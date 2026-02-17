@@ -1,0 +1,305 @@
+% bathesis.sty — ZHAW/IMS Bachelor Thesis style for scrreprt
+% Adapted from labstyle.sty v2.0
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{bathesis}[2026/02/16 v1.1 ZHAW/IMS Bachelor Thesis style]
+
+% =============================================================================
+% Engine + Fonts
+% =============================================================================
+\RequirePackage{iftex}
+\ifPDFTeX
+  \RequirePackage[T1]{fontenc}
+  \RequirePackage[utf8]{inputenc}
+  \RequirePackage{lmodern}
+\else
+  \RequirePackage{fontspec}
+  \setmainfont{Latin Modern Roman}
+  \setsansfont{Latin Modern Sans}
+  \setmonofont{Latin Modern Mono}
+\fi
+
+% csquotes must come AFTER inputenc — load it here, not in main.tex
+\RequirePackage{csquotes}
+
+% =============================================================================
+% Core Packages
+% =============================================================================
+\RequirePackage{microtype}
+\RequirePackage{graphicx}
+\RequirePackage[dvipsnames]{xcolor}
+
+\RequirePackage{siunitx}
+\sisetup{
+  per-mode    = symbol,
+  range-units = single,
+}
+\DeclareSIUnit{\rpm}{rpm}
+\DeclareSIUnit{\newtonmeter}{\newton\metre}
+
+\RequirePackage{amsmath,amssymb}
+\RequirePackage{booktabs}
+\RequirePackage{enumitem}
+\setlist{itemsep=.1\baselineskip, topsep=.1\baselineskip, leftmargin=*}
+
+\RequirePackage{float}
+\RequirePackage{placeins}
+\RequirePackage{subcaption}
+
+% Code listings and directory trees
+\RequirePackage{listings}
+\RequirePackage{dirtree}
+
+\lstset{
+  basicstyle  = \ttfamily\small,
+  frame       = single,
+  breaklines  = true,
+  numbers     = left,
+  numberstyle = \tiny\color{gray},
+  captionpos  = b,
+  tabsize     = 4,
+}
+
+% =============================================================================
+% Colors
+% =============================================================================
+\definecolor{ZHAWBlue}{HTML}{0061A2}
+\definecolor{thesisAccent}{RGB}{0,100,166}
+
+% =============================================================================
+% Hyperref + Cross-references
+% =============================================================================
+\RequirePackage{hyperref}
+\hypersetup{
+  colorlinks = true,
+  linkcolor  = black,
+  citecolor  = ZHAWBlue,
+  urlcolor   = ZHAWBlue,
+  pdfcreator = {LaTeX via KOMA-Script},
+}
+\urlstyle{same}
+\RequirePackage[nameinlink,capitalise]{cleveref}
+\RequirePackage{etoolbox}
+
+% =============================================================================
+% KOMA-Script Layout for scrreprt
+% =============================================================================
+\KOMAoptions{
+  parskip     = half,
+  headings    = normal,
+  headinclude = true,
+  footinclude = true,
+  twoside     = false,
+  open        = any,
+}
+
+% Page geometry — set FIRST, then adjust header, then recalc
+\areaset[10mm]{155mm}{240mm}
+
+% --- Chapter styling ----------------------------------------------------------
+\RedeclareSectionCommand[
+  beforeskip = 0pt,
+  afterskip  = 1.5em,
+  font       = \LARGE\bfseries,
+]{chapter}
+
+\renewcommand*{\chapterformat}{%
+  \mbox{\chapappifchapterprefix{\nobreakspace}\thechapter\autodot%
+  \IfUsePrefixLine{}{\enskip}}%
+}
+
+\RedeclareSectionCommand[
+  beforeskip = 1.5em,
+  afterskip  = 0.75em,
+]{section}
+
+\RedeclareSectionCommand[
+  beforeskip = 1.25em,
+  afterskip  = 0.1em,
+]{subsection}
+
+\RedeclareSectionCommand[
+  beforeskip = 1em,
+  afterskip  = 0.1em,
+]{subsubsection}
+
+\setkomafont{section}{\Large\bfseries}
+\setkomafont{subsection}{\large\bfseries}
+\setkomafont{subsubsection}{\normalsize\bfseries}
+
+\setcounter{tocdepth}{2}
+\setcounter{secnumdepth}{3}
+
+\setlength{\abovecaptionskip}{6pt}
+\setlength{\belowcaptionskip}{2pt}
+
+% =============================================================================
+% Header / Footer (scrlayer-scrpage)
+% =============================================================================
+\RequirePackage{scrlayer-scrpage}
+\clearpairofpagestyles
+\pagestyle{scrheadings}
+\setkomafont{pageheadfoot}{\normalfont\small}
+
+\KOMAoptions{
+  headsepline = 0.2pt:\textwidth,
+  footsepline = false,
+}
+
+% Set headheight BEFORE recalctypearea to avoid warnings
+\setlength{\headheight}{45pt}
+\recalctypearea
+
+% --- Metadata commands (set in main.tex) --------------------------------------
+\newcommand{\thesistitle}{}
+\newcommand{\thesissubtitle}{}
+\newcommand{\thesisauthors}{}
+\newcommand{\thesisdate}{\today}
+\newcommand{\thesisheader}{Bachelor Thesis}
+\newcommand{\thesisfooter}{ZHAW/IMS}
+\newcommand{\thesislogo}{imslogo.pdf}
+
+\makeatletter
+\ihead{\raisebox{-24pt}{\thesisheader}}
+\ohead{%
+  \ifdefempty{\thesislogo}{}{%
+    \IfFileExists{\thesislogo}{\includegraphics[height=38pt]{\thesislogo}}{}%
+  }%
+}
+\ifoot{\thesisfooter}
+\ofoot{\pagemark}
+\makeatother
+
+\renewcommand*{\chapterpagestyle}{scrheadings}
+
+% =============================================================================
+% Graphics paths
+% =============================================================================
+\graphicspath{{figures/}{Figures/}{Images/}}
+
+% =============================================================================
+% Glossary + Acronyms + Nomenclature (glossaries-extra)
+% =============================================================================
+\RequirePackage[
+  acronym,
+  symbols,
+  toc,
+  nogroupskip,
+  nopostdot,
+  automake,
+  section=chapter,
+]{glossaries-extra}
+\setabbreviationstyle[acronym]{long-short}
+
+% =============================================================================
+% Thesis-specific commands
+% =============================================================================
+\newcommand{\dd}{\mathrm{d}}
+\newcommand{\e}{\mathrm{e}}
+
+% --- Helper: quick figure insertion -------------------------------------------
+\makeatletter
+\newcommand{\thesisfig}[3][]{%
+  \filename@parse{#2}%
+  \begin{figure}[htbp]
+    \centering
+    \includegraphics[#1]{#2}%
+    \caption{#3}\label{fig:\filename@base}%
+  \end{figure}
+}
+\makeatother
+
+% =============================================================================
+% Fallback title page (used when no external PDF is available)
+% =============================================================================
+\newcommand{\makethesistitle}{%
+  \begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    {\scshape\Large ZHAW School of Engineering\\[4pt]
+     Institute of Mechatronic Systems\par}
+    \vspace{2cm}
+    \rule{\textwidth}{0.4pt}\\[1em]
+    {\Huge\bfseries \thesistitle\par}
+    \ifdefempty{\thesissubtitle}{}{%
+      \vspace{0.5em}
+      {\Large\color{thesisAccent}\thesissubtitle\par}%
+    }
+    \vspace{0.5em}
+    \rule{\textwidth}{0.4pt}
+    \vspace{2cm}
+
+    {\large Bachelor Thesis\par}
+    \vspace{1cm}
+    {\large \thesisauthors\par}
+    \vspace{1cm}
+    {\large Supervisor: Michael Peter (pmic)\\[4pt]
+     Co-Supervisor: Prof.\ Dr.\ Ruprecht Altenburger (altb)\par}
+
+    \vfill
+
+    {\large \thesisdate\par}
+  \end{titlepage}
+}
+
+% =============================================================================
+% Declaration of Originality
+% =============================================================================
+\newcommand{\declarationtext}{%
+  We hereby declare that this thesis is our own work and has been composed solely
+  by the undersigned. We have not used any sources or aids other than those indicated.
+  All passages taken verbatim or in substance from published or unpublished works
+  of others have been clearly marked as such. This thesis has not been submitted,
+  in whole or in part, for any other degree or examination at this or any other
+  institution.%
+}
+
+\newcommand{\makedeclaration}[2]{%
+  \chapter*{Declaration of Originality}
+  \addcontentsline{toc}{chapter}{Declaration of Originality}
+  \declarationtext
+
+  \vspace{2cm}
+
+  \noindent #1, #2
+
+  \vspace{1.5cm}
+
+  \noindent
+  \begin{minipage}{0.45\textwidth}
+    \rule{0.9\textwidth}{0.4pt}\\[4pt]
+    Yuri Bianchi
+  \end{minipage}\hfill
+  \begin{minipage}{0.45\textwidth}
+    \rule{0.9\textwidth}{0.4pt}\\[4pt]
+    Dario Jurietti
+  \end{minipage}
+
+  \vspace{1.5cm}
+
+  \noindent
+  \begin{minipage}{0.45\textwidth}
+    \rule{0.9\textwidth}{0.4pt}\\[4pt]
+    Janick Dort
+  \end{minipage}
+
+  \clearpage
+}
+
+% =============================================================================
+% Front / Main / Back matter helpers (scrreprt lacks these)
+% =============================================================================
+\newcommand{\frontmatter}{%
+  \clearpage
+  \pagenumbering{roman}%
+}
+
+\newcommand{\mainmatter}{%
+  \clearpage
+  \pagenumbering{arabic}%
+}
+
+\newcommand{\backmatter}{%
+  \clearpage
+}
+
+\endinput
