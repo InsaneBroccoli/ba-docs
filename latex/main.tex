@@ -1,0 +1,284 @@
+% =============================================================================
+% main.tex — Bachelor Thesis Template (ZHAW / IMS)
+% Document class: KOMA-Script scrreprt (chapters as top level)
+% =============================================================================
+\documentclass[a4paper, 11pt, bibliography=totoc, listof=totoc]{scrreprt}
+
+% --- Language -----------------------------------------------------------------
+\usepackage[english]{babel}
+% NOTE: csquotes and inputenc are loaded inside bathesis.sty — do NOT load here
+
+% --- Thesis style (KOMA-Script based) ----------------------------------------
+\usepackage{bastyl}
+
+% --- Bibliography -------------------------------------------------------------
+\usepackage[
+  backend  = biber,
+  style    = numeric,
+  sorting  = none,
+]{biblatex}
+\addbibresource{references.bib}    % rename to your .bib file
+
+% --- PDF inclusion (title page) -----------------------------------------------
+\usepackage{pdfpages}
+
+% --- Temporary: placeholder text (remove when writing real content) -----------
+\usepackage{lipsum}
+
+% --- Glossary / Acronym / Symbol definitions ----------------------------------
+\input{glossary.tex}
+\makeglossaries
+
+% =============================================================================
+% Thesis Metadata
+% =============================================================================
+\renewcommand{\thesistitle}{Betaflight -- Offline Controller Tuning}
+\renewcommand{\thesissubtitle}{%
+  Data-Driven Tuning of Rate and Altitude Controllers for FPV Drones%
+}
+\renewcommand{\thesisauthors}{Yuri Bianchi, Dario Jurietti and Janick Dort}
+\renewcommand{\thesisdate}{\today}
+\renewcommand{\thesisheader}{Bachelor Thesis}
+\renewcommand{\thesisfooter}{ZHAW / IMS}
+% \renewcommand{\thesislogo}{imslogo.pdf}  % uncomment when logo file exists
+
+% PDF metadata
+\hypersetup{
+  pdftitle    = {Betaflight -- Offline Controller Tuning},
+  pdfauthor   = {Yuri Bianchi, Dario Jurietti, Janick Dort},
+  pdfsubject  = {Bachelor Thesis, ZHAW School of Engineering},
+  pdfkeywords = {Betaflight, PID tuning, system identification, FPV, chirp},
+}
+
+% =============================================================================
+\begin{document}
+% =============================================================================
+
+% *****************************************************************************
+%   FRONT MATTER
+% *****************************************************************************
+\frontmatter
+
+% --- Title page ---------------------------------------------------------------
+% Option A: External PDF (uncomment when Titelblatt.pdf exists)
+% \begin{titlepage}
+%   \includepdf[pages=1]{pdf/Titelblatt.pdf}
+% \end{titlepage}
+
+% Option B: Auto-generated fallback title page
+\makethesistitle
+
+% --- Declaration of Originality -----------------------------------------------
+\makedeclaration{Winterthur}{\today}
+
+% --- Abstract (German + English) ----------------------------------------------
+\chapter*{Zusammenfassung}
+\addcontentsline{toc}{chapter}{Zusammenfassung}
+
+\lipsum[1] % placeholder — replace with German abstract
+
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+
+\lipsum[2] % placeholder — replace with English abstract
+
+% --- Preface / Acknowledgements -----------------------------------------------
+\chapter*{Preface}
+\addcontentsline{toc}{chapter}{Preface}
+
+This thesis was carried out during the spring semester 2026 at the Institute of
+Mechatronic Systems~(IMS) at the ZHAW School of Engineering. It continues the
+work started in the preceding project thesis conducted in the fall semester 2025.
+
+We would like to thank our supervisor, Michael Peter, for\ldots
+
+% --- Table of Contents --------------------------------------------------------
+\tableofcontents
+
+% --- List of Figures ----------------------------------------------------------
+\listoffigures
+
+% --- List of Tables -----------------------------------------------------------
+\listoftables
+
+% --- Acronyms -----------------------------------------------------------------
+\printglossary[type=\acronymtype, title={List of Acronyms}]
+
+% --- Nomenclature (Symbols) ---------------------------------------------------
+\printglossary[type=symbols, title={Nomenclature}]
+
+% --- Glossary (optional — uncomment if using glossary terms) ------------------
+% \printglossary[title={Glossary}]
+
+
+% *****************************************************************************
+%   MAIN MATTER
+% *****************************************************************************
+\mainmatter
+
+% =============================================================================
+\chapter{Introduction}
+\label{ch:introduction}
+% =============================================================================
+
+\section{Background and Motivation}
+\label{sec:background}
+
+% Establish context: FPV drone control, Betaflight ecosystem, importance of
+% tuning. Reference the project thesis as prior work.
+
+\section{Research Questions and Objectives}
+\label{sec:objectives}
+
+% Clearly state what the BA thesis aims to achieve beyond the PA.
+% Connect each objective to a gap identified in the background.
+
+\section{Document Structure}
+\label{sec:structure}
+
+This thesis is organized as follows.
+\Cref{ch:theory} provides the theoretical foundations\ldots
+\Cref{ch:methodology} describes the methodology\ldots
+\Cref{ch:implementation} details the implementation\ldots
+\Cref{ch:results} presents the experimental results\ldots
+\Cref{ch:discussion} discusses the findings and outlines future work.
+
+
+% =============================================================================
+\chapter{Theoretical Foundations}
+\label{ch:theory}
+% =============================================================================
+
+\section{Betaflight Control Architecture}
+\label{sec:bf_architecture}
+
+\section{System Identification via Chirp Excitation}
+\label{sec:chirp_theory}
+
+\section{Frequency Response Estimation}
+\label{sec:freq_response_theory}
+
+\section{Closed-Loop Analysis}
+\label{sec:closed_loop_theory}
+
+\section{Cascaded Control Structures}
+\label{sec:cascaded_control}
+
+
+% =============================================================================
+\chapter{Methodology}
+\label{ch:methodology}
+% =============================================================================
+
+\section{Tuning Workflow Overview}
+\label{sec:workflow}
+
+\section{Flight Test Protocol}
+\label{sec:flight_protocol}
+
+\section{Signal Processing Pipeline}
+\label{sec:signal_processing}
+
+\section{Controller Design Procedure}
+\label{sec:controller_design}
+
+\section{Altitude Hold System Identification}
+\label{sec:althold_sysid}
+
+
+% =============================================================================
+\chapter{Implementation}
+\label{ch:implementation}
+% =============================================================================
+
+\section{Software Architecture}
+\label{sec:sw_architecture}
+
+\section{MATLAB Implementation}
+\label{sec:matlab}
+
+\section{Python Implementation}
+\label{sec:python}
+
+\section{Betaflight Firmware Modifications}
+\label{sec:firmware}
+
+\section{Validation Framework}
+\label{sec:validation}
+
+
+% =============================================================================
+\chapter{Results}
+\label{ch:results}
+% =============================================================================
+
+\section{Rate Controller Tuning Results}
+\label{sec:rate_results}
+
+\section{Filter Configuration Results}
+\label{sec:filter_results}
+
+\section{Altitude Hold Identification Results}
+\label{sec:althold_results}
+
+\section{Python--MATLAB Consistency Validation}
+\label{sec:consistency}
+
+\section{Flight Test Validation}
+\label{sec:flight_validation}
+
+
+% =============================================================================
+\chapter{Discussion and Outlook}
+\label{ch:discussion}
+% =============================================================================
+
+\section{Discussion of Results}
+\label{sec:discussion_results}
+
+\section{Limitations}
+\label{sec:limitations}
+
+\section{Future Work}
+\label{sec:future_work}
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+
+% *****************************************************************************
+%   BACK MATTER
+% *****************************************************************************
+\backmatter
+
+% --- References ---------------------------------------------------------------
+\printbibliography[title={References}]
+
+% --- Generative AI Declaration ------------------------------------------------
+\chapter*{Declaration of Generative AI Use}
+\addcontentsline{toc}{chapter}{Declaration of Generative AI Use}
+
+The following generative AI systems were used during the preparation of this
+thesis. Their use was limited to the functions described below. All generated
+content was critically reviewed and verified by the authors.
+
+% List AI tools as in your PA.
+
+% --- Appendix -----------------------------------------------------------------
+\appendix
+
+\chapter{Project Management}
+\label{app:project_management}
+
+\section{Project Assignment}
+\label{app:assignment}
+
+\section{Project Schedule}
+\label{app:schedule}
+
+
+\chapter{Additional Figures and Data}
+\label{app:additional}
+
+% =============================================================================
+\end{document}
