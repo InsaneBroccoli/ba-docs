@@ -1,0 +1,128 @@
+% =============================================================================
+% Pflichtenheft.tex — Bachelor Thesis Template (ZHAW / IMS)
+% =============================================================================
+\documentclass[a4paper,11pt,bibliography=totoc,listof=totoc]{scrreprt}
+
+\usepackage[english]{babel}
+
+% bastyl loads glossaries-extra internally -> pass required option BEFORE bastyl
+\PassOptionsToPackage{automake=immediate}{glossaries-extra}
+\usepackage{bastyl}
+
+% bastyl/glossaries setup expects this
+\makeglossaries
+
+% =============================================================================
+% Thesis Metadata
+% =============================================================================
+\renewcommand{\thesistitle}{Betaflight -- Offline Controller Tuning}
+\renewcommand{\thesissubtitle}{%
+  Data-Driven Tuning of Rate and Altitude Controllers for FPV Drones%
+}
+\renewcommand{\thesisauthors}{Yuri Bianchi, Dario Jurietti and Janick Dort}
+\renewcommand{\thesisdate}{\today}
+\renewcommand{\thesisheader}{Betaflight -- Offline Controller Tuning}
+\renewcommand{\thesisfooter}{ZHAW / IMS}
+
+\hypersetup{
+  pdftitle    = {Betaflight -- Offline Controller Tuning Pflichtenheft},
+  pdfauthor   = {Yuri Bianchi, Dario Jurietti, Janick Dort},
+  pdfsubject  = {Bachelor Thesis, ZHAW School of Engineering},
+  pdfkeywords = {Betaflight, PID tuning, system identification, FPV, chirp},
+}
+
+\begin{document}
+
+\section{Introduction}
+
+First-Person-View (FPV) racing drones require precise and responsive control 
+in order to achieve stable flight behaviour, suppress disturbances such as 
+propeller wash and maintain agility during rapid manoeuvres. The quality of this 
+behaviour strongly depends on the tuning of the flight controller’s feedback loops. 
+In particular, the parameters of the angular rate controller determine how quickly 
+and accurately the drone reacts to pilot inputs and external disturbances.
+
+In practice, controller tuning is still predominantly performed manually through 
+iterative trial-and-error procedures. This process requires extensive flight 
+testing and considerable piloting experience, making it both time-consuming and 
+difficult to reproduce. Even though modern flight controller firmware such as 
+Betaflight offers extensive configuration possibilities and detailed flight data 
+logging, efficient and systematic tuning remains a significant challenge.
+
+A previous project introduced a proof-of-concept approach for offline tuning of 
+angular rate controllers using recorded flight data and system identification 
+techniques. Since then, this concept has been further developed beyond the initial 
+proof of concept and forms the basis for the present work.
+
+The objective of this bachelor thesis is to further refine and extend this approach 
+into a modular offline tuning framework for multiple control loops used in 
+Betaflight-based flight controllers. In addition to the already developed angular 
+rate controller tuner, new modules will be introduced for tuning the angle 
+controller, the altitude hold controller, and the position controller. These 
+additions aim to extend the tuning framework beyond the inner rate control loop 
+and provide tools for analysing and tuning higher-level control layers.
+
+The framework will be implemented primarily in MATLAB and Python and will provide 
+tools for analysing flight logs, estimating system dynamics and generating 
+controller parameters without requiring repeated flight tests. The software will 
+be developed as an open-source library and accompanied by comprehensive 
+documentation to ensure accessibility and usability for the FPV community.
+
+By providing a structured, data-driven approach to controller tuning, this 
+project aims to simplify the tuning process, improve flight performance and 
+reduce the reliance on manual trial-and-error methods.
+
+\section{Goal / Task Description}
+
+The goal of this bachlelor thesis is to develop a modular offline tuning framework
+for multiple control loops used in Betaflight-based flight controllers. Newly,
+the angle controller and the altitude hold controller should be added to the
+already developed angular rate controller tuner. If time allows, a position 
+controller tuner should be also implemented as well. The framework should be 
+implemented primarily in MATLAB and Python. 
+
+To achieve this goal, the firmware of the flight controller will be modified 
+to add the chirp signal to the input signal of the angle controller, the 
+altitude hold controller and the position controller.
+
+\section{Specification}
+\subsection{Technical Specification}
+
+For the implementation of the offline tuning framework, the following technical
+specifications are defined:
+\begin{itemize}
+    \item The framework should be implemented in MATLAB and Python.
+    \item The framework should be modular, allowing for the addition of new tuning modules for different control loops.
+    \item The framework should provide tools for analysing flight logs, estimating system dynamics and generating controller parameters.
+    \item The framework should be developed as an open-source library and accompanied by comprehensive documentation.
+\end{itemize}
+
+\subsection{Functional Specification}
+The functional specifications for the offline tuning framework are as follows:
+\begin{itemize}
+    \item The framework should be able to process flight logs recorded with Betaflight firmware.
+    \item The framework should be able to estimate the system dynamics of the angle controller, 
+    the altitude hold controller and the position controller based on the recorded flight data.
+    \item The framework should be able to generate controller parameters for the angle controller, 
+    the altitude hold controller and the position controller based on the estimated system dynamics.
+    \item The framework should provide a user-friendly interface for configuring and running the tuning process.
+\end{itemize}
+
+\subsection{Boundary Conditions}
+The following boundary conditions are defined for the offline tuning framework:
+\begin{itemize}
+    \item The framework should be compatible with Betaflight firmware version 
+    \item The framework should be designed for use with FPV racing drones equipped with Betaflight-based flight controllers.
+\end{itemize}
+
+\section{Costs}
+The costs associated with the development of the offline tuning framework are estimated as follows:
+\begin{itemize}
+    \item Additional GPS modules for testing the position controller tuner
+\end{itemize}
+
+\section{Work Packages}
+The project is divided into several work packages that structure the development 
+and validation of the offline tuning framework. 
+
+\end{document}
