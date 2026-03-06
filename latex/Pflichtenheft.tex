@@ -8,6 +8,7 @@
 % bastyl loads glossaries-extra internally -> pass required option BEFORE bastyl
 \PassOptionsToPackage{automake=immediate}{glossaries-extra}
 \usepackage{bastyl}
+\usepackage{pdfpages}
 
 % bastyl/glossaries setup expects this
 \makeglossaries
@@ -286,6 +287,29 @@ logs and generates controller parameters.
 \end{itemize}
 
 \newpage
+
+\section{Timetable}
+
+\begin{center}
+\includegraphics[width=\textwidth]{pdf/Zeitplan_BA_00.pdf}
+\end{center}
+
+\newpage
+
+\includepdf[
+pages=1,
+scale=0.7,
+pagecommand={\section{Attachment}}
+]{pdf/aufgabenstellung_ba.pdf}
+
+\includepdf[
+pages=2-,
+scale=0.7,
+pagecommand={}
+]{pdf/aufgabenstellung_ba.pdf}
+
+
+\newpage
 \section{Signatures}
 
 The undersigned accept this specification document as the basis for the bachelor thesis.
@@ -293,36 +317,36 @@ The undersigned accept this specification document as the basis for the bachelor
 \vspace{1.5cm}
 
 \noindent\rule{0.48\textwidth}{0.4pt}\par
-{\small Ort, Datum}
+{\small Place, Date}
 
 \vspace{1.8cm}
 
 \noindent\rule{0.48\textwidth}{0.4pt}\par
-{\small Betreuer}\\
+{\small Supervisor}\\
 {\small Michael Peter}
 
 \vspace{1.8cm}
 
 \noindent\rule{0.48\textwidth}{0.4pt}\par
-{\small Ort, Datum}
+{\small Place, Date}
 
 \vspace{2.5cm}
 
 \noindent
 \begin{minipage}[t]{0.48\textwidth}
   \rule{\textwidth}{0.4pt}\par
-  {\small Studierende}\\
+  {\small Student}\\
   {\small Janick Dort}
 \end{minipage}\hfill
 \begin{minipage}[t]{0.48\textwidth}
   \rule{\textwidth}{0.4pt}\par
-  {\small Studierende}\\
+  {\small Student}\\
   {\small Yuri Bianchi}
 \end{minipage}
 
 \vspace{2.0cm}
 
 \noindent\rule{0.48\textwidth}{0.4pt}\par
-{\small Studierende}\\
+{\small Student}\\
 {\small Dario Jurietti}
 \end{document}
