@@ -1,39 +1,44 @@
-\documentclass[a4paper,11pt]{scrartcl}
+\documentclass[a4paper,11pt,bibliography=totoc,listof=totoc]{scrreprt}
 
-% Language and citation support
 \usepackage[english]{babel}
-\usepackage[utf8]{inputenc}
-\usepackage{csquotes}
-\usepackage{placeins}
-% Load consolidated formatting from labstyle
-\usepackage{labstyle}
-\usepackage{cleveref}
-
-% Bibliography setup
-\usepackage[
-  backend=biber,
-  style=numeric,
-  sorting=none
-]{biblatex}
-\addbibresource{Zotero_zitieren.bib}
-
-% PDF inclusion (for title page)
+\PassOptionsToPackage{automake=immediate}{glossaries-extra}
+\usepackage{bastyl}
 \usepackage{pdfpages}
+\usepackage{graphicx}
 
-% Document metadata
-\renewcommand{\labtitle}{Drone Control Tuning}
-\renewcommand{\labsubtitle}{Development of an Offline Betaflight Drone Control Tuning tool}
-\renewcommand{\labauthor}{Yuri Bianchi, Dario Jurietti and Janick Dort}
-\renewcommand{\labdate}{\today}
+\makeglossaries
+
+\renewcommand{\thesistitle}{Betaflight -- Offline Controller Tuning}
+\renewcommand{\thesissubtitle}{
+  Data-Driven Tuning of Rate and Altitude Controllers for FPV Drones%
+}
+\renewcommand{\thesisauthors}{Yuri Bianchi, Dario Jurietti and Janick Dort}
+\renewcommand{\thesisdate}{\today}
+\renewcommand{\thesisheader}{Betaflight -- Offline Controller Tuning}
+\renewcommand{\thesisfooter}{ZHAW / IMS}
+
+\hypersetup{
+  pdftitle    = {Betaflight -- Offline Controller Tuning Pflichtenheft},
+  pdfauthor   = {Yuri Bianchi, Dario Jurietti, Janick Dort},
+  pdfsubject  = {Bachelor Thesis, ZHAW School of Engineering},
+  pdfkeywords = {Betaflight, PID tuning, system identification, FPV, chirp},
+}
+
+\setcounter{secnumdepth}{3}
+\renewcommand{\thesection}{\arabic{section}}
 
 \begin{document}
 
-\begin{titlepage}
-
-\end{titlepage}
 
 
 \clearpage
+
+\section{Gyro Controll Tuning}
+
+During the project thesis, an offline tuner for the angular rate controller was developed. 
+The tuner allows for systematic optimization of the rate control loop, which is crucial for 
+achieving stable and responsive flight performance in Acro mode.
+
 
 \section{Angle Control}
 
