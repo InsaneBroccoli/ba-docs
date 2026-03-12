@@ -64,6 +64,9 @@
                   & Dario Jurietti \\
                   & Janick Dort \\
 \\
+\textbf{Supervisors:} & Michael Peter \\
+                      & Prof.\ Dr.\ Ruprecht Altenburger \\
+\\
 \textbf{Degree Program:} & BSc System Engineering \\
 \\
 \textbf{Institution:} & ZHAW School of Engineering \\
@@ -71,7 +74,6 @@
 \\
 \textbf{Date:} & \today \\
 \end{tabular}
-
 \vfill
 
 
@@ -91,41 +93,51 @@ Winterthur, Switzerland
 \section{Introduction}
 
 First-Person-View (FPV) racing drones require precise and responsive control 
-in order to achieve stable flight behaviour, suppress disturbances such as 
-propeller wash and maintain agility during rapid manoeuvres. The quality of this 
-behaviour strongly depends on the tuning of the flight controller’s feedback loops. 
-In particular, the parameters of the angular rate controller determine how quickly 
-and accurately the drone reacts to pilot inputs and external disturbances.
+to achieve stable flight behaviour, suppress disturbances such as propeller 
+wash and maintain agility during rapid manoeuvres. The flight performance 
+strongly depends on the tuning of the flight controller’s feedback loops. 
+In particular, the parameters of the angular rate controller determine how 
+quickly and accurately the drone reacts to pilot inputs and external disturbances.
 
-In practice, controller tuning is still predominantly performed manually through 
-iterative trial-and-error procedures. This process requires extensive flight 
-testing and considerable piloting experience, making it both time-consuming and 
-difficult to reproduce. Even though modern flight controller firmware such as 
-Betaflight offers extensive configuration possibilities and detailed flight data 
-logging, efficient and systematic tuning remains a significant challenge.
+In practice, controller tuning is still often performed manually through 
+iterative trial-and-error procedures. This requires extensive flight testing 
+and considerable piloting experience, making the process time-consuming and 
+difficult to reproduce. Although modern flight controller firmware such as 
+Betaflight provides extensive configuration options and detailed flight data 
+logging, systematic tuning remains a challenge.
+
+One commonly used tool for offline tuning is the PID-Toolbox. In this approach, 
+flight logs are recorded during normal flights and later analysed to derive 
+suitable controller parameters. However, the system excitation depends entirely 
+on the pilot’s inputs and the natural flight behaviour of the drone. As a result, 
+not all relevant frequency ranges are sufficiently excited, which can limit the 
+quality of the measurements.
+
+In the approach proposed in this thesis, a chirp excitation signal is injected 
+directly into the control loop. This allows the system to be excited over a wide 
+range of frequencies in a controlled and systematic way, resulting in higher 
+quality measurements for system identification and controller tuning.
 
 A previous project introduced a proof-of-concept approach for offline tuning of 
-angular rate controllers using recorded flight data and system identification 
-techniques. Since then, this concept has been further developed beyond the initial 
-proof of concept and forms the basis for the present work.
+angular rate controllers based on recorded flight data. This concept forms the 
+basis for the present work.
 
-The objective of this bachelor thesis is to further refine and extend this approach 
-into a modular offline tuning framework for multiple control loops used in 
-Betaflight-based flight controllers. In addition to the already developed angular 
-rate controller tuner, new modules will be introduced for tuning the angle 
-controller, the altitude hold controller, and the position controller. These 
-additions aim to extend the tuning framework beyond the inner rate control loop 
-and provide tools for analysing and tuning higher-level control layers.
+The objective of this bachelor thesis is to further refine and extend this 
+approach into an offline tuning framework for multiple control loops used in 
+Betaflight-based flight controllers. In addition to the existing angular rate 
+controller tuner, the framework will be extended with code extensions for tuning 
+the angle controller, the altitude hold controller and the position controller. 
+This extends the tuning framework beyond the inner rate control loop and enables 
+the analysis and tuning of higher-level control layers.
 
 The framework will be implemented primarily in MATLAB and Python and will provide 
 tools for analysing flight logs, estimating system dynamics and generating 
 controller parameters without requiring repeated flight tests. The software will 
-be developed as an open-source library and accompanied by comprehensive 
-documentation to ensure accessibility and usability for the FPV community.
+be developed as an open-source library with accompanying documentation for the 
+FPV community.
 
 By providing a structured, data-driven approach to controller tuning, this 
-project aims to simplify the tuning process, improve flight performance and 
-reduce the reliance on manual trial-and-error methods.
+project aims to simplify the tuning process and improve flight performance.
 
 \newpage
 
@@ -147,11 +159,20 @@ The framework will be implemented primarily in MATLAB and Python. Flight
 logs recorded with Betaflight will be analysed to estimate the system 
 dynamics of the respective control loops.
 
-To obtain suitable excitation signals for system identification, the 
-firmware of the flight controller will be modified to inject a chirp signal 
-into the input of the angle controller, the altitude hold controller and, 
-if implemented, the position controller. Based on the recorded system 
-responses, controller parameters can then be determined offline.
+To enable system identification of the control loops, the firmware of the 
+flight controller will be modified to inject a chirp signal into the input 
+of the angle controller, the altitude hold controller and, if implemented, 
+the position controller. By analysing the measured input–output data, the 
+transfer function of the respective control loop can be estimated. Based on 
+this identified model, the controller parameters are then recalculated in 
+order to reshape the loop dynamics.
+
+From the resulting loop model, different representations of the closed-loop 
+behaviour can be derived. For users with a strong background in control 
+engineering, a Gang-of-Four representation is provided to analyse the loop 
+properties in the frequency domain. In addition, a step response is generated 
+to provide an intuitive interpretation of the system behaviour for less 
+experienced users.
 
 Both the modified firmware and the developed tuning framework will be 
 extensively tested and validated using flight experiments and recorded 
@@ -166,9 +187,10 @@ proposed approach.
 For the implementation of the offline tuning framework, the following technical
 specifications are defined:
 \begin{itemize}
-    \item The framework should be implemented in MATLAB and Python.
+    \item The framework should be implemented in MATLAB and Python as identical as possible, 
+    allowing users to choose their preferred programming environment.
     \item The framework should be modular, allowing for the addition of new tuning modules for different control loops.
-    \item The framework should provide tools for analysing flight logs, estimating system dynamics and generating controller parameters.
+    \item The framework should provide tools for analysing flight logs, estimating system dynamics and predicting controller parameters.
     \item The framework should be developed as an open-source library and accompanied by comprehensive documentation.
 \end{itemize}
 
@@ -176,34 +198,37 @@ specifications are defined:
 The functional specifications for the offline tuning framework are as follows:
 \begin{itemize}
     \item The framework should be able to process flight logs recorded with Betaflight firmware.
-    \item The framework should be able to estimate the system dynamics of the angle controller, 
-    the altitude hold controller and the position controller based on the recorded flight data.
-    \item The framework should be able to generate controller parameters for the angle controller, 
+    \item The framework should be able to estimate the system dynamics of the angle control loop, 
+    the altitude hold control loop and the position control loop based on the recorded flight data.
+    \item The framework should be able to tune controller parameters for the angle controller, 
     the altitude hold controller and the position controller based on the estimated system dynamics.
-    \item The framework should provide a user-friendly interface for configuring and running the tuning process.
+    \item The framework should provide a user-friendly interface for configuring and running 
+    the tuning process.
+    \item Documentation for user to understand the tuning process
 \end{itemize}
 
 \subsection{Boundary Conditions}
 The following boundary conditions are defined for the offline tuning framework:
 \begin{itemize}
-    \item The framework should be compatible with Betaflight firmware version 
+    \item The framework should be compatible with Betaflight firmware version 25.12.1
     \item The framework should be designed for use with FPV racing drones equipped with Betaflight-based flight controllers.
 \end{itemize}
 
 \section{Costs}
 The costs associated with the development of the offline tuning framework are estimated as follows:
 \begin{itemize}
-    \item Additional GPS modules for testing the position controller tuner
+    \item Additional GPS modules for testing the position controller tuner worth 18.50~CHF.
+    \item 3D-printed parts for mounting the GPS modules worth approximately 5~CHF.
 \end{itemize}
 
-\section{Work Packages}
+\section{Task Allocation}
 
 The development tasks of the project are divided among the team members
 according to their technical focus areas.
 
 \begin{itemize}
 
-\item \textbf{Work Package 1 – Angle Controller Tuning} \\
+\item \textbf{Angle Controller Tuning} \\
 Responsible: Janick Dort \\
 Focus: Control engineering and signal processing \\
 Content: Development of the offline tuning approach for the angle
@@ -211,20 +236,20 @@ controller. This includes the analysis of flight log data, system
 identification and signal processing as well as the implementation
 of the angle controller tuner.
 
-\item \textbf{Work Package 2 – Altitude Hold Controller} \\
+\item \textbf{Altitude Hold Controller Tuning} \\
 Responsible: Dario Jurietti \\
 Focus: Software development \\
 Content: Implementation of the altitude hold tuning framework, including
 firmware modifications for chirp signal injection and development of the
 required software tools.
 
-\item \textbf{Work Package 3 – Position Hold Controller} \\
+\item \textbf{Position Hold Controller Tuning} \\
 Responsible: Yuri Bianchi \\
 Focus: Drone tuning and experimental testing \\
 Content: Development of the position hold tuning module and evaluation of
 the tuning results through practical drone tests and tuning experiments.
 
-\item \textbf{Work Package 4 – Testing and Documentation} \\
+\item \textbf{Testing and Documentation} \\
 Responsible: All team members \\
 Content: Joint testing of the modified firmware and the developed tuning
 framework as well as preparation of the final thesis documentation.
@@ -233,52 +258,67 @@ framework as well as preparation of the final thesis documentation.
 
 \newpage
 
-\section{Milestones}
+\section{Working Packages / Milestones}
 
-The development of the offline tuning framework is divided into several
-milestones. Each milestone represents a development step and defines the
-expected results.
+The project is structured into several working packages, which are grouped into three main milestones. Each working package 
+has specific content and acceptance criteria to ensure the successful completion of the project.
 
+
+
+\textbf{Milestone 1}
 \begin{itemize}
 
-\item \textbf{Milestone 1 – Development of the Angle Controller Offline Tuner (MATLAB)} \\
+
+\item \textbf{Working Package 1 – Development Angle Controller Offline Tuner (MATLAB)} \\
 Content: Implementation of an offline tuning tool for the angle controller
 using MATLAB. The tool should process Betaflight flight logs and estimate
 the system dynamics of the angle controller. 
 Acceptance criteria: MATLAB tool successfully analyses flight logs and
 produces tuning results for the angle controller.
 
-\item \textbf{Milestone 2 – Chirp Signal Implementation for Altitude Hold} \\
+\item \textbf{Working Package 2 – Chirp Signal Implementation for Altitude Hold} \\
 Content: Modification of the flight controller firmware to inject a chirp
 excitation signal into the altitude hold control loop.
 Acceptance criteria: Flight logs contain the excitation signal and the
 system response required for system identification.
 
-\item \textbf{Milestone 3 – Altitude Hold Tuning Tool (MATLAB)} \\
+\item \textbf{Working Package 3 – Angle Controller Tuner in Python} \\
+Content: Porting or reimplementation of the angle controller tuning tool
+from MATLAB to Python. 
+Acceptance criteria: Python implementation produces equivalent results to
+the MATLAB version.
+\end{itemize}
+
+\textbf{Milestone 2}
+
+\begin{itemize}
+
+\item \textbf{Working Package 4 – Altitude Hold Tuning Tool (MATLAB)} \\
 Content: Development of an offline tuning module in MATLAB for the altitude
 hold controller based on recorded flight data.
 Acceptance criteria: The MATLAB tool can estimate system dynamics and
 generate controller parameters for altitude hold.
 
-\item \textbf{Milestone 4 – Angle Controller Tuner in Python} \\
-Content: Porting or reimplementation of the angle controller tuning tool
-from MATLAB to Python. 
-Acceptance criteria: Python implementation produces equivalent results to
-the MATLAB version.
 
-\item \textbf{Milestone 5 – Chirp Signal Implementation for Position Hold} \\
+\item \textbf{Working Package 5 – Chirp Signal Implementation for Position Hold} \\
 Content: Extension of the modified firmware to inject a chirp signal into
 the position hold controller. 
 Acceptance criteria: Flight logs contain usable excitation data for the
 position hold controller.
 
-\item \textbf{Milestone 6 – Position Hold Tuning Tool (MATLAB)} \\
+\end{itemize}
+
+\textbf{Milestone 3}
+
+\begin{itemize}
+
+\item \textbf{Working Package 6 – Position Hold Tuning Tool (MATLAB)} \\
 Content: Development of a MATLAB module for analysing the position hold
 controller and computing suitable controller parameters. 
 Acceptance criteria: MATLAB tool successfully estimates system dynamics and
 produces tuning parameters.
 
-\item \textbf{Milestone 7 – Position Hold Tuning Tool in Python (Optional)} \\
+\item \textbf{Working Package 7 – Position Hold Tuning Tool in Python (Optional)} \\
 Content: Implementation of the position hold tuning module in Python based
 on the MATLAB prototype. 
 Acceptance criteria: Python implementation successfully processes flight
@@ -314,39 +354,60 @@ pagecommand={}
 
 The undersigned accept this specification document as the basis for the bachelor thesis.
 
-\vspace{1.5cm}
-
-\noindent\rule{0.48\textwidth}{0.4pt}\par
-{\small Place, Date}
-
-\vspace{1.8cm}
-
-\noindent\rule{0.48\textwidth}{0.4pt}\par
-{\small Supervisor}\\
-{\small Michael Peter}
-
-\vspace{1.8cm}
-
-\noindent\rule{0.48\textwidth}{0.4pt}\par
-{\small Place, Date}
+\textbf{Supervisors:}
 
 \vspace{2.5cm}
 
 \noindent
 \begin{minipage}[t]{0.48\textwidth}
   \rule{\textwidth}{0.4pt}\par
-  {\small Student}\\
+  {\small Michael Peter}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.48\textwidth}
+  \rule{\textwidth}{0.4pt}\par
+  {\small Prof. Dr. Ruprecht Altenburger}
+\end{minipage}
+
+\vspace{2.5cm}
+
+\noindent
+\begin{minipage}[t]{0.48\textwidth}
+  \rule{\textwidth}{0.4pt}\par
+  {\small Place, Date}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.48\textwidth}
+  \rule{\textwidth}{0.4pt}\par
+  {\small Place, Date}
+\end{minipage}
+
+
+\vspace{2.0cm}
+
+\textbf{Students:}
+\vspace{2.5cm}
+
+
+\noindent
+\begin{minipage}[t]{0.48\textwidth}
+  \rule{\textwidth}{0.4pt}\par
   {\small Janick Dort}
 \end{minipage}\hfill
 \begin{minipage}[t]{0.48\textwidth}
   \rule{\textwidth}{0.4pt}\par
-  {\small Student}\\
+
   {\small Yuri Bianchi}
 \end{minipage}
 
-\vspace{2.0cm}
+\vspace{2.5cm}
 
-\noindent\rule{0.48\textwidth}{0.4pt}\par
-{\small Student}\\
-{\small Dario Jurietti}
+\noindent
+\begin{minipage}[t]{0.48\textwidth}
+  \rule{\textwidth}{0.4pt}\par
+  {\small Dario Jurietti}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.48\textwidth}
+  \rule{\textwidth}{0.4pt}\par
+  {\small Place, Date}
+\end{minipage}
+
 \end{document}
