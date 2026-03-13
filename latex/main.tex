@@ -85,6 +85,21 @@
 % --- Table of Contents --------------------------------------------------------
 \tableofcontents
 
+% --- List of Figures ----------------------------------------------------------
+\listoffigures
+
+% --- List of Tables -----------------------------------------------------------
+\listoftables
+
+% --- Acronyms -----------------------------------------------------------------
+\printglossary[type=\acronymtype, title={List of Acronyms}]
+
+% --- Nomenclature (Symbols) ---------------------------------------------------
+\printglossary[type=symbols, title={Nomenclature}]
+
+% --- Glossary (optional — uncomment if using glossary terms) ------------------
+% \printglossary[title={Glossary}]
+
 
 % --- Preface / Acknowledgements -----------------------------------------------
 \chapter*{Preface}
@@ -98,8 +113,15 @@ We would like to thank our supervisor, Michael Peter, for\ldots
 
 
 \newpage
+% *****************************************************************************
+%   MAIN MATTER
+% *****************************************************************************
+\mainmatter
 
-\section{Introduction}
+
+% =============================================================================
+\chapter{Introduction}
+\label{ch:introduction}
 
 First-Person-View (FPV) racing drones require precise and responsive control to achieve stable
 flight behaviour, suppress disturbances such as propeller wash, and maintain agility during rapid
@@ -144,8 +166,19 @@ By providing a structured, data-driven approach to controller tuning, this proje
 simplify the tuning process and improve flight performance.
 
 \newpage
+% =============================================================================
 
-\section{Theory}
+\section{Initial situation}
+\label{sec:IniSituation}
+
+\section{Task and Objective}
+\label{sec:TaskObjective}
+
+\newpage
+
+% =============================================================================
+\chapter{Theoretical Foundations}
+\label{ch:theory}
 
 In this chapter, the theoretical background of the approach used for tuning the different control loops of the flight controller is introduced. Since the fundamental working principle is identical for all loops, the general concepts are explained here before addressing the individual loops in the methodology section.
 
@@ -153,11 +186,11 @@ To support the theoretical concepts, a simplified simulation model is introduced
 
 The detailed application of these principles to the different control loops implemented in Betaflight is discussed in the following chapter.
 
-\subsection{Chirp Signal}
+\section{Chirp Signal}
 
 A chirp signal is a sinusoidal signal whose frequency varies continuously over time. It is widely used in system identification to excite a broad range of frequencies in a single measurement, making it possible to estimate the frequency response $G(\omega)$ efficiently.
 
-\subsubsection{Mathematical Definition}
+\subsection{Mathematical Definition}
 
 The instantaneous value of the chirp is defined as
 \[
@@ -179,7 +212,7 @@ In practical implementations such as \textbf{Betaflight}, the phase $\text{arg}(
 \]
 so that it resets to 0 whenever a full $2\pi$ rotation is reached. This keeps the numerical values bounded and results in the sawtooth-shaped \texttt{sinarg} signal often observed in practice.
 
-\subsubsection{Common Frequency Profiles}
+\subsection{Common Frequency Profiles}
 
 \textbf{Linear chirp:}
 
@@ -215,7 +248,7 @@ f(t) = f_0 \left(\frac{f_1}{f_0}\right)^{t/T}
 
 These functions define the \textbf{phase trajectory} $\text{arg}(t)$ used in simulations and in the \texttt{apply\_rotfiltfilt} method for time-dependent frequency shifting of chirp signals.
 
-\subsubsection{Lag Filter for Chirp Input Shaping}
+\subsection{Lag Filter for Chirp Input Shaping}
 
 Prior to injection into the control loop, the chirp signal is conditioned using a filter to compensate for the differentiating behaviour of the controller effort at low frequencies. This differentiating characteristic leads to an increasing gain toward lower frequencies, which would otherwise result in excessive motor excitation at the beginning of the chirp sweep. Such behaviour may cause actuator saturation and thereby degrade the quality of the system identification data.
 
@@ -245,7 +278,7 @@ The pole introduces the lag characteristic by reducing the magnitude for frequen
 
 It is important to note that in the Betaflight implementation, the pole frequency $\omega_p$ must not be set higher than the zero frequency $\omega_z$. Otherwise, the filter would behave as a lead filter, amplifying high-frequency components and potentially causing excessive motor excitation or hardware damage.
 
-\subsection{Signal Processing}
+\section{Signal Processing}
 
 As already mentioned in the section \textit{Chirp Signal for System Identification}, the transfer
 function of the whole system from the target angle to the measured angle can be estimated
@@ -330,7 +363,7 @@ This leads to the practical and statistically robust estimator of the transfer f
 G(\omega) = \frac{S_{yu}(\omega)}{S_{uu}(\omega)}.
 \]
 
-\subsubsection{Welch’s Method for Spectral Estimation}
+\subsection{Welch’s Method for Spectral Estimation}
 
 To estimate the spectral densities $S_{yu}(\omega)$ and $S_{uu}(\omega)$ from finite data,
 Welch’s method is employed. The spectral densities cannot be computed directly from the
@@ -398,7 +431,7 @@ G(\omega) = \frac{S_{yu}(\omega)}{S_{uu}(\omega)}.
 $$
 
 
-\subsubsection{Baseband Filtering via Frequency Rotation}
+\subsection{Baseband Filtering via Frequency Rotation}
 
 Measured signals are often contaminated by measurement noise and unwanted high-frequency
 components. These disturbances can obscure the relevant information contained in the signal
@@ -411,7 +444,7 @@ objective of the filtering process is to suppress the noise components while pre
 amplitude and phase of the underlying signal.
 
 
-\subsubsection{Frequency Shifting to Baseband}
+\subsection{Frequency Shifting to Baseband}
 
 The filtering method is based on shifting the frequency content of the signal to baseband,
 applying a low-pass filter, and subsequently shifting the signal back to its original frequency
@@ -451,7 +484,7 @@ After this rotation step, the dominant signal component is centered around
 $0\,\text{Hz}$, which allows efficient filtering using a low-pass filter.
 
 
-\subsubsection{Baseband Filtering}
+\subsection{Baseband Filtering}
 
 Once the signal has been shifted to baseband, a low-pass filter can be applied to remove
 high-frequency noise components. Since the useful signal is concentrated near zero
@@ -472,7 +505,7 @@ $$
 which contain the desired signal components with reduced noise.
 
 
-\subsubsection{Inverse Frequency Rotation}
+\subsection{Inverse Frequency Rotation}
 
 After filtering in the baseband, the signal is shifted back to its original frequency
 range. This is achieved by multiplying the filtered signals with the corresponding
@@ -498,7 +531,7 @@ version of the original signal.
 The resulting signal $x_f(t)$ retains the phase characteristics of the original signal
 while high-frequency noise components are effectively suppressed.
 
-\subsection{Control Loop Calculations}
+\section{Control Loop Calculations}
 
 Although the flight controller consists of several nested control loops, their fundamental
 structure is identical. Each loop follows the same basic feedback control principle and differs
@@ -514,7 +547,7 @@ calculation of the controller terms to be explained in a clear and structured wa
 The same principles are later applied to the individual control loops implemented
 in the flight controller.
 
-\subsubsection{Calculation of the Control Loop Components}
+\subsection{Calculation of the Control Loop Components}
 
 After the signal processing steps, the control loop components can be calculated.
 As in the signal processing stage, the goal is to mitigate the influence of disturbances
@@ -557,7 +590,7 @@ P(s) =
 C(s) \cdot \frac{1}{C(s)} = 1.
 $$
 
-\subsubsection{Closed-Loop Performance Metrics}
+\subsection{Closed-Loop Performance Metrics}
 
 After determining the plant transfer function, the next step is to analyze the behaviour
 of the overall system when a controller is applied. This is achieved by evaluating the
@@ -601,13 +634,15 @@ $$
 
 To be added.
 
-\section{Method}
+% =============================================================================
+\chapter{Methodology}
+\label{ch:methodology}
 
 In this chapter, the practical application of the theoretical concepts introduced in the previous chapter is described. The focus is on how these principles are implemented in the context of tuning the control loops of a Betaflight-based flight controller. The methodology is structured around the different control loops, starting with the angle controller, followed by the altitude hold controller and the position controller. For each control loop, the specific implementation details and tuning procedures are described.
 
-\subsection{Angle Mode}
+\section{Angle Mode}
 
-\subsubsection{Difference between Angle and Acro Mode}
+\subsection{Difference between Angle and Acro Mode}
 
 The Betaflight software provides three main flight modes: Angle, Horizon, and Acro.
 
@@ -617,7 +652,7 @@ In contrast, Acro mode provides full manual control. In this mode, stick inputs 
 
 During the project thesis, an offline tuner for the angular rate controller was further developed to systematically optimize the rate control loop and improve Acro mode performance. The tuner was subsequently extended to also support Angle mode, enabling improved stability and responsiveness while maintaining intuitive handling for beginner pilots.
 
-\subsubsection{Control Loops in Angle Mode}
+\subsection{Control Loops in Angle Mode}
 
 In Angle mode, the angular rate controller is extended by an outer angle control loop, resulting in a cascaded control structure.
 
@@ -632,9 +667,16 @@ The Angle mode controller therefore consists of two cascaded loops:
 \item The inner angular rate loop, which computes the rate error
 \end{itemize}
 
-The angle control loop consists of a proportional controller with an additional feedforward term. Within the offline tuning framework, however, only the proportional controller is optimized. The feedforward path is included in the conceptual description for completeness but was deliberately disabled during the tuning process.
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1.0\textwidth]{Figures/Control_Loop_Angle.png}
+    \caption{Cascaded control structure of the Betaflight Angle mode controller.}
+    \label{fig:angle_mode_control_loop}
+\end{figure}
 
-\subsubsection{Derivation of the Target Angle}
+The angle control loop consists of a proportional controller with an additional feedforward term. Within the offline tuning framework, however, only the proportional controller is optimized. The feedforward path is included in the control structure for completeness but was deliberately disabled during the tuning process.
+
+\subsection{Derivation of the Target Angle}
 
 The target angle is obtained by scaling the commanded angular rate with respect to the maximum achievable rate and the configured maximum tilt angle
 
@@ -683,167 +725,53 @@ Thus, the stick position scales the target angle continuously within the range
 \tag{0.4}
 \end{equation}
 
+\subsection{Chirp Signal for System Identification}
 
+As already mentioned in the gyro control tuning section, a chirp signal is injected into the control loop.
 
+If the chirp signal were added in the same way as for the gyro control tuning, it would not be
+possible to directly calculate the transfer function of the complete system from the target
+angle to the measured angle. The chirp signal would be added to the current setpoint and
+therefore inside the closed control loop. Consequently, the system would have two inputs:
+the stick input and the injected chirp signal.
 
+This situation is illustrated in Figure~\ref{fig:angle_loop_original}, which shows the control
+loop structure currently implemented in the Betaflight firmware.
 
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1.0\textwidth]{Figures/Chirp_Control_Loop_Angle.png}
+    \caption{Current control loop structure in Betaflight when the chirp signal is injected inside the closed loop.}
+    \label{fig:angle_loop_original}
+\end{figure}
 
+To overcome this issue, a small modification in the firmware allows the chirp signal to be
+added directly to the setpoint before it is converted into the target angle. Due to the
+transformation from the setpoint to the target angle, the parameters of the chirp signal do
+not need to be adjusted.
 
+The modified control structure used for the offline tuning framework is illustrated in
+Figure~\ref{fig:angle_loop_modified}. In this configuration, the chirp signal is injected
+before the transformation from the rate setpoint to the target angle, allowing the transfer
+function from the target angle to the measured angle to be estimated directly.
 
+% TODO: Replace placeholder with final control loop diagram showing chirp injection before the angle conversion
+%\begin{figure}[htbp]
+   % \centering
+    %\fbox{\rule{0pt}{6cm}\rule{0.9\textwidth}{0pt}}
+    %\caption{Modified control loop structure with chirp injection before the target angle generation (to be created).}
+    %\label{fig:angle_loop_modified}
+%\end{figure}
 
+Some older drones are only capable of flying in Acro mode and therefore do not support Angle
+mode. In this case, the chirp signal can still be added to the setpoint. Since the angle control
+loop and the transformation from the setpoint to the target angle are disabled in Acro mode,
+the resulting control loop structure is identical to the one used for the gyro control tuning.
 
-
-% --- List of Figures ----------------------------------------------------------
-\listoffigures
-
-% --- List of Tables -----------------------------------------------------------
-\listoftables
-
-% --- Acronyms -----------------------------------------------------------------
-\printglossary[type=\acronymtype, title={List of Acronyms}]
-
-% --- Nomenclature (Symbols) ---------------------------------------------------
-\printglossary[type=symbols, title={Nomenclature}]
-
-% --- Glossary (optional — uncomment if using glossary terms) ------------------
-% \printglossary[title={Glossary}]
-
-
-% *****************************************************************************
-%   MAIN MATTER
-% *****************************************************************************
-\mainmatter
-
-% =============================================================================
-\chapter{Introduction}
-\label{ch:introduction}
-% =============================================================================
-
-\section{Background and Motivation}
-\label{sec:background}
-
-% Establish context: FPV drone control, Betaflight ecosystem, importance of
-% tuning. Reference the project thesis as prior work.
-
-\section{Research Questions and Objectives}
-\label{sec:objectives}
-
-% Clearly state what the BA thesis aims to achieve beyond the PA.
-% Connect each objective to a gap identified in the background.
-
-\section{Document Structure}
-\label{sec:structure}
-
-This thesis is organized as follows.
-\Cref{ch:theory} provides the theoretical foundations\ldots
-\Cref{ch:methodology} describes the methodology\ldots
-\Cref{ch:implementation} details the implementation\ldots
-\Cref{ch:results} presents the experimental results\ldots
-\Cref{ch:discussion} discusses the findings and outlines future work.
-
-
-% =============================================================================
-\chapter{Theoretical Foundations}
-\label{ch:theory}
-% =============================================================================
-
-\section{Betaflight Control Architecture}
-\label{sec:bf_architecture}
-
-\section{System Identification via Chirp Excitation}
-\label{sec:chirp_theory}
-
-\section{Frequency Response Estimation}
-\label{sec:freq_response_theory}
-
-\section{Closed-Loop Analysis}
-\label{sec:closed_loop_theory}
-
-\section{Cascaded Control Structures}
-\label{sec:cascaded_control}
-
-
-% =============================================================================
-\chapter{Methodology}
-\label{ch:methodology}
-% =============================================================================
-
-\section{Tuning Workflow Overview}
-\label{sec:workflow}
-
-\section{Flight Test Protocol}
-\label{sec:flight_protocol}
-Hello, this is a placeholder for the flight test protocol section. Here we will describe the specific maneuvers and conditions under which the flight tests will be conducted to collect data for system identification and controller tuning.
-
-\section{Signal Processing Pipeline}
-\label{sec:signal_processing}
-
-\section{Controller Design Procedure}
-\label{sec:controller_design}
-
-\section{Altitude Hold System Identification}
-\label{sec:althold_sysid}
-
-
-% =============================================================================
-\chapter{Implementation}
-\label{ch:implementation}
-% =============================================================================
-
-\section{Software Architecture}
-\label{sec:sw_architecture}
-
-\section{MATLAB Implementation}
-\label{sec:matlab}
-
-\section{Python Implementation}
-\label{sec:python}
-
-\section{Betaflight Firmware Modifications}
-\label{sec:firmware}
-
-\section{Validation Framework}
-\label{sec:validation}
-
-
-% =============================================================================
-\chapter{Results}
-\label{ch:results}
-% =============================================================================
-
-\section{Rate Controller Tuning Results}
-\label{sec:rate_results}
-
-\section{Filter Configuration Results}
-\label{sec:filter_results}
-
-\section{Altitude Hold Identification Results}
-\label{sec:althold_results}
-
-\section{Python--MATLAB Consistency Validation}
-\label{sec:consistency}
-
-\section{Flight Test Validation}
-\label{sec:flight_validation}
-
-
-% =============================================================================
-\chapter{Discussion and Outlook}
-\label{ch:discussion}
-% =============================================================================
-
-\section{Discussion of Results}
-\label{sec:discussion_results}
-
-\section{Limitations}
-\label{sec:limitations}
-
-\section{Future Work}
-\label{sec:future_work}
-
-\section{Conclusion}
-\label{sec:conclusion}
-
+This approach allows the same chirp signal to be used for both modes. As a result, the
+implementation is simplified and the tuning process becomes more straightforward, since the
+same excitation signal can be applied without considering structural differences in the control
+loop.
 
 % *****************************************************************************
 %   BACK MATTER
@@ -866,18 +794,6 @@ content was critically reviewed and verified by the authors.
 % --- Appendix -----------------------------------------------------------------
 \appendix
 
-\chapter{Project Management}
-\label{app:project_management}
-
-\section{Project Assignment}
-\label{app:assignment}
-
-\section{Project Schedule}
-\label{app:schedule}
-
-
-\chapter{Additional Figures and Data}
-\label{app:additional}
 
 % =============================================================================
 \end{document}
