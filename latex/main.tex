@@ -82,6 +82,10 @@
 
 \lipsum[2] % placeholder — replace with English abstract
 
+% --- Table of Contents --------------------------------------------------------
+\tableofcontents
+
+
 % --- Preface / Acknowledgements -----------------------------------------------
 \chapter*{Preface}
 \addcontentsline{toc}{chapter}{Preface}
@@ -95,400 +99,599 @@ We would like to thank our supervisor, Michael Peter, for\ldots
 
 \newpage
 
-\section{Gyro Controll Tuning}
+\section{Introduction}
 
-During the project thesis, an offline tuner for the angular rate controller was developed. 
-The tuner allows for systematic optimization of the rate control loop, which is crucial for 
-achieving stable and responsive flight performance in Acro mode.
+First-Person-View (FPV) racing drones require precise and responsive control to achieve stable
+flight behaviour, suppress disturbances such as propeller wash, and maintain agility during rapid
+manoeuvres. The flight performance strongly depends on the tuning of the flight controller’s
+feedback loops. In particular, the parameters of the angular rate controller determine how
+quickly and accurately the drone reacts to pilot inputs and external disturbances.
+
+In practice, controller tuning is still often performed manually through iterative trial-and-error
+procedures. This requires extensive flight testing and considerable piloting experience, making
+the process time-consuming and difficult to reproduce. Although modern flight controller
+firmware such as Betaflight provides extensive configuration options and detailed flight data
+logging, systematic tuning remains a challenge.
+
+One commonly used tool for offline tuning is the PID-Toolbox. In this approach, flight logs
+are recorded during normal flights and later analysed to derive suitable controller parameters.
+However, the system excitation depends entirely on the pilot’s inputs and the natural flight
+behaviour of the drone. As a result, not all relevant frequency ranges are sufficiently excited,
+which can limit the quality of the measurements.
+
+In the approach proposed in this thesis, a chirp excitation signal is injected directly into
+the control loop. This allows the system to be excited over a wide range of frequencies
+in a controlled and systematic way, resulting in higher-quality measurements for system
+identification and controller tuning.
+
+A previous project introduced a proof-of-concept approach for offline tuning of angular rate
+controllers based on recorded flight data. In the preceding project thesis, this concept was
+restructured and modularised and now serves as the foundation for the present work.
+
+The objective of this bachelor thesis is to further refine and extend this approach into an
+offline tuning framework for multiple control loops used in Betaflight-based flight controllers.
+In addition to the existing angular rate controller tuner, the framework will be extended with
+code modules for tuning the angle controller, the altitude hold controller, and the position
+controller. This extends the tuning framework beyond the inner rate control loop and enables
+the analysis and tuning of higher-level control layers.
+
+The framework will be implemented primarily in MATLAB and Python and will provide tools
+for analysing flight logs, estimating system dynamics, and generating controller parameters
+without requiring repeated flight tests. The software will be developed as an open-source
+library with accompanying documentation for the FPV community.
+
+By providing a structured, data-driven approach to controller tuning, this project aims to
+simplify the tuning process and improve flight performance.
 
 \newpage
 
-\section{Angle Mode}
+\section{Theory}
 
-\subsection{Difference between Angle and Acro Mode}
-The Betaflight software provides three main flight modes: Angle, Horizon and Acro.
+In this chapter, the theoretical background of the approach used for tuning the different control loops of the flight controller is introduced. Since the fundamental working principle is identical for all loops, the general concepts are explained here before addressing the individual loops in the methodology section.
 
-In Angle mode, the drone’s tilt angle is directly linked to the stick position. The maximum tilt is limited to a predefined value, preventing flips and making this mode suitable for beginners.
+To support the theoretical concepts, a simplified simulation model is introduced. The simulation is gradually developed throughout this chapter, allowing the reader to follow the modelling process step by step and to better understand the behaviour of the control system. This approach illustrates the influence of the controller parameters and provides an intuitive understanding of the tuning process.
 
-In contrast, Acro mode provides full manual control. Stick inputs define an angular rate rather than a target angle, meaning the drone continues rotating as long as the stick is deflected. This enables aggressive maneuvers such as flips and rolls but requires greater pilot experience.
+The detailed application of these principles to the different control loops implemented in Betaflight is discussed in the following chapter.
 
-During the project thesis, an offline tuner for the angular rate controller was further developed to systematically optimize the rate control loop for improved Acro performance.
+\subsection{Chirp Signal}
 
-The tuner was subsequently extended to support Angle mode, enabling enhanced stability and responsiveness while maintaining intuitive handling for beginner pilots.
+A chirp signal is a sinusoidal signal whose frequency varies continuously over time. It is widely used in system identification to excite a broad range of frequencies in a single measurement, making it possible to estimate the frequency response $G(\omega)$ efficiently.
 
-\subsection{Control Loop of the Angle Mode}
+\subsubsection{Mathematical Definition}
+
+The instantaneous value of the chirp is defined as
+\[
+x(t) = \sin(\text{arg}(t)),
+\]
+where the phase argument
+\[
+\text{arg}(t) = 2\pi \int_0^t f(\tau)\,d\tau
+\]
+represents the \textbf{instantaneous phase} of the signal. The derivative of this phase yields the \textbf{instantaneous frequency}
+
+\[
+f(t) = \frac{1}{2\pi}\frac{d(\text{arg}(t))}{dt}.
+\]
+
+In practical implementations such as \textbf{Betaflight}, the phase $\text{arg}(t)$ is wrapped using the modulo operation
+\[
+\text{arg}(t) \bmod 2\pi,
+\]
+so that it resets to 0 whenever a full $2\pi$ rotation is reached. This keeps the numerical values bounded and results in the sawtooth-shaped \texttt{sinarg} signal often observed in practice.
+
+\subsubsection{Common Frequency Profiles}
+
+\textbf{Linear chirp:}
+
+The frequency increases linearly over time:
+
+\[
+k = \frac{f_1-f_0}{T}
+\]
+
+\[
+f(t) = f_0 + k t
+\]
+
+\[
+\text{arg}(t) = 2\pi\left(f_0 t + \tfrac{1}{2}k t^2\right)
+\]
+
+\textbf{Exponential chirp (as used in Betaflight):}
+
+The frequency grows exponentially from the starting frequency $f_0$ to the ending frequency $f_1$ over the time interval $T$:
+
+\[
+f(t) = f_0 \left(\frac{f_1}{f_0}\right)^{t/T}
+\]
+
+\[
+\text{arg}(t) =
+\frac{2\pi T f_0}{\ln(f_1/f_0)}
+\left[
+\left(\frac{f_1}{f_0}\right)^{t/T}-1
+\right]
+\]
+
+These functions define the \textbf{phase trajectory} $\text{arg}(t)$ used in simulations and in the \texttt{apply\_rotfiltfilt} method for time-dependent frequency shifting of chirp signals.
+
+\subsubsection{Lag Filter for Chirp Input Shaping}
+
+Prior to injection into the control loop, the chirp signal is conditioned using a filter to compensate for the differentiating behaviour of the controller effort at low frequencies. This differentiating characteristic leads to an increasing gain toward lower frequencies, which would otherwise result in excessive motor excitation at the beginning of the chirp sweep. Such behaviour may cause actuator saturation and thereby degrade the quality of the system identification data.
+
+To mitigate this effect, the filter attenuates low-to-mid frequency components of the chirp signal before injection. As a result, the combined response of the filter and controller produces a more uniform excitation level across the frequency range of interest.
+
+The filter is configured with a pole at \textbf{3 Hz} and a zero at \textbf{30 Hz}, yielding the following transfer function:
+
+\[
+H(s) = \frac{1 + s/\omega_z}{1 + s/\omega_p}
+\]
+
+where
+
+\[
+\omega_z = 2\pi \cdot 30\ \text{rad/s}
+\]
+
+represents the zero frequency and
+
+\[
+\omega_p = 2\pi \cdot 3\ \text{rad/s}
+\]
+
+represents the pole frequency.
+
+The pole introduces the lag characteristic by reducing the magnitude for frequencies above its cutoff frequency. Conversely, the zero limits this attenuation by introducing magnitude amplification above its own cutoff frequency. However, since the pole frequency is lower than the zero frequency, the pole’s contribution dominates over the primary control bandwidth, resulting in an overall lag filter behaviour.
+
+It is important to note that in the Betaflight implementation, the pole frequency $\omega_p$ must not be set higher than the zero frequency $\omega_z$. Otherwise, the filter would behave as a lead filter, amplifying high-frequency components and potentially causing excessive motor excitation or hardware damage.
+
+\subsection{Signal Processing}
+
+As already mentioned in the section \textit{Chirp Signal for System Identification}, the transfer
+function of the whole system from the target angle to the measured angle can be estimated
+directly from the input and output signals. However, due to disturbances and measurement
+noise, the estimated transfer function would not accurately reflect the true system dynamics.
+Therefore, additional processing steps are required to isolate the transfer function dynamics
+from these effects.
+
+To illustrate the influence of the applied signal processing steps, a simulation is used as a
+reference. The simulation is based on a predefined transfer function. For this example, a PT1
+system is used. The transfer function is given by
+
+\[
+G(s) = \frac{1}{0.1s + 1}.
+\]
+
+If the system is analysed in the frequency domain using a Bode plot, the magnitude decreases
+with increasing frequency and the phase shifts from $0^\circ$ at low frequencies to $-90^\circ$
+at high frequencies.
+
+To measure the transfer function, a chirp signal is applied to the input of the system and the
+corresponding output signal is recorded. Disturbances and noise are added to the output signal
+in order to simulate realistic measurement conditions.
+
+The transfer function is then estimated using the spectral relation
+
+\[
+G(\omega) = \frac{S_{yu}(\omega)}{S_{uu}(\omega)}.
+\]
+
+\subsubsection{Estimate Frequency Response}
+
+For a meaningful estimation of the transfer function, both the frequency response and the coherence between the input and output signals are calculated. The coherence provides a measure of how strongly the output signal is linearly related to the input signal at each frequency. Values close to one indicate a strong linear relationship and therefore a reliable transfer function estimate, whereas low coherence values indicate that noise or nonlinear effects dominate the measurement.
+
+In the frequency domain, the relation between the input and output of a linear time-invariant (LTI) system can be expressed as
+
+\[
+G(\omega) = \frac{Y(\omega)}{U(\omega)}.
+\]
+
+Here, $U(\omega)$ and $Y(\omega)$ denote the Fourier transforms of the input signal $u(t)$ and the output signal $y(t)$, respectively. This ratio describes how each frequency component of the input is scaled and phase-shifted by the system.
+
+In practice, however, the measured output signal is affected by disturbances. The measured output can therefore be written as
+
+\[
+Y(\omega) = G(\omega)U(\omega) + D_y(\omega),
+\]
+
+where $D_y(\omega)$ represents an additive disturbance at the output. If the transfer function were estimated directly by dividing $Y(\omega)$ by $U(\omega)$, the disturbance term would directly influence the result
+
+\[
+\frac{Y(\omega)}{U(\omega)} = G(\omega) + \frac{D_y(\omega)}{U(\omega)}.
+\]
+
+This expression shows that a direct division is highly sensitive to disturbances and measurement noise.
+
+To obtain a more reliable estimate, spectral quantities based on statistical averaging are used. The cross-power spectral density between input and output and the power spectral density of the input are defined as
+
+\[
+S_{yu}(\omega) = \mathbb{E}[Y(\omega)U^*(\omega)], \qquad
+S_{uu}(\omega) = \mathbb{E}[|U(\omega)|^2].
+\]
+
+Substituting the disturbed output signal into the cross-power spectral density yields
+
+\[
+S_{yu}(\omega) =
+\mathbb{E}[(G(\omega)U(\omega) + D_y(\omega))U^*(\omega)]
+=
+G(\omega)S_{uu}(\omega) + \mathbb{E}[D_y(\omega)U^*(\omega)].
+\]
+
+If the disturbance $D_y(\omega)$ is uncorrelated with the input signal, the second term becomes zero and the expression simplifies to
+
+\[
+S_{yu}(\omega) = G(\omega)S_{uu}(\omega).
+\]
+
+This leads to the practical and statistically robust estimator of the transfer function
+
+\[
+G(\omega) = \frac{S_{yu}(\omega)}{S_{uu}(\omega)}.
+\]
+
+\subsubsection{Welch’s Method for Spectral Estimation}
+
+To estimate the spectral densities $S_{yu}(\omega)$ and $S_{uu}(\omega)$ from finite data,
+Welch’s method is employed. The spectral densities cannot be computed directly from the
+expectation operator, since only finite time-domain measurements of the input and output
+signals are available. Instead, these quantities must be estimated from the measured data.
+In this work, Welch’s method is used to obtain reliable estimates of the power spectral
+densities and cross-power spectral densities.
+
+Let $u[n]$ and $y[n]$ denote the discrete-time input and output signals of length $N$.
+In Welch’s method, the signals are divided into $K$ overlapping segments of length $L$.
+Each segment is multiplied by a window function $w[n]$ in order to reduce spectral leakage.
+
+The $k$-th windowed segment of the input signal can therefore be written as
+
+$$
+u_k[n] = u[n + kD]\, w[n], \qquad n = 0, \dots, L-1
+$$
+
+where $D$ denotes the shift between successive segments and determines the amount of
+overlap between segments.
+
+For each segment, the discrete Fourier transform (DFT) is computed
+
+$$
+U_k(\omega) = \sum_{n=0}^{L-1} u_k[n] e^{-j\omega n}
+$$
+
+and analogously for the output signal
+
+$$
+Y_k(\omega) = \sum_{n=0}^{L-1} y_k[n] e^{-j\omega n}.
+$$
+
+From these Fourier transforms, the periodogram estimate of the power spectral density
+of the input signal for each segment is obtained as
+
+$$
+P_{uu,k}(\omega) = \frac{1}{L} |U_k(\omega)|^2.
+$$
+
+Similarly, the cross-periodogram between output and input is defined as
+
+$$
+P_{yu,k}(\omega) = \frac{1}{L} Y_k(\omega) U_k^*(\omega).
+$$
+
+Welch’s method reduces the variance of the spectral estimates by averaging the periodograms
+over all segments. The resulting estimates of the power spectral density and the cross-power
+spectral density are therefore given by
+
+$$
+S_{uu}(\omega) = \frac{1}{K} \sum_{k=1}^{K} P_{uu,k}(\omega)
+$$
+
+and
+
+$$
+S_{yu}(\omega) = \frac{1}{K} \sum_{k=1}^{K} P_{yu,k}(\omega).
+$$
+
+These averaged spectral estimates are then used to compute the transfer function estimate
+
+$$
+G(\omega) = \frac{S_{yu}(\omega)}{S_{uu}(\omega)}.
+$$
+
+
+\subsubsection{Baseband Filtering via Frequency Rotation}
+
+Measured signals are often contaminated by measurement noise and unwanted high-frequency
+components. These disturbances can obscure the relevant information contained in the signal
+and may negatively affect subsequent analysis steps. To suppress these disturbances while
+preserving the phase characteristics of the signal, a frequency-shifting filtering approach can
+be employed.
+
+As an illustrative example, consider a sinusoidal signal corrupted by additive noise. The
+objective of the filtering process is to suppress the noise components while preserving the
+amplitude and phase of the underlying signal.
+
+
+\subsubsection{Frequency Shifting to Baseband}
+
+The filtering method is based on shifting the frequency content of the signal to baseband,
+applying a low-pass filter, and subsequently shifting the signal back to its original frequency
+range. This approach allows the filtering operation to focus on a narrow frequency region
+around the signal of interest.
+
+The principle can be understood using the Fourier shift theorem. Multiplication of a signal
+$f(t)$ with a complex exponential results in a shift of its spectrum
+
+$$
+e^{i2\pi\xi_0 t} f(t)
+\;\Longleftrightarrow\;
+\hat{f}(\xi-\xi_0)
+$$
+
+which translates the spectrum by the frequency $\xi_0$.
+
+In the present case, however, the signal of interest is a chirp signal whose frequency varies
+continuously over time. Therefore, the frequency shift must also be time-dependent. This is
+achieved by introducing a complex phasor
+
+$$
+p(t)=e^{i\phi(t)}
+$$
+
+where $\phi(t)$ represents the instantaneous phase of the chirp signal.
+
+Multiplying the measured signal $x(t)$ with this phasor or its complex conjugate rotates the
+signal spectrum toward baseband
+
+$$
+y_R(t)=x(t)p(t), \qquad
+y_Q(t)=x(t)p^*(t)
+$$
+
+After this rotation step, the dominant signal component is centered around
+$0\,\text{Hz}$, which allows efficient filtering using a low-pass filter.
+
+
+\subsubsection{Baseband Filtering}
+
+Once the signal has been shifted to baseband, a low-pass filter can be applied to remove
+high-frequency noise components. Since the useful signal is concentrated near zero
+frequency, the filter can effectively suppress unwanted spectral components outside this
+region.
+
+To avoid phase distortion, the filtering is performed using forward-backward filtering.
+This method applies the filter in both forward and reverse directions, resulting in
+zero-phase filtering.
+
+The filtering operation produces the filtered baseband signals
+
+$$
+y_R(t) \rightarrow \tilde{y}_R(t), \qquad
+y_Q(t) \rightarrow \tilde{y}_Q(t)
+$$
+
+which contain the desired signal components with reduced noise.
+
+
+\subsubsection{Inverse Frequency Rotation}
+
+After filtering in the baseband, the signal is shifted back to its original frequency
+range. This is achieved by multiplying the filtered signals with the corresponding
+inverse phasors and combining the results to obtain a real-valued signal
+
+$$
+x_f(t)
+=
+\mathrm{Re}
+\left(
+\frac{1}{2}
+\left(
+\tilde{y}_R(t)p^*(t)
++
+\tilde{y}_Q(t)p(t)
+\right)
+\right).
+$$
+
+This operation reverses the initial frequency rotation and reconstructs a filtered
+version of the original signal.
+
+The resulting signal $x_f(t)$ retains the phase characteristics of the original signal
+while high-frequency noise components are effectively suppressed.
+
+\subsection{Control Loop Calculations}
+
+Although the flight controller consists of several nested control loops, their fundamental
+structure is identical. Each loop follows the same basic feedback control principle and differs
+mainly in the controlled variable and the chosen controller parameters. Therefore, instead of
+analysing every loop individually from the beginning, a simplified model is used to explain the
+underlying calculations and controller behaviour.
+
+The simplified control structure used for the analysis consists of a controller $C$ and a plant $P$,
+which describes the dynamic behaviour of the system being controlled.
+
+Using this simplified model allows the general behaviour of the control loop and the
+calculation of the controller terms to be explained in a clear and structured way.
+The same principles are later applied to the individual control loops implemented
+in the flight controller.
+
+\subsubsection{Calculation of the Control Loop Components}
+
+After the signal processing steps, the control loop components can be calculated.
+As in the signal processing stage, the goal is to mitigate the influence of disturbances
+and noise on the calculated control loop components. Therefore, only the input signal
+of the control loop is used for the estimation.
+
+The advantage of this approach is that
+
+\begin{itemize}
+\item the input signal is not affected by the back-calculation of the control loop and is therefore not influenced by disturbances or noise within the loop.
+\item the input signal is not affected by filtering steps, since it is not measured but taken directly from the software. Consequently, it is not subject to measurement noise or disturbances.
+\end{itemize}
+
+This approach allows a more precise estimation of the transfer function. However,
+it also means that the transfer functions of the individual control loop components
+cannot be calculated directly. Instead, they must be obtained through mathematical
+manipulations.
+
+For example, consider a simplified control loop consisting of a controller $C(s)$
+and a plant $P(s)$.
+
+To calculate the transfer function of the controller $C(s)$, the following relation can be used
+
+$$
+C(s) =
+\frac{Y(s)}{E(s)} =
+\frac{Y(s)}{R(s) - Y(s)} =
+\frac{Y(s)}{R(s)} \cdot
+\frac{1}{1 - \frac{Y(s)}{R(s)}} =
+\frac{G(s)}{1 - G(s)}.
+$$
+
+To calculate the transfer function of the plant $P(s)$, the following relation can be used
+
+$$
+P(s) =
+\frac{Y(s)}{U(s)} =
+\frac{Y(s)}{E(s)} \cdot
+\frac{E(s)}{U(s)} =
+C(s) \cdot \frac{1}{C(s)} = 1.
+$$
+
+\subsubsection{Closed-Loop Performance Metrics}
+
+After determining the plant transfer function, the next step is to analyze the behaviour
+of the overall system when a controller is applied. This is achieved by evaluating the
+closed-loop transfer functions, which describe the system response, disturbance sensitivity,
+disturbance rejection capability, and the required controller effort. These measures provide
+valuable insights into the stability, robustness, and performance of the controlled system.
+
+The closed-loop transfer function from the reference input to the output is given by
+
+$$
+G_{yr}(\omega) =
+\frac{C(\omega)P(\omega)}
+{1 + C(\omega)P(\omega)}.
+$$
+
+The sensitivity function, which describes how sensitive the system output is to
+disturbances and model uncertainties, is defined as
+
+$$
+S(\omega) =
+\frac{1}{1 + C(\omega)P(\omega)}.
+$$
+
+The compliance function, representing the system response to disturbances acting
+on the plant, is given by
+
+$$
+SP(\omega) =
+P(\omega)\,S(\omega).
+$$
+
+Finally, the controller effort describes the influence of the reference input on the
+controller output and is defined as
+
+$$
+SC(\omega) =
+C(\omega)\,S(\omega).
+$$
+
+\subsubsection{Step Response Analysis}
+
+To be added.
+
+\section{Method}
+
+In this chapter, the practical application of the theoretical concepts introduced in the previous chapter is described. The focus is on how these principles are implemented in the context of tuning the control loops of a Betaflight-based flight controller. The methodology is structured around the different control loops, starting with the angle controller, followed by the altitude hold controller and the position controller. For each control loop, the specific implementation details and tuning procedures are described.
+
+\subsection{Angle Mode}
+
+\subsubsection{Difference between Angle and Acro Mode}
+
+The Betaflight software provides three main flight modes: Angle, Horizon, and Acro.
+
+In Angle mode, the drone’s tilt angle is directly linked to the stick position. The maximum tilt is limited to a predefined value, preventing flips and making this mode particularly suitable for beginners.
+
+In contrast, Acro mode provides full manual control. In this mode, stick inputs define an angular rate rather than a target angle, meaning the drone continues rotating as long as the stick remains deflected. This allows aggressive maneuvers such as flips and rolls but also requires greater pilot experience.
+
+During the project thesis, an offline tuner for the angular rate controller was further developed to systematically optimize the rate control loop and improve Acro mode performance. The tuner was subsequently extended to also support Angle mode, enabling improved stability and responsiveness while maintaining intuitive handling for beginner pilots.
+
+\subsubsection{Control Loops in Angle Mode}
 
 In Angle mode, the angular rate controller is extended by an outer angle control loop, resulting in a cascaded control structure.
 
-The stick input initially generates a rate setpoint. Unlike in Acro mode, this rate setpoint is converted into a target angle. This target angle then serves as the reference input for the inner angular rate controller.
+The stick input initially generates a rate setpoint. Unlike in Acro mode, this rate setpoint is then converted into a target angle. This target angle serves as the reference input for the inner angular rate controller.
 
-The cascaded architecture separates attitude control from angular rate stabilization. The outer loop ensures convergence toward the desired orientation, while the inner loop provides fast dynamic stabilization by regulating angular velocity. Consequently, the system achieves improved disturbance rejection and more intuitive handling characteristics, since the pilot directly commands an angle rather than a rotational rate.
+The cascaded architecture separates attitude control from angular rate stabilization. While the outer loop ensures convergence toward the desired orientation, the inner loop provides fast dynamic stabilization by regulating the angular velocity. As a result, the system achieves improved disturbance rejection and more intuitive handling characteristics, since the pilot directly commands an angle rather than a rotational rate.
 
-The Angle mode controller consists of two cascaded loops, as illustrated in Figure~\ref{fig:angle_control_structure}, and is reconstructed from the Betaflight codebase:
+The Angle mode controller therefore consists of two cascaded loops:
 
 \begin{itemize}
-    \item The outer angle loop, which computes the angle error
-    \item The inner angular rate loop, which computes the rate error
+\item The outer angle loop, which computes the angle error
+\item The inner angular rate loop, which computes the rate error
 \end{itemize}
 
-The angle control loop consists of a proportional controller with an additional feedforward term. Within the offline tuning framework, only the proportional controller is optimized. The feedforward term is deactivated and therefore not shown in the figure.
-
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=1.0\textwidth]{Figures/Control_Loop_Angle.png}
-    \caption{Control loop structure of the Angle control in Betaflight.}
-    \label{fig:angle_control_structure}
-\end{figure}
-\newpage
-
+The angle control loop consists of a proportional controller with an additional feedforward term. Within the offline tuning framework, however, only the proportional controller is optimized. The feedforward path is included in the conceptual description for completeness but was deliberately disabled during the tuning process.
 
 \subsubsection{Derivation of the Target Angle}
 
-The target angle is obtained by scaling the commanded angular rate with respect to the maximum achievable rate and the configured maximum tilt angle:
+The target angle is obtained by scaling the commanded angular rate with respect to the maximum achievable rate and the configured maximum tilt angle
 
 \begin{equation}
 \theta_{\text{target}} =
-\theta_{\text{limit}} \cdot
+\theta_{\text{limit}}
+\cdot
 \frac{\omega_{\text{set}}}{\omega_{\text{max}}}
+\tag{0.1}
 \end{equation}
 
-where:
+where
 
 \begin{itemize}
-    \item $\theta_{\text{limit}}$ is the maximum allowed tilt angle (e.g.\ $60^\circ$),
-    \item $\omega_{\text{set}}$ is the commanded angular rate derived from the stick input,
-    \item $\omega_{\text{max}}$ is the maximum achievable angular rate determined by the rate configuration.
+\item $\theta_{\text{limit}}$ is the maximum allowed tilt angle (e.g., $60^\circ$),
+\item $\omega_{\text{set}}$ is the commanded angular rate derived from the stick input,
+\item $\omega_{\text{max}}$ is the maximum achievable angular rate determined by the rate configuration.
 \end{itemize}
 
 This relation ensures a proportional mapping between stick deflection and target angle.
 
-For example:
+For example,
 
-\begin{align}
-\omega_{\text{set}} &= \omega_{\text{max}}
+\begin{equation}
+\omega_{\text{set}} = \omega_{\text{max}}
 \Rightarrow
 \theta_{\text{target}} = \theta_{\text{limit}}
-\\
-\omega_{\text{set}} &= 0
+\tag{0.2}
+\end{equation}
+
+\begin{equation}
+\omega_{\text{set}} = 0
 \Rightarrow
 \theta_{\text{target}} = 0
-\end{align}
+\tag{0.3}
+\end{equation}
 
 Thus, the stick position scales the target angle continuously within the range
 
 \begin{equation}
--\theta_{\text{limit}} \leq \theta_{\text{target}} \leq +\theta_{\text{limit}}.
+-\theta_{\text{limit}}
+\le
+\theta_{\text{target}}
+\le
++\theta_{\text{limit}}
+\tag{0.4}
 \end{equation}
 
-In Figure x you see the in the upper plot the Gyro signal and in the lower plot the corresponding target angle and angle signal. The target angle is derived from the stick input and the Gyro signal represents the measured angular rate. The angle signal is obtained by integrating the Gyro signal over time, which corresponds to the actual orientation of the drone.
 
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=1.0\textwidth]{Figures/Gyro_Angle_Overview.png}
-    \caption{Gyro and Angle Signal Overview.}
-\end{figure}
 
-\subsection{Chirp Signal for System Identification}
 
-As already mentioned in the gyro control tuning section, a chirp signal is injected into the control loop.
 
-If the chirp signal were added in the same way as for the gyro control tuning, it would not be possible
-to directly calculate the transfer function of the complete system from the target angle to the 
-measured angle. As illustrated in Figure~\ref{fig:gyro_angle_overview}, the chirp signal is added to 
-the current setpoint and therefore inside the closed control loop. Consequently, the system would have 
-two inputs: the stick input and the injected chirp signal.
 
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=1.0\textwidth]{Figures/Chirp_Control_Loop_Angle.png}
-    \caption{Gyro signal and corresponding target and measured angle.}
-    \label{fig:gyro_angle_overview}
-\end{figure}
 
-To overcome this issue, a small modification in the firmware allows the chirp signal to be added 
-directly to the setpoint as you see in Figure~\ref{fig:angle_overview}.before it is 
-converted into the target angle. Due to the transformation from the setpoint to the target angle, 
-the parameters of the chirp signal do not need to be adjusted.
 
-Some older drones are only capable of flying in Acro mode and therefore do not support Angle mode. In 
-this case, the chirp signal can still be added to the setpoint. Since the angle control loop and the 
-transformation from the setpoint to the target angle are disabled in Acro mode, the resulting control 
-loop structure is identical to the one used for the gyro control tuning, as shown in Figure~\ref{fig:gyro_angle_overview_acro}.
 
-This approach allows the same chirp signal to be used for both modes. As a result, the implementation 
-is simplified and the tuning process becomes more straightforward, since the same excitation signal 
-can be applied without considering structural differences in the control loop.
 
-\newpage
-
-\section{Calculation of the Angle Control Tuner}
-
-For the offline tuner, it is necessary to derive the transfer function of the plant in Angle mode. In 
-a closed-loop control system, the plant represents the physical dynamics that we want to control. In 
-this case, the plant describes the relationship between the commanded angular rate and the resulting 
-angle of the drone.
-
-\subsection{Signal Processing}
-
-As already mentioned in the section Chirp Signal for System Identification, the transfer function
-of the hole system from the target angle to the measured angle can be estiamated directly from the
-input and output signals. However, to disturbances and noise, the estimated transfer function would
-not reflect the true dynamics. Therefore, a different approach is required to isolate the transfer
-function dynamics from the effects.
-
-\subsection{Estimate Frequency Response}
-
-For a meaningful estimation of the transfer function, both the frequency response and the coherence 
-between the input and output signals are calculated. The coherence provides a measure of how strongly 
-the output signal is linearly related to the input signal at each frequency. Values close to one 
-indicate a strong linear relationship and therefore a reliable transfer function estimate, whereas 
-low coherence values indicate that noise or nonlinear effects dominate the measurement.
-
-As an example, Figure~\ref{fig:angle_bode} shows a block diagram with an additional disturbance and 
-noise source affecting the measured output signal.
-
-In the frequency domain, the relation between the input and output of a linear time-invariant (LTI) 
-system can be expressed as
-
-\begin{equation}
-G(\omega) = \frac{Y(\omega)}{U(\omega)},
-\end{equation}
-
-where \(U(\omega)\) and \(Y(\omega)\) are the Fourier transforms of the input signal \(u(t)\) and 
-the output signal \(y(t)\), respectively. This ratio describes how each frequency component of the 
-input is scaled and phase-shifted by the system.
-
-In practice, however, the measured output signal is affected by disturbances. The measured output 
-can therefore be written as
-
-\begin{equation}
-Y(\omega) = G(\omega)U(\omega) + D_y(\omega),
-\end{equation}
-
-where \(D_y(\omega)\) represents an additive disturbance at the output. If the transfer function 
-were estimated directly by dividing \(Y(\omega)\) by \(U(\omega)\), the disturbance term would 
-directly influence the result:
-
-\begin{equation}
-\frac{Y(\omega)}{U(\omega)} = G(\omega) + \frac{D_y(\omega)}{U(\omega)}.
-\end{equation}
-
-This shows that a direct division is highly sensitive to disturbances and measurement noise.
-
-To obtain a more reliable estimate, spectral quantities based on statistical averaging are used. 
-The cross-power spectral density between input and output and the power spectral density of the 
-input are defined as
-
-\begin{equation}
-S_{yu}(\omega) = \mathbb{E}[Y(\omega)U^*(\omega)]
-\end{equation}
-
-\begin{equation}
-S_{uu}(\omega) = \mathbb{E}[|U(\omega)|^2].
-\end{equation}
-
-Substituting the disturbed output signal into the cross-power spectral density yields
-
-\begin{equation}
-S_{yu}(\omega) = 
-\mathbb{E}[(G(\omega)U(\omega) + D_y(\omega))U^*(\omega)].
-\end{equation}
-
-Expanding this expression gives
-
-\begin{equation}
-S_{yu}(\omega) =
-G(\omega)\mathbb{E}[U(\omega)U^*(\omega)] +
-\mathbb{E}[D_y(\omega)U^*(\omega)].
-\end{equation}
-
-The first term corresponds to the system response and can be written as
-
-\begin{equation}
-G(\omega)S_{uu}(\omega).
-\end{equation}
-
-If the disturbance \(D_y(\omega)\) is uncorrelated with the input signal, the second term becomes zero
-
-\begin{equation}
-\mathbb{E}[D_y(\omega)U^*(\omega)] = 0.
-\end{equation}
-
-Under this assumption the cross-power spectral density simplifies to
-
-\begin{equation}
-S_{yu}(\omega) = G(\omega)S_{uu}(\omega),
-\end{equation}
-
-which leads to the practical and statistically robust estimator of the transfer function
-
-\begin{equation}
-G(\omega) = \frac{S_{yu}(\omega)}{S_{uu}(\omega)}.
-\end{equation}
-
-This formulation shows that disturbances at the output do not bias the transfer function estimate, 
-provided that they are uncorrelated with the input signal.
-
-
-
-\subsection{Theoretical Expectation}
-
-If we consider the fundamental relationship between angular rate and orientation,
-the angle corresponds to the time integral of the angular rate. Hence, the measured
-angle can be written as
-
-\begin{equation}
-\theta_{\text{measured}}(t) = \int \omega_{\text{measured}}(t)\, dt.
-\end{equation}
-
-Assuming zero initial conditions and applying the Laplace transform, this relationship
-in the frequency domain becomes
-
-\begin{equation}
-\Theta_{\text{measured}}(s) = \frac{1}{s} \Omega_{\text{measured}}(s).
-\end{equation}
-
-This expression shows that the angle is obtained by integrating the angular rate,
-which corresponds to a multiplication by $\frac{1}{s}$ in the Laplace domain.
-Consequently, from a theoretical point of view, the Angle plant behaves as an ideal integrator with transfer function
-
-\begin{equation}
-P_{\text{Angle}}(s) = \frac{1}{s}.
-\end{equation}
-
-\subsection{Closed-Loop Identification Problem}
-
-However, during flight the system operates in closed loop, meaning that the measured response is influenced by the control actions of the loop. Therefore, the input signal is no longer independent of the output.
-
-If we were to directly estimate the transfer function from input to output,
-
-\begin{equation}
-P(s)_{\text{Angle}} = \frac{\Theta_{\text{measured}}(s)}{\Omega_{\text{measured}}(s)}
-\end{equation}
-
-the result would not reflect the true plant dynamics. Instead, it would include:
-
-\begin{itemize}
-    \item the dynamics of the controller,
-    \item the feedback effects of the closed loop,
-    \item and the plant dynamics.
-\end{itemize}
-
-Therefore, the estimated transfer function would deviate significantly from the theoretical expectation of an integrator and would not be suitable for tuning the controller parameters.
-
-\subsection{Closed-Loop Transfer Relations}
-
-To overcome this issue, we can use the known relationships between the transfer functions in a closed-loop system. 
-
-We can calculate the transfer function of the complete system from the target angle to the measured angle, which is not directly affected by the closed-loop feedback:
-
-\begin{equation}
-G_{\text{setpoint->Current Angle}}= \frac{\Theta_{\text{measured}}(s)}{\Theta_{\text{target}}(s)}
-\end{equation}
-\begin{equation}
-= \frac{
-P_G(s)\,
-P_A(s)\,
-C_A(s)\,
-C_{\text{PI},G}(s)
-}{
-1
-+ P_G(s)\,
-C_{\text{PI},G}(s)\,
-C_{\text{D},G}(s)
-+ P_A(s)\,
-P_G(s)\,
-C_A(s)\,
-C_{\text{PI},G}(s)
-}
-\end{equation}
-
-\noindent
-\textbf{Legend:}
-\begin{itemize}
-    \item $P_G(s)$: Angular rate plant
-    \item $P_A(s)$: Angle plant
-    \item $C_A(s)$: Angle controller
-    \item $C_{\text{PI},G}(s)$: PI controller of the angular rate loop
-    \item $C_{\text{D},G}(s)$: D controller of the angular rate loop
-\end{itemize}
-\par
-
-Additional to this, we also have to calculate the transfer function from the target angle to the measured angular rate:
-
-\begin{equation}
-G_{\text{setpoint->Current Angular Rate}}(s) = \frac{\Omega_{\text{measured}}(s)}{\Theta_{\text{target}}(s)} 
-\end{equation}
-\begin{equation}
-= \frac{
-P_G(s)\,
-C_A(s)\,
-C_{\text{PI},G}(s)
-}{
-1
-+ P_G(s)\,
-C_{\text{PI},G}(s)\,
-C_{\text{D},G}(s)
-+ P_A(s)\,
-P_G(s)\,
-C_A(s)\,
-C_{\text{PI},G}(s)
-}
-\end{equation}
-
-With these two transfer functions, we can derive the Angle plant by taking the ratio of the transfer function from target angle to measured angle and the transfer function from target angle to measured angular rate.
-Since both expressions share the same denominator and contain identical controller dynamics, all common terms cancel out. As a result, only the Angle plant $P_A(s)$ remains. This allows us to isolate the true plant dynamics of the Angle mode independently of the controller structure.
-
-\begin{equation}
-P_{\text{Angle}}(s) =
-\frac{
-G_{\text{setpoint->Current Angle}}(s)
-}{
-G_{\text{setpoint->Current Angular Rate}}(s)
-}
-\end{equation}
-
-This approach allows us to isolate the true plant dynamics of the Angle mode, enabling accurate tuning of the controller parameters based on the estimated transfer function.
-
-\newpage
-
-
-\subsection{Results of the System Identification}
-
-Through the application of the chirp signal and the estimation of the transfer functions, as mentioned in the previous section, we can derive the estimated transfer function of the Angle plant. The resulting Bode plot of the estimated transfer function is shown in Figure~\ref{fig:angle_bode}.
-
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=1.0\textwidth]{Figures/Angle_Plant_Bode.png}
-    \caption{Bode plot of the estimated Angle plant.}
-    \label{fig:angle_bode}
-\end{figure}
-
-As you can see, the estimated transfer function closely follows the theoretical expectation of an integrator at lower frequencies, confirming that the Angle plant behaves as expected. However, at higher frequencies, deviations from the ideal integrator behavior can be observed. These deviations can be attributed to various factors such as sensor noise or unmodeled dynamics in the system.
-
-The coherence in the plot indicates the reliability of the estimation across the frequency range. A high coherence value, especially at lower frequencies, suggests that the estimated transfer function accurately captures the system dynamics in that range. Conversely, a drop in coherence at higher frequencies indicates that the estimation may be less reliable in those regions, likely due to noise or other disturbances affecting the measurements.
-
-To obtain the coherence value, the following formula can be used:
-
-\begin{equation}
-\gamma^2(f) = \frac{|P_{xy}(f)|^2}{P_{xx}(f)\, P_{yy}(f)}
-\end{equation}
-
-where:
-\begin{itemize}
-    \item $\gamma^2(f)$ is the coherence at frequency $f$,
-    \item $P_{xy}(f)$ is the cross power spectral density between the input and output signals,
-    \item $P_{xx}(f)$ is the power spectral density of the input signal,
-    \item $P_{yy}(f)$ is the power spectral density of the output signal.
-\end{itemize}
-
-
-
-\end{document}
-
-
-% --- Table of Contents --------------------------------------------------------
-\tableofcontents
 
 % --- List of Figures ----------------------------------------------------------
 \listoffigures
