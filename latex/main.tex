@@ -188,126 +188,180 @@ The detailed application of these principles to the different control loops impl
 
 \section{Chirp Signal}
 
-A chirp signal is a sinusoidal signal whose frequency varies continuously over time. It is widely used in system identification to excite a broad range of frequencies in a single measurement, making it possible to estimate the frequency response $G(\omega)$ efficiently.
-
 \subsection{Mathematical Definition}
 
-The instantaneous value of the chirp is defined as
+The instantaneous value of the chirp signal is defined as
+
 \[
 x(t) = \sin(\text{arg}(t)),
 \]
+
 where the phase argument
+
 \[
 \text{arg}(t) = 2\pi \int_0^t f(\tau)\,d\tau
 \]
-represents the \textbf{instantaneous phase} of the signal. The derivative of this phase yields the \textbf{instantaneous frequency}
 
-\[
-f(t) = \frac{1}{2\pi}\frac{d(\text{arg}(t))}{dt}.
-\]
+represents the instantaneous phase of the signal. In practical implementations such as
+\textbf{Betaflight}, the phase is wrapped once it reaches $2\pi$. This keeps the numerical
+values bounded and produces the sawtooth-shaped \texttt{sinarg} signal that is often
+observed in practice.
 
-In practical implementations such as \textbf{Betaflight}, the phase $\text{arg}(t)$ is wrapped using the modulo operation
-\[
-\text{arg}(t) \bmod 2\pi,
-\]
-so that it resets to 0 whenever a full $2\pi$ rotation is reached. This keeps the numerical values bounded and results in the sawtooth-shaped \texttt{sinarg} signal often observed in practice.
+The behaviour of the chirp signal is determined by several parameters that define the
+frequency sweep:
+
+\begin{itemize}
+\item $f_0$ -- starting frequency of the chirp signal (in the simulation $1\,\text{Hz}$)
+\item $f_1$ -- final frequency of the chirp signal (in the simulation $600\,\text{Hz}$)
+\item $T$ -- total duration of the frequency sweep (in the simulation $20\,\text{s}$)
+\item $f_s$ -- sampling frequency used in the discrete-time simulation (in the simulation $2000\,\text{Hz}$)
+\end{itemize}
+
+The parameters used in the simulation are chosen to be close to the typical operating range
+of the real system.
 
 \subsection{Common Frequency Profiles}
 
 \textbf{Linear chirp:}
 
-The frequency increases linearly over time:
+For a linear chirp, the instantaneous frequency increases linearly over time. 
+The slope of the frequency sweep is defined as
 
 \[
-k = \frac{f_1-f_0}{T}
+k = \frac{f_1-f_0}{T}.
 \]
 
-\[
-f(t) = f_0 + k t
-\]
+The instantaneous frequency is therefore given by
 
 \[
-\text{arg}(t) = 2\pi\left(f_0 t + \tfrac{1}{2}k t^2\right)
+f(t) = f_0 + k t,
 \]
+
+and the corresponding phase trajectory results from integrating the frequency over time
+
+\[
+\text{arg}(t) = 2\pi\left(f_0 t + \tfrac{1}{2}k t^2\right).
+\]
+
+Figure~\ref{fig:linear_chirp} illustrates the resulting chirp signal, the instantaneous
+frequency $f(t)$, and the corresponding phase trajectory $\text{arg}(t)$ for the
+simulation parameters introduced in the previous section.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=1.0\textwidth]{linear_chirp.png}
+\caption{Linear chirp signal used for the simulation.}
+\label{fig:linear_chirp}
+\end{figure}
+
+The apparent gaps visible in the chirp signal and in the wrapped phase are caused by the finite sampling time of the simulation and the limited resolution of the plotted data, rather than by discontinuities in the signal itself.
 
 \textbf{Exponential chirp (as used in Betaflight):}
 
-The frequency grows exponentially from the starting frequency $f_0$ to the ending frequency $f_1$ over the time interval $T$:
+For an exponential chirp, the instantaneous frequency increases exponentially
+from the starting frequency $f_0$ to the final frequency $f_1$ over the time
+interval $T$. The instantaneous frequency is defined as
 
 \[
-f(t) = f_0 \left(\frac{f_1}{f_0}\right)^{t/T}
+f(t) = f_0 \left(\frac{f_1}{f_0}\right)^{t/T}.
 \]
+
+The corresponding phase trajectory results from integrating the frequency over time
 
 \[
 \text{arg}(t) =
 \frac{2\pi T f_0}{\ln(f_1/f_0)}
 \left[
 \left(\frac{f_1}{f_0}\right)^{t/T}-1
-\right]
+\right].
 \]
 
-These functions define the \textbf{phase trajectory} $\text{arg}(t)$ used in simulations and in the \texttt{apply\_rotfiltfilt} method for time-dependent frequency shifting of chirp signals.
+These expressions define the phase trajectory $\text{arg}(t)$ used in the simulations
+and in the \texttt{apply\_rotfiltfilt} method for time-dependent frequency shifting
+of chirp signals. The resulting exponential chirp signal, the instantaneous
+frequency, and the phase trajectory are illustrated in Figure~\ref{fig:exponential_chirp}.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=1.0\textwidth]{exponential_chirp.png}
+\caption{Exponential chirp signal used for the simulation.}
+\label{fig:exponential_chirp}
+\end{figure}
+
+The apparent gaps in the chirp signal and the wrapped phase result from the
+discrete sampling time of the simulation and the limited resolution of the plot.
 
 \subsection{Lag Filter for Chirp Input Shaping}
 
-Prior to injection into the control loop, the chirp signal is conditioned using a filter to compensate for the differentiating behaviour of the controller effort at low frequencies. This differentiating characteristic leads to an increasing gain toward lower frequencies, which would otherwise result in excessive motor excitation at the beginning of the chirp sweep. Such behaviour may cause actuator saturation and thereby degrade the quality of the system identification data.
+Before the chirp signal is injected into the control loop, it is conditioned by a filter to address the differentiating behavior of the controller effort at low frequencies. This differentiating characteristic causes rising gain at low frequencies, which would lead to excessive motor response at the start of the chirp sweep and potentially cause saturation, compromising the quality of system identification data. The filter reduces low-to-mid frequency components of the chirp signal before injection, such that the combined response produces approximately uniform excitation across the frequency range.
 
-To mitigate this effect, the filter attenuates low-to-mid frequency components of the chirp signal before injection. As a result, the combined response of the filter and controller produces a more uniform excitation level across the frequency range of interest.
+The filter is configured with a pole at 3 Hz and a zero at 30 Hz. This configuration corresponds to the transfer function
+\begin{equation}
+	H(s) = \frac{1 + s/\omega_z}{1 + s/\omega_p}
+\end{equation}
+where $\omega_z = 2\pi \cdot 30$ rad/s and $\omega_p = 2\pi \cdot 3$ rad/s represent the zero and pole frequencies respectively. The pole introduces the lag component by creating magnitude reduction at frequencies above its cutoff frequency. The zero limits this reduction by introducing magnitude amplification at frequencies above its cutoff frequency. However, since the pole frequency is lower than the zero frequency, the pole's contribution dominates throughout the primary control bandwidth, resulting in a net lag filter. It is important to note that in the Betaflight implementation, the pole frequency ($\omega_p$) must not be set higher than the zero frequency ($\omega_z$), as this would create a lead filter that amplifies high frequencies and could potentially damage the motors.
 
-The filter is configured with a pole at \textbf{3 Hz} and a zero at \textbf{30 Hz}, yielding the following transfer function:
+For the simulation shown in Figure~\ref{fig:chirpleadlag}, the same parameter values introduced in the previous section were used ($f_0 = 1\,\text{Hz}$, $f_1 = 600\,\text{Hz}$, $T = 20\,\text{s}$, $f_s = 2000\,\text{Hz}$). The excitation signal is generated using the exponential chirp formulation described earlier.
 
-\[
-H(s) = \frac{1 + s/\omega_z}{1 + s/\omega_p}
-\]
-
-where
-
-\[
-\omega_z = 2\pi \cdot 30\ \text{rad/s}
-\]
-
-represents the zero frequency and
-
-\[
-\omega_p = 2\pi \cdot 3\ \text{rad/s}
-\]
-
-represents the pole frequency.
-
-The pole introduces the lag characteristic by reducing the magnitude for frequencies above its cutoff frequency. Conversely, the zero limits this attenuation by introducing magnitude amplification above its own cutoff frequency. However, since the pole frequency is lower than the zero frequency, the pole’s contribution dominates over the primary control bandwidth, resulting in an overall lag filter behaviour.
-
-It is important to note that in the Betaflight implementation, the pole frequency $\omega_p$ must not be set higher than the zero frequency $\omega_z$. Otherwise, the filter would behave as a lead filter, amplifying high-frequency components and potentially causing excessive motor excitation or hardware damage.
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1.0\textwidth]{chirp_lag_filtert.png}
+	\caption{Exponential chirp signal after conditioning with the lag filter used for chirp input shaping.}
+	\label{fig:chirpleadlag}
+\end{figure}
 
 \section{Signal Processing}
 
-As already mentioned in the section \textit{Chirp Signal for System Identification}, the transfer
-function of the whole system from the target angle to the measured angle can be estimated
-directly from the input and output signals. However, due to disturbances and measurement
-noise, the estimated transfer function would not accurately reflect the true system dynamics.
-Therefore, additional processing steps are required to isolate the transfer function dynamics
-from these effects.
-
 To illustrate the influence of the applied signal processing steps, a simulation is used as a
-reference. The simulation is based on a predefined transfer function. For this example, a PT1
-system is used. The transfer function is given by
+reference. The simulated system approximates the dynamics of the drone attitude control
+system and consists of an integrator, a first-order lag element, and a dead-time component.
+
+The resulting transfer function is
 
 \[
-G(s) = \frac{1}{0.1s + 1}.
+G(s)=G_1(s)\,G_2(s)\,G_t(s)
 \]
 
-If the system is analysed in the frequency domain using a Bode plot, the magnitude decreases
-with increasing frequency and the phase shifts from $0^\circ$ at low frequencies to $-90^\circ$
-at high frequencies.
-
-To measure the transfer function, a chirp signal is applied to the input of the system and the
-corresponding output signal is recorded. Disturbances and noise are added to the output signal
-in order to simulate realistic measurement conditions.
-
-The transfer function is then estimated using the spectral relation
+with
 
 \[
-G(\omega) = \frac{S_{yu}(\omega)}{S_{uu}(\omega)}.
+G_1(s)=\frac{\omega_1}{s}, \qquad
+G_2(s)=\frac{1}{1+s/\omega_2}, \qquad
+G_t(s)=e^{-s/\omega_t}.
 \]
+
+Thus, the overall transfer function becomes
+
+\[
+G(s)=\frac{\omega_1}{s}\cdot\frac{1}{1+s/\omega_2}\cdot e^{-s/\omega_t}.
+\]
+
+For the simulation, the parameters are chosen as
+
+\[
+\omega_1 = 16 \cdot 2\pi, \qquad
+\omega_2 = 13 \cdot 2\pi, \qquad
+\omega_t = 60 \cdot 2\pi.
+\]
+
+The structure of the simulation model is illustrated in Figure~\ref{fig:signal_processing_model}.
+The chirp signal $u(t)$ is applied to the transfer function $G(s)$, resulting in the ideal
+system output $\tilde{y}(t)$. To emulate realistic measurement conditions, additive
+disturbance noise $d(t)$ is superimposed on the output, such that
+
+\[
+y(t) = \tilde{y}(t) + d(t).
+\]
+
+In the simulation, the disturbance is modelled as additive white Gaussian noise with a
+standard deviation of $\sigma_d = 2\,\text{deg/s}$.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{signal_processing_block.png}
+	\caption{Simulation model used for the signal processing analysis.}
+	\label{fig:signal_processing_model}
+\end{figure}
 
 \subsubsection{Estimate Frequency Response}
 
