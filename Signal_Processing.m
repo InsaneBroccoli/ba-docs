@@ -102,44 +102,125 @@ ylabel('Amplitude [deg/s]');
  Gt = exp(-s * (1/wt));     % dead time
  Gges = G1*G2*Gt;          % total transfer function
 
- %% Disturbance 
+%% Disturbance
 
 % Ideal output of the system
 y_ideal = lsim(Gges, x_e_f, t);
 
 % Disturbance / measurement noise
-noise_std = 2;                      % standard deviation
-noise = noise_std * randn(size(t)); % white Gaussian noise
+noise_std = 2;                          
+noise = noise_std * randn(size(y_ideal));   % gleiche Größe wie y_ideal
 
 % Measured output
 y_meas = y_ideal + noise;
 
+%% Transfer function through spectral quantities + coherence
+U = fft(x_e_f);
+Y = fft(y_meas);
 
-%% Transferfunction through direct measurement
+Suu = U .* conj(U);
+Syu = Y .* conj(U);
 
-u = x_e_f(:);      % force column vector
-y = y_meas(:);     % force column vector
-
-U = fft(u);
-Y = fft(y);
-
-G_est = Y ./ U;
+G_spec = Syu ./ Suu;
 
 N = length(U);
 f = (0:N-1)*(fs/N);
 
-% only positive frequencies
-idx = 1:floor(N/2);
+idx = 2:floor(N/2);
+idx = idx(f(idx) <= 600);
 
-figure(4)
-subplot(2,1,1)
-semilogx(f(idx),20*log10(abs(G_est(idx))))
-grid on
-ylabel('Magnitude [dB]')
-title('Direct Transfer Function Estimate')
+G_spec = frd(G_spec(idx), 2*pi*f(idx));
 
-subplot(2,1,2)
-semilogx(f(idx),angle(G_est(idx))*180/pi)
+figure(5)
+bode(Gges, G_spec)
 grid on
-ylabel('Phase [deg]')
+legend('Real Plant', 'Measured')
+xlim([1 600])
+
+%% Apply Rotfiltfilt
+
+fc_lp = 2;                  
+[b,a] = butter(2, fc_lp/(fs/2));
+
+y = y_meas(:) - mean(y_meas(:));   % Spaltenvektor
+p = exp(1i * arge(:));             % Spaltenvektor
+
+yR = y .* p;
+yQ = y .* conj(p);
+
+yR = filtfilt(b, a, yR);
+yQ = filtfilt(b, a, yQ);
+
+y_filt = real(0.5 * (yR .* conj(p) + yQ .* p));
+
+Y = fft(y_filt);
+Syu = Y .* conj(U);
+
+G_filt = Syu ./ Suu;
+
+G_filt = frd(G_filt(idx), 2*pi*f(idx));
+
+figure(6)
+bode(Gges, G_filt)
+grid on
+legend('Real Plant', 'Measured')
+xlim([1 600])
+
+
+%% Welch
+u = x_e_f(:) - mean(x_e_f);
+y = y_filt(:) - mean(y_filt);
+
+Nseg = 1024;
+Noverlap = round(Nseg * 0.9);
+
+step = Nseg - Noverlap;
+win = hann(Nseg);
+Nfreq = Nseg/2 + 1;
+
+Suu = zeros(Nfreq,1);
+Syu = zeros(Nfreq,1);
+Syy = zeros(Nfreq,1);
+K = 0;
+
+for k = 1:step:(length(u)-Nseg+1)
+    idx = k:k+Nseg-1;
+    
+    U = fft(u(idx).*win);
+    Y = fft(y(idx).*win);
+    
+    U = U(1:Nfreq);
+    Y = Y(1:Nfreq);
+    
+    Suu = Suu + U .* conj(U);
+    Syu = Syu + Y .* conj(U);
+    Syy = Syy + Y .* conj(Y);
+    
+    K = K + 1;
+end
+
+Suu = Suu / K;
+Syu = Syu / K;
+Syy = Syy / K;
+
+G_welch = Syu ./ Suu;
+Coh_welch = abs(Syu).^2 ./ (Suu .* Syy);
+f = (0:Nseg/2)' * fs / Nseg;
+
+idx = f > 0 & f <= 600;
+
+G_welch_frd = frd(G_welch(idx), f(idx), 'Units', 'Hz');
+
+figure(7)
+bode(Gges, G_welch_frd)
+grid on
+legend('Real Plant', 'Welch Estimate')
+xlim([1 600])
+
+figure(8)
+plot(f(idx), Coh_welch(idx))
+grid on
 xlabel('Frequency [Hz]')
+ylabel('Coherence [-]')
+xlim([0 600])
+ylim([0 1.05])
