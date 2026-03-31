@@ -26,7 +26,6 @@ argl_wrapped = mod(argl, 2*pi);
 figure(1)
 subplot(311)
 plot(t,x_l);
-ylabel('Amplitude [deg/s]')
 
 title('Chrip Signal');
 
@@ -55,7 +54,6 @@ arge_wrapped = mod(arge, 2*pi);
 figure(2)
 subplot(311)
 plot(t,x_e);
-ylabel('Amplitude [deg/s]')
 
 title('Chrip Signal');
 

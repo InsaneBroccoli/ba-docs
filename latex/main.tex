@@ -180,117 +180,139 @@ simplify the tuning process and improve flight performance.
 \chapter{Theoretical Foundations}
 \label{ch:theory}
 
-In this chapter, the theoretical background of the approach used for tuning the different control loops of the flight controller is introduced. Since the fundamental working principle is identical for all loops, the general concepts are explained here before addressing the individual loops in the methodology section.
+In this chapter, the theoretical background of the approach used for the estimation and calculation of the different controll loops is described. Since the fundamental approuch of all the control loops is the same, the general approach is described here and the specific details of each control loop are described in the Methodology chapter.
 
-To support the theoretical concepts, a simplified simulation model is introduced. The simulation is gradually developed throughout this chapter, allowing the reader to follow the modelling process step by step and to better understand the behaviour of the control system. This approach illustrates the influence of the controller parameters and provides an intuitive understanding of the tuning process.
+To support the theoretical concepts, a simplified simulation model is added. The simulation is gradually developed throughout this chapter, allowing the reader to follow the modelling process step by step and to better understand the behaviour of the control system. This approach should provide a clear and practical understanding of the control loops and the signal processing techniques used in the estimation and calculation of the control loops.
 
 The detailed application of these principles to the different control loops implemented in Betaflight is discussed in the following chapter.
 
 \section{Chirp Signal}
 
+A chirp signal is a signal in which the frequency increases or decreases over time. It is commonly used in system identification and control engineering to analyze the response of a system over a range of frequencies.
+
+The main advantage of a chirp signal is that it allows a wide frequency range to be excited within a single experiment. Instead of testing individual frequencies one by one, the system is continuously stimulated with increasing frequency. This makes the approach both efficient and well suited for practical applications.
+
+By observing how the system responds to this input, it becomes possible to analyse its frequency-dependent behaviour. In particular, the measured input and output signals can be used to estimate the frequency response and, consequently, the transfer function of the system. This provides valuable insight into the system dynamics and forms the basis for the methods described in the following sections.
+
+\newpage
+
 \subsection{Mathematical Definition}
 
 The instantaneous value of the chirp signal is defined as
 
-\[
-x(t) = \sin(\text{arg}(t)),
-\]
+\begin{equation}
+x(t) = A \cdot \sin(\varphi(t)),
+\end{equation}
 
-where the phase argument
+where \( A \) is the amplitude. The amplitude determines the excitation strength of the signal and therefore influences the signal-to-noise ratio of the measurement.
 
-\[
-\text{arg}(t) = 2\pi \int_0^t f(\tau)\,d\tau
-\]
+The phase is defined as
 
-represents the instantaneous phase of the signal. In practical implementations such as
-\textbf{Betaflight}, the phase is wrapped once it reaches $2\pi$. This keeps the numerical
-values bounded and produces the sawtooth-shaped \texttt{sinarg} signal that is often
-observed in practice.
+\begin{equation}
+\varphi(t) = 2\pi \int_0^t f(\tau)\, d\tau,
+\end{equation}
 
-The behaviour of the chirp signal is determined by several parameters that define the
-frequency sweep:
+and represents the accumulated instantaneous frequency over time, where \( f(\tau) \) denotes the instantaneous frequency at time \( \tau \). The specific evolution of the frequency over time will be introduced in the following sections.
+
+In practical implementations such as \textbf{Betaflight}, the phase is wrapped once it reaches \( 2\pi \). This keeps the numerical values bounded and results in a sawtooth-shaped wrapped phase signal, which serves as the argument of the sinusoidal excitation.
+
+The behaviour of the chirp signal is determined by several parameters defining the frequency sweep.
+
+For the simulation model introduced in this chapter, the following parameter values are used:
 
 \begin{itemize}
-\item $f_0$ -- starting frequency of the chirp signal (in the simulation $1\,\text{Hz}$)
-\item $f_1$ -- final frequency of the chirp signal (in the simulation $600\,\text{Hz}$)
-\item $T$ -- total duration of the frequency sweep (in the simulation $20\,\text{s}$)
-\item $f_s$ -- sampling frequency used in the discrete-time simulation (in the simulation $2000\,\text{Hz}$)
+\item \( f_0 \) — starting frequency of the chirp signal (simulation: \( 1\,\text{Hz} \))
+\item \( f_1 \) — final frequency of the chirp signal (simulation: \( 600\,\text{Hz} \))
+\item \( T \) — total duration of the frequency sweep (simulation: \( 20\,\text{s} \))
+\item \( f_s \) — sampling frequency used in the discrete-time simulation (simulation: \( 2000\,\text{Hz} \))
+\item \( A \) — amplitude of the chirp signal (simulation: \( 230 \))
 \end{itemize}
 
-The parameters used in the simulation are chosen to be close to the typical operating range
-of the real system.
+These parameters are chosen to reflect the typical operating range of the angular rate and the attitude while ensuring that the relevant frequency dynamics are sufficiently excited.
+
+These parameters directly influence the quality of the system excitation and therefore the accuracy of the subsequent frequency response estimation.
 
 \subsection{Common Frequency Profiles}
 
+The chirp signal can be generated using different frequency profiles, which define how the frequency changes over time. The two most common profiles are the linear chirp and the exponential chirp.
+
 \textbf{Linear chirp:}
 
-For a linear chirp, the instantaneous frequency increases linearly over time. 
-The slope of the frequency sweep is defined as
+For a linear chirp, the instantaneous frequency increases linearly over time.  
+In other words, the frequency grows with a constant slope, which is defined as
 
-\[
-k = \frac{f_1-f_0}{T}.
-\]
+\begin{equation}
+k = \frac{f_1 - f_0}{T}.
+\end{equation}
 
 The instantaneous frequency is therefore given by
 
-\[
+\begin{equation}
 f(t) = f_0 + k t,
-\]
+\end{equation}
 
-and the corresponding phase trajectory results from integrating the frequency over time
+and the corresponding phase trajectory follows from integrating the frequency over time
 
-\[
-\text{arg}(t) = 2\pi\left(f_0 t + \tfrac{1}{2}k t^2\right).
-\]
+\begin{equation}
+\varphi(t) = 2\pi\left(f_0 t + \tfrac{1}{2}k t^2\right).
+\end{equation}
 
 Figure~\ref{fig:linear_chirp} illustrates the resulting chirp signal, the instantaneous
-frequency $f(t)$, and the corresponding phase trajectory $\text{arg}(t)$ for the
-simulation parameters introduced in the previous section.
+frequency \( f(t) \), and the corresponding phase trajectory \( \varphi(t) \) for the
+simulation parameters introduced above.
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=1.0\textwidth]{linear_chirp.png}
+\includegraphics[width=0.85\linewidth]{Figures/linear_chirp.png}
 \caption{Linear chirp signal used for the simulation.}
 \label{fig:linear_chirp}
 \end{figure}
 
-The apparent gaps visible in the chirp signal and in the wrapped phase are caused by the finite sampling time of the simulation and the limited resolution of the plotted data, rather than by discontinuities in the signal itself.
+The apparent gaps visible in the chirp signal and in the wrapped phase are not actual
+discontinuities. They result from the finite sampling time of the simulation and the limited
+resolution of the plotted data.
+\newpage
 
 \textbf{Exponential chirp (as used in Betaflight):}
 
 For an exponential chirp, the instantaneous frequency increases exponentially
-from the starting frequency $f_0$ to the final frequency $f_1$ over the time
-interval $T$. The instantaneous frequency is defined as
+from the starting frequency \( f_0 \) to the final frequency \( f_1 \) over the time
+interval \( T \). This means that lower frequencies are covered more slowly,
+while higher frequencies are reached more rapidly.
 
-\[
+The instantaneous frequency is defined as
+
+\begin{equation}
 f(t) = f_0 \left(\frac{f_1}{f_0}\right)^{t/T}.
-\]
+\end{equation}
 
-The corresponding phase trajectory results from integrating the frequency over time
+Compared to the linear chirp, this results in a more uniform excitation in logarithmic
+frequency space, which is particularly useful when analysing systems using Bode plots.
 
-\[
-\text{arg}(t) =
+The corresponding phase trajectory is obtained by integrating the frequency
+
+\begin{equation}
+\varphi(t) =
 \frac{2\pi T f_0}{\ln(f_1/f_0)}
 \left[
 \left(\frac{f_1}{f_0}\right)^{t/T}-1
 \right].
-\]
+\end{equation}
 
-These expressions define the phase trajectory $\text{arg}(t)$ used in the simulations
-and in the \texttt{apply\_rotfiltfilt} method for time-dependent frequency shifting
-of chirp signals. The resulting exponential chirp signal, the instantaneous
-frequency, and the phase trajectory are illustrated in Figure~\ref{fig:exponential_chirp}.
+These expressions define the phase trajectory \( \varphi(t) \) used both in the simulations and in the time-dependent frequency shifting approach.
+
+The resulting exponential chirp signal, the instantaneous frequency, and the phase trajectory
+are illustrated in Figure~\ref{fig:exponential_chirp}.
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=1.0\textwidth]{exponential_chirp.png}
+\includegraphics[width=0.9\linewidth]{Figures/exponential_chirp.png}
 \caption{Exponential chirp signal used for the simulation.}
 \label{fig:exponential_chirp}
 \end{figure}
 
-The apparent gaps in the chirp signal and the wrapped phase result from the
-discrete sampling time of the simulation and the limited resolution of the plot.
-
+As with the linear chirp, the apparent gaps in the signal and the wrapped phase are caused by
+the discrete sampling time and the limited resolution of the plot.
 \subsection{Lag Filter for Chirp Input Shaping}
 
 Before the chirp signal is injected into the control loop, it is conditioned by a filter to address the differentiating behavior of the controller effort at low frequencies. This differentiating characteristic causes rising gain at low frequencies, which would lead to excessive motor response at the start of the chirp sweep and potentially cause saturation, compromising the quality of system identification data. The filter reduces low-to-mid frequency components of the chirp signal before injection, such that the combined response produces approximately uniform excitation across the frequency range.
@@ -312,56 +334,42 @@ For the simulation shown in Figure~\ref{fig:chirpleadlag}, the same parameter va
 
 \section{Signal Processing}
 
-To illustrate the influence of the applied signal processing steps, a simulation is used as a
-reference. The simulated system approximates the dynamics of the drone attitude control
-system and consists of an integrator, a first-order lag element, and a dead-time component.
+To illustrate the influence of the applied signal processing steps, a simulation is used as a reference. The simulated system approximates the dynamics of the drone attitude control system and consists of an integrator, a first-order lag element, and a dead-time component. These elements are commonly encountered in control systems and frequently appear in plant models, making them a suitable choice for representing the essential dynamics.
 
-The resulting transfer function is
+The overall transfer function of the system is given by
 
-\[
-G(s)=G_1(s)\,G_2(s)\,G_t(s)
-\]
+\begin{equation}
+G(s) = \frac{\omega_1}{s} \cdot \frac{1}{1 + s/\omega_2} \cdot e^{-s/\omega_t}.
+\end{equation}
 
-with
-
-\[
-G_1(s)=\frac{\omega_1}{s}, \qquad
-G_2(s)=\frac{1}{1+s/\omega_2}, \qquad
-G_t(s)=e^{-s/\omega_t}.
-\]
-
-Thus, the overall transfer function becomes
-
-\[
-G(s)=\frac{\omega_1}{s}\cdot\frac{1}{1+s/\omega_2}\cdot e^{-s/\omega_t}.
-\]
+The integrator represents the relation between angular rate and angle, the first-order lag models actuator and system dynamics, and the dead-time component accounts for delays in the control loop.
 
 For the simulation, the parameters are chosen as
 
-\[
+\begin{equation}
 \omega_1 = 16 \cdot 2\pi, \qquad
 \omega_2 = 13 \cdot 2\pi, \qquad
 \omega_t = 60 \cdot 2\pi.
-\]
+\end{equation}
 
 The structure of the simulation model is illustrated in Figure~\ref{fig:signal_processing_model}.
-The chirp signal $u(t)$ is applied to the transfer function $G(s)$, resulting in the ideal
-system output $\tilde{y}(t)$. To emulate realistic measurement conditions, additive
-disturbance noise $d(t)$ is superimposed on the output, such that
-
-\[
-y(t) = \tilde{y}(t) + d(t).
-\]
-
-In the simulation, the disturbance is modelled as additive white Gaussian noise with a
-standard deviation of $\sigma_d = 2\,\text{deg/s}$.
 
 \begin{figure}[H]
-	\centering
-	\includegraphics[width=0.8\textwidth]{signal_processing_block.png}
-	\caption{Simulation model used for the signal processing analysis.}
-	\label{fig:signal_processing_model}
+    \centering
+    \includegraphics[width=0.8\textwidth]{signal_processing_block.png}
+    \caption{Simulation model used for the signal processing analysis.}
+    \label{fig:signal_processing_model}
 \end{figure}
+
+The chirp signal \( u(t) \) is applied to the system, resulting in the ideal output \( \tilde{y}(t) \).
+
+To emulate realistic measurement conditions, additive disturbance noise \( d(t) \) is superimposed on the output, such that
+
+\begin{equation}
+y(t) = \tilde{y}(t) + d(t).
+\end{equation}
+
+In the simulation, the disturbance is modelled as additive white Gaussian noise with a standard deviation of \( \sigma_d = 2\,\text{deg/s} \).
 
 \subsubsection{Estimate Frequency Response}
 
@@ -886,6 +894,82 @@ This approach allows the same chirp signal to be used for both modes. As a resul
 implementation is simplified and the tuning process becomes more straightforward, since the
 same excitation signal can be applied without considering structural differences in the control
 loop.
+
+\subsection{Measurement of the Control Loop Components}
+
+Based on the modified control structure, the dynamic behaviour of the Angle mode control loop
+can be analysed using the recorded input and output signals. Due to the chirp signal being
+injected before the transformation to the target angle, the system can be treated as a
+single-input single-output system from the target angle to the measured angle.
+
+After applying the signal processing steps described in the previous chapter, the frequency
+response of the closed control loop is estimated. Using the Fourier transforms of the target
+angle $\Theta_{\text{target}}(\omega)$ and the measured angle $\Theta(\omega)$, the closed-loop
+transfer function is obtained as
+
+$$
+G_{cl}(\omega) =
+\frac{\Theta(\omega)}{\Theta_{\text{target}}(\omega)}.
+$$
+
+This transfer function describes the complete behaviour of the cascaded control structure,
+including both the outer angle controller and the inner angular rate controller, as well as
+the plant dynamics.
+
+For a standard feedback system, the closed-loop transfer function can be expressed as
+
+$$
+G_{cl}(\omega) =
+\frac{C(\omega)P(\omega)}{1 + C(\omega)P(\omega)},
+$$
+
+where $C(\omega)$ represents the combined controller dynamics and $P(\omega)$ denotes the
+plant.
+
+By rearranging this expression, the corresponding open-loop transfer function can be computed
+
+$$
+C(\omega)P(\omega) =
+\frac{G_{cl}(\omega)}{1 - G_{cl}(\omega)}.
+$$
+
+This formulation allows the combined dynamics of the controller and the plant to be determined
+directly from measurement data.
+
+Since only the overall closed-loop behaviour is observed, the individual transfer functions of
+the controller and the plant cannot be uniquely separated without additional information.
+However, the open-loop transfer function fully characterizes the stability and performance of
+the control loop and is therefore sufficient for the subsequent tuning process.
+
+In practice, the estimated open-loop transfer function is used to evaluate bandwidth,
+phase margin, and disturbance rejection properties of the system, forming the basis for the
+offline tuning procedure.
+
+
+\subsection{Theoretical Expectation}
+
+If we consider the fundamental relationship between angular rate and orientation,
+the angle corresponds to the time integral of the angular rate. Hence, the measured
+angle can be written as
+
+\begin{equation}
+\theta_{\text{measured}}(t) = \int \omega_{\text{measured}}(t)\, dt.
+\end{equation}
+
+Assuming zero initial conditions and applying the Laplace transform, this relationship
+in the frequency domain becomes
+
+\begin{equation}
+\Theta_{\text{measured}}(s) = \frac{1}{s} \Omega_{\text{measured}}(s).
+\end{equation}
+
+This expression shows that the angle is obtained by integrating the angular rate,
+which corresponds to a multiplication by $\frac{1}{s}$ in the Laplace domain.
+Consequently, from a theoretical point of view, the Angle plant behaves as an ideal integrator with transfer function
+
+\begin{equation}
+P_{\text{Angle}}(s) = \frac{1}{s}.
+\end{equation}
 
 % *****************************************************************************
 %   BACK MATTER
