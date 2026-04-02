@@ -238,20 +238,15 @@ The chirp signal can be generated using different frequency profiles, which defi
 
 \textbf{Linear chirp:}
 
-For a linear chirp, the instantaneous frequency increases linearly over time.  
-In other words, the frequency grows with a constant slope, which is defined as
-
-\begin{equation}
-k = \frac{f_1 - f_0}{T}.
-\end{equation}
+For a linear chirp, the instantaneous frequency increases linearly over time.
 
 The instantaneous frequency is therefore given by
 
 \begin{equation}
-f(t) = f_0 + k t,
+f(t) = f_0 + \frac{f_1 - f_0}{T} \cdot t,
 \end{equation}
 
-and the corresponding phase trajectory follows from integrating the frequency over time
+and the corresponding phase follows by integrating the frequency over time.
 
 \begin{equation}
 \varphi(t) = 2\pi\left(f_0 t + \tfrac{1}{2}k t^2\right).
@@ -263,7 +258,7 @@ simulation parameters introduced above.
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.85\linewidth]{Figures/linear_chirp.png}
+\includegraphics[width=0.95\linewidth]{Figures/linear_chirp.png}
 \caption{Linear chirp signal used for the simulation.}
 \label{fig:linear_chirp}
 \end{figure}
@@ -334,7 +329,7 @@ For the simulation shown in Figure~\ref{fig:chirpleadlag}, the same parameter va
 
 \section{Signal Processing}
 
-To illustrate the influence of the applied signal processing steps, a simulation is used as a reference. The simulated system approximates the dynamics of the drone attitude control system and consists of an integrator, a first-order lag element, and a dead-time component. These elements are commonly encountered in control systems and frequently appear in plant models, making them a suitable choice for representing the essential dynamics.
+To illustrate the influence of the applied signal-processing steps, a simulation is used as a reference. The simulated system represents a simplified model of the plant of the drone's angular-rate controller. It consists of an integrator, a low-pass filter, and a dead-time component. These elements capture the main dynamics of the system and are commonly used in control engineering.
 
 The overall transfer function of the system is given by
 
@@ -342,7 +337,7 @@ The overall transfer function of the system is given by
 G(s) = \frac{\omega_1}{s} \cdot \frac{1}{1 + s/\omega_2} \cdot e^{-s/\omega_t}.
 \end{equation}
 
-The integrator represents the relation between angular rate and angle, the first-order lag models actuator and system dynamics, and the dead-time component accounts for delays in the control loop.
+The integrator describes how differences in rotor thrust affect the angular rate over time. The first-order term represents the low-pass behavior introduced by the electronics and actuator dynamics. The dead-time component accounts for delays in the control loop.
 
 For the simulation, the parameters are chosen as
 
@@ -356,7 +351,7 @@ The structure of the simulation model is illustrated in Figure~\ref{fig:signal_p
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.8\textwidth]{signal_processing_block.png}
+    \includegraphics[width=0.7\textwidth]{signal_processing_block.png}
     \caption{Simulation model used for the signal processing analysis.}
     \label{fig:signal_processing_model}
 \end{figure}
@@ -370,68 +365,15 @@ y(t) = \tilde{y}(t) + d(t).
 \end{equation}
 
 In the simulation, the disturbance is modelled as additive white Gaussian noise with a standard deviation of \( \sigma_d = 2\,\text{deg/s} \).
-
-\subsubsection{Estimate Frequency Response}
-
-For a meaningful estimation of the transfer function, the frequency response between the input and output signals is analyzed. 
-
-In the frequency domain, the relation between the input and output of a linear time-invariant (LTI) system can be expressed as
-\[
-G(\omega) = \frac{Y(\omega)}{U(\omega)}.
-\]
-
-Here, \(U(\omega)\) and \(Y(\omega)\) denote the Fourier transforms of the input signal \(u(t)\) and the output signal \(y(t)\), respectively. This ratio describes how each frequency component of the input is scaled and phase-shifted by the system.
-
-In practice, however, the measured output signal is affected by disturbances. The measured output can therefore be written as
-\[
-Y(\omega) = G(\omega)U(\omega) + D_y(\omega),
-\]
-where \(D_y(\omega)\) represents an additive disturbance at the output. If the transfer function were estimated directly by dividing \(Y(\omega)\) by \(U(\omega)\), the disturbance term would directly influence the result
-\[
-\frac{Y(\omega)}{U(\omega)} = G(\omega) + \frac{D_y(\omega)}{U(\omega)}.
-\]
-
-This expression shows that a direct estimation is highly sensitive to disturbances and measurement noise.
-
-To mitigate this issue, it is advantageous to consider the relation between input and output in terms of spectral quantities. In a first step, spectral quantities can be formed directly from the Fourier transforms as
-\[
-S_{uu}(\omega) = |U(\omega)|^2, \qquad
-S_{yu}(\omega) = Y(\omega)U^*(\omega).
-\]
-
-Based on these quantities, the transfer function can be expressed as
-\[
-G(\omega) = \frac{S_{yu}(\omega)}{S_{uu}(\omega)}.
-\]
-
-However, this formulation is equivalent to the direct division \(Y(\omega)/U(\omega)\) and therefore inherits the same sensitivity to disturbances. In particular, the disturbance term is fully contained in the cross-spectral quantity and directly propagates into the estimate, which may lead to significant deviations from the true system behavior.
-
-A more robust formulation is obtained by defining the spectral densities in a statistical sense using expectation values. This reduces the influence of disturbances, provided that the noise is uncorrelated with the input signal. Since the expectation operator cannot be evaluated directly from finite measurement data, it must be approximated by averaging over multiple realizations or segments of the signals. In practice, this is achieved using spectral estimation techniques such as Welch’s method, which is introduced in the following section.
-
-As shown in Fig.~\ref{fig:transfer_estimation}, the estimated transfer function closely follows the true system response in frequency regions where the signal-to-noise ratio is sufficiently high. In contrast, deviations occur in frequency ranges dominated by noise and disturbances, where the estimation becomes less reliable.
-
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=\linewidth]{Bode_direct_meas.png}
-    \caption{Bode plot of the true and estimated transfer function. Deviations between the curves occur in frequency regions dominated by noise and disturbances.}
-    \label{fig:transfer_estimation}
-\end{figure}
+Based on these simulated signals, the following signal-processing steps are applied and evaluated.
 
 \subsection{Baseband Filtering via Frequency Rotation}
 
-Measured signals are often contaminated by measurement noise and unwanted high-frequency
-components. These disturbances can obscure the relevant information contained in the signal
-and negatively affect subsequent analysis steps. To suppress these disturbances while
-preserving the phase characteristics of the signal, a frequency-shifting filtering approach
-is employed.
+Measured signals are often affected by noise and unwanted high-frequency components, which can obscure the relevant information and complicate further analysis. This is also the case in the simulated signals considered here, where additive noise is present. To reduce these disturbances while preserving the phase characteristics of the signal, a frequency-shifting filtering approach is used.
 
-The method is based on shifting the frequency content of the signal to baseband, applying a
-low-pass filter, and subsequently shifting the signal back to its original frequency range.
-This allows the filtering operation to focus on a narrow frequency region around the signal
-of interest.
+The method is based on shifting the frequency content of the signal to baseband, applying a low-pass filter, and subsequently shifting the signal back to its original frequency range. This allows the filtering operation to focus on a narrow frequency region around the signal of interest.
 
-The underlying principle can be understood using the Fourier shift theorem. Multiplication
-of a signal $f(t)$ with a complex exponential results in a shift of its spectrum
+The underlying principle can be understood using the Fourier shift theorem. Multiplication of a signal $f(t)$ with a complex exponential results in a shift of its spectrum
 
 $$
 e^{i2\pi\xi_0 t} f(t)
@@ -439,38 +381,28 @@ e^{i2\pi\xi_0 t} f(t)
 \hat{f}(\xi-\xi_0),
 $$
 
-which translates the spectrum by the frequency $\xi_0$.
+which shifts the spectrum by the frequency $\xi_0$.
 
-In the present case, the signal of interest is a chirp signal with a continuously varying
-instantaneous frequency. Therefore, the frequency shift must also be time-dependent. This is
-achieved by introducing a complex phasor
+In this case, the signal of interest is a chirp signal with a continuously changing instantaneous frequency. Therefore, the frequency shift has to be time-dependent. This is achieved using a complex phasor
 
 $$
 p(t)=e^{i\phi(t)},
 $$
 
-where $\phi(t)$ denotes the instantaneous phase of the chirp signal.
+where \( \phi(t) \) describes the instantaneous phase of the chirp.
 
-Multiplying the measured signal $x(t)$ with this phasor or its complex conjugate results in
-a rotation of the signal spectrum toward baseband
+Multiplying the measured signal $x(t)$ with this phasor or its complex conjugate results in a rotation of the signal spectrum toward baseband
 
 $$
 y_R(t)=x(t)p(t), \qquad
 y_Q(t)=x(t)p^*(t).
 $$
 
-After this rotation step, the dominant signal component is centered around
-$0\,\text{Hz}$, enabling efficient filtering using a low-pass filter.
+After this rotation, the dominant signal component is centered around $0\,\text{Hz}$, enabling efficient filtering using a low-pass filter.
 
-\subsubsection{Baseband Filtering}
+Once the signal has been shifted to baseband, a low-pass filter is applied to remove high-frequency noise components. Since the useful signal is concentrated near zero frequency, the filter can effectively suppress unwanted spectral components outside this region.
 
-Once the signal has been shifted to baseband, a low-pass filter is applied to remove
-high-frequency noise components. Since the useful signal is concentrated near zero
-frequency, the filter can effectively suppress unwanted spectral components outside this
-region.
-
-To avoid phase distortion, forward-backward filtering is employed. This approach applies
-the filter in both forward and reverse directions, resulting in zero-phase filtering.
+To avoid phase distortion, forward-backward filtering is employed. This approach applies the filter in both forward and reverse directions, resulting in zero-phase filtering.
 
 The filtering operation yields the filtered baseband signals
 
@@ -481,11 +413,7 @@ $$
 
 which contain the desired signal components with reduced noise.
 
-\subsubsection{Inverse Frequency Rotation}
-
-After filtering in the baseband, the signal is shifted back to its original frequency
-range. This is achieved by multiplying the filtered signals with the corresponding inverse
-phasors and combining the results to obtain a real-valued signal
+After filtering, the signal is shifted back to its original frequency range. This is achieved by multiplying the filtered signals with the corresponding inverse phasors and combining the results to obtain a real-valued signal
 
 $$
 x_f(t)
@@ -501,157 +429,129 @@ x_f(t)
 \right).
 $$
 
-This operation reverses the initial frequency rotation and reconstructs a filtered version
-of the original signal. The resulting signal $x_f(t)$ retains the phase characteristics of
-the original signal while high-frequency noise components are effectively suppressed.
+This step reverses the initial frequency rotation and reconstructs a filtered version of the original signal.
 
-\subsubsection{Impact on Frequency Response Estimation}
+TThe filtered signal is then used for further analysis. By reducing the noise before the spectral estimation, the signal-to-noise ratio is improved, leading to more reliable results.
 
-The filtered signal is subsequently used for frequency response estimation. By reducing
-noise prior to the spectral analysis, the signal-to-noise ratio is significantly improved,
-leading to more reliable estimates of the transfer function.
+The effect of the filtering approach is illustrated in Fig.~\ref{fig:time_filtered}. The upper plot shows the unfiltered signal, where the noise becomes dominant at later time instances (corresponding to higher chirp frequencies). In contrast, the lower plot shows the filtered signal.
 
-The effect of the filtering approach is illustrated in Fig.~\ref{fig:bode_filtered}, where
-the estimated transfer function based on the filtered signal is compared with the true
-system response. A closer agreement between both curves indicates that the baseband
-filtering effectively suppresses noise while preserving the relevant system dynamics.
+The noise is significantly reduced, especially at higher frequencies, while the main signal characteristics are preserved. The filtered signal closely follows the underlying system response.
+
+At higher frequencies, a slight reduction in amplitude can be observed, which is consistent with the low-pass behavior of the system.
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=\linewidth]{bode_apply_rotfiltfilt.png}
-    \caption{Bode plot of the true transfer function and the estimated transfer function
-    based on the filtered signal. The filtering improves the signal-to-noise ratio and
-    leads to a more accurate estimation.}
-    \label{fig:bode_filtered}
+    \includegraphics[width=0.95\linewidth]{rotfilt_signal.png}
+    \caption{Time-domain signal before (top) and after (bottom) baseband filtering. The filtering reduces noise while preserving the main signal characteristics.}
+    \label{fig:time_filtered}
 \end{figure}
+
+\subsection{Frequency Response Estimation}
+
+To estimate the transfer function, the relation between input and output signals is analyzed in the frequency domain. For a linear time-invariant (LTI) system, this relation can be written as
+
+\[
+G(\omega) = \frac{Y(\omega)}{U(\omega)},
+\]
+
+where \(U(\omega)\) and \(Y(\omega)\) denote the Fourier transforms of the input signal \(u(t)\) and the output signal \(y(t)\), respectively.
+
+In practice, however, the measured output signal is affected by disturbances. Even after applying the baseband filtering, residual noise remains, especially at higher frequencies. The measured output can therefore be written as
+
+\[
+Y(\omega) = G(\omega)U(\omega) + D_y(\omega),
+\]
+
+where \(D_y(\omega)\) represents an additive disturbance. A direct estimation by dividing \(Y(\omega)\) by \(U(\omega)\) leads to
+
+\[
+\frac{Y(\omega)}{U(\omega)} = G(\omega) + \frac{D_y(\omega)}{U(\omega)},
+\]
+
+which shows that the estimate is directly influenced by noise.
+
+To reduce the sensitivity to noise, spectral quantities can be introduced. However, computing these directly from the Fourier transforms leads to the same issues as the direct division \(Y(\omega)/U(\omega)\).
+
+A more robust approach is to estimate the spectral densities using averaging techniques, which reduce the influence of disturbances. This is typically achieved using methods such as Welch’s method, which is described in the following section.
+
+In particular, the estimation becomes unreliable in frequency regions where the input signal is small, since the disturbance term can dominate the ratio.
+
+\newpage
+
 \subsection{Spectral Estimation using Welch’s Method}
 
-To estimate the spectral densities $S_{yu}(\omega)$ and $S_{uu}(\omega)$ from finite data,
-Welch’s method is employed. The spectral densities cannot be computed directly from the
-expectation operator, since only finite time-domain measurements of the input and output
-signals are available. Instead, these quantities must be estimated from the measured data.
-In this work, Welch’s method is used to obtain reliable estimates of the power spectral
-densities and cross-power spectral densities.
+To obtain reliable estimates of the spectral densities, Welch’s method is applied. As discussed in the previous section, direct computation from finite data is sensitive to noise. Therefore, averaging techniques are required to approximate the expected values of the spectral quantities.
 
-Let $u[n]$ and $y[n]$ denote the discrete-time input and output signals of length $N$.
-In Welch’s method, the signals are divided into $K$ overlapping segments of length $L$.
-Each segment is multiplied by a window function $w[n]$ in order to reduce spectral leakage.
+The spectral densities describe how the signal energy is distributed over frequency and form the basis for estimating the transfer function.
 
-The $k$-th windowed segment of the input signal can therefore be written as
+Let \(u[n]\) and \(y[n]\) denote the discrete-time input and output signals of length \(N\). In Welch’s method, the signals are divided into \(K\) overlapping segments of length \(L\). Each segment is multiplied by a window function \(w[n]\) to reduce spectral leakage.
 
-$$
-u_k[n] = u[n + kD]\, w[n], \qquad n = 0, \dots, L-1
-$$
+The \(k\)-th segment of the input signal is given by
 
-where $D$ denotes the shift between successive segments and determines the amount of
-overlap between segments.
+\begin{equation}
+u_k[n] = u[n + kD]\, w[n], \qquad n = 0, \dots, L-1,
+\end{equation}
 
-For each segment, the discrete Fourier transform (DFT) is computed
+where \(D\) defines the shift between segments and determines the overlap.
 
-$$
-U_k(\omega) = \sum_{n=0}^{L-1} u_k[n] e^{-j\omega n}
-$$
+For each segment, the discrete Fourier transform (DFT) is computed as
 
-and analogously for the output signal
-
-$$
+\begin{equation}
+U_k(\omega) = \sum_{n=0}^{L-1} u_k[n] e^{-j\omega n}, \qquad
 Y_k(\omega) = \sum_{n=0}^{L-1} y_k[n] e^{-j\omega n}.
-$$
+\end{equation}
 
-From these Fourier transforms, the periodogram estimate of the power spectral density
-of the input signal for each segment is obtained as
+To obtain a stable representation in the frequency domain, the squared magnitude of the Fourier transform is used. This corresponds to the signal power and makes the spectral estimate less sensitive to noise.
 
-$$
-P_{uu,k}(\omega) = \frac{1}{L} |U_k(\omega)|^2.
-$$
+The periodogram estimates are defined as
 
-Similarly, the cross-periodogram between output and input is defined as
+\begin{equation}
+P_{uu,k}(\omega) = \frac{1}{L} |U_k(\omega)|^2, \qquad
+P_{yu,k}(\omega) = \frac{1}{L} Y_k(\omega) U_k^*(\omega)
+\end{equation}
 
-$$
-P_{yu,k}(\omega) = \frac{1}{L} Y_k(\omega) U_k^*(\omega).
-$$
+Welch’s method reduces the variance of the estimates by averaging over all segments. The resulting spectral densities are given by
 
-Welch’s method reduces the variance of the spectral estimates by averaging the periodograms
-over all segments. The resulting estimates of the power spectral density and the cross-power
-spectral density are therefore given by
+Welch’s method reduces the variance of the estimates by averaging over all segments. The resulting spectral densities are given by
 
-$$
-S_{uu}(\omega) = \frac{1}{K} \sum_{k=1}^{K} P_{uu,k}(\omega)
-$$
+\begin{equation}
+S_{uu}(\omega) = \frac{1}{K} \sum_{k=1}^{K} P_{uu,k}(\omega), \qquad
+S_{yu}(\omega) = \frac{1}{K} \sum_{k=1}^{K} P_{yu,k}(\omega), 
+\end{equation}
 
-and
+\newpage
 
-$$
-S_{yu}(\omega) = \frac{1}{K} \sum_{k=1}^{K} P_{yu,k}(\omega).
-$$
+Using these quantities, the transfer function estimate is computed as
 
-In addition, the power spectral density of the output signal is obtained as
-
-$$
-S_{yy}(\omega) = \frac{1}{K} \sum_{k=1}^{K} P_{yy,k}(\omega),
-$$
-
-with
-
-$$
-P_{yy,k}(\omega) = \frac{1}{L} |Y_k(\omega)|^2.
-$$
-
-These averaged spectral estimates are then used to compute the transfer function estimate
-
-$$
+\begin{equation}
 G(\omega) = \frac{S_{yu}(\omega)}{S_{uu}(\omega)}.
-$$
+\end{equation}
 
-Furthermore, the coherence function can be defined as
-
-$$
-\gamma^2(\omega) = \frac{|S_{yu}(\omega)|^2}{S_{uu}(\omega)\, S_{yy}(\omega)}.
-$$
-
-The coherence takes values in the range $0 \leq \gamma^2(\omega) \leq 1$ and provides a
-frequency-dependent measure of the linear relationship between input and output signals.
-Values close to one indicate that the output is predominantly determined by the input,
-whereas low values indicate that noise, disturbances, or nonlinear effects dominate the
-measurement and reduce the reliability of the estimated transfer function.
-
-\subsubsection{Estimated Transfer Function}
-
-The estimated transfer function obtained from the averaged spectral quantities is compared
-with the true system response in the frequency domain, as shown in Fig.~\ref{fig:transfer_estimation}.
-A good agreement between both curves indicates that the spectral estimation provides a reliable
-approximation of the underlying system dynamics. Deviations occur primarily in frequency regions
-where the signal-to-noise ratio is low and the estimation becomes less accurate.
+The estimated transfer function is shown in Fig.~\ref{fig:transfer_estimation_filtered}. Compared to the direct estimation, a significantly better agreement with the true system response can be observed over a wider frequency range.
 
 \begin{figure}[h]
     \centering
     \includegraphics[width=\linewidth]{transferfunction_after_processing.png}
-    \caption{Bode plot of the true and estimated transfer function. A good agreement between both curves indicates that the spectral estimation captures the system dynamics well.}
-    \label{fig:transfer_estimation}
+    \caption{Bode plot of the true and estimated transfer function using Welch’s method. The agreement is improved due to the reduced influence of noise.}
+    \label{fig:transfer_estimation_filtered}
 \end{figure}
 
-In order to further assess the reliability of the estimated transfer function, the coherence
-function is evaluated. Unlike the transfer function itself, the coherence provides a direct
-measure of how strongly the output signal is linearly related to the input signal at each
-frequency.
+To further assess the quality of the estimate, the coherence function is evaluated. The coherence is defined as
 
-\subsubsection{Coherence Analysis}
+$$
+\gamma^2(\omega) = \frac{|S_{yu}(\omega)|^2}{S_{uu}(\omega)\, S_{yy}(\omega)},
+$$
 
-The coherence corresponding to the estimated transfer function is shown in
-Fig.~\ref{fig:coherence_estimation}. High coherence values indicate frequency regions in which
-the output is strongly driven by the input signal and the transfer function estimate can be
-considered reliable. In contrast, low coherence values indicate that noise, disturbances, or
-nonlinear effects dominate the measurement, leading to increased uncertainty in the estimated
-transfer function.
+and takes values in the range \(0 \leq \gamma^2(\omega) \leq 1\). It provides a frequency-dependent measure of how strongly the output is linearly related to the input.
+
+The coherence is shown in Fig.~\ref{fig:coherence_estimation}. Values close to one indicate a reliable estimate, whereas lower values indicate that noise or disturbances dominate the measurement.
 
 \begin{figure}[h]
     \centering
     \includegraphics[width=\linewidth]{coherence_processing.png}
-    \caption{Magnitude-squared coherence between input and output signals. Values close to one indicate a strong linear relationship and therefore a reliable transfer function estimate, whereas low values indicate reduced reliability due to noise and disturbances.}
+    \caption{Magnitude-squared coherence between input and output signals. High values indicate a reliable transfer function estimate.}
     \label{fig:coherence_estimation}
 \end{figure}
-
-
 
 \section{Control Loop Calculations}
 

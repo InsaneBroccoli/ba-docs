@@ -106,7 +106,7 @@ ylabel('Amplitude [deg/s]');
 y_ideal = lsim(Gges, x_e_f, t);
 
 % Disturbance / measurement noise
-noise_std = 2;                          
+noise_std = 20;                          
 noise = noise_std * randn(size(y_ideal));   % gleiche Größe wie y_ideal
 
 % Measured output
@@ -137,7 +137,7 @@ xlim([1 600])
 
 %% Apply Rotfiltfilt
 
-fc_lp = 2;                  
+fc_lp = 10;                  
 [b,a] = butter(2, fc_lp/(fs/2));
 
 y = y_meas(:) - mean(y_meas(:));   % Spaltenvektor
@@ -158,6 +158,19 @@ G_filt = Syu ./ Suu;
 
 G_filt = frd(G_filt(idx), 2*pi*f(idx));
 
+figure(66)
+subplot(2,1,1)
+plot(t, y, t, y_ideal-mean(y_ideal), LineWidth=1);
+title('Unfiltert Signal')
+legend('Signal','Real Chirp');
+
+
+subplot(2,1,2)
+plot(t, y_filt, t, y_ideal-mean(y_ideal), LineWidth=1);
+title('Filtert Signal')
+xlabel('Time [s]')
+xlim([0 10])
+
 figure(6)
 bode(Gges, G_filt)
 grid on
@@ -169,7 +182,7 @@ xlim([1 600])
 u = x_e_f(:) - mean(x_e_f);
 y = y_filt(:) - mean(y_filt);
 
-Nseg = 1024;
+Nseg = 1024*4;
 Noverlap = round(Nseg * 0.9);
 
 step = Nseg - Noverlap;
