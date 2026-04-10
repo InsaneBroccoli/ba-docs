@@ -830,34 +830,46 @@ By comparing the experimentally identified system behavior with the responses of
 
 The following subsections describe the individual plant models corresponding to the main control layers of the flight controller: angular rate, angle, altitude hold and position hold.
 
-\subsubsection{Plant Angular Rate}
+\subsubsection{Motor Dynamics}
 
-The basis of the flight control system is the angular rate controller, which regulates the rotational speed of the drone around its axes. It is also the innermost control loop, which directly influences the other control loops, such as the angle and position hold. Therefore, the plant model of the angular rate controller serves as the fundamental reference for the analysis of the entire control system.
+As the basis of the whole system, the transfer function of the motor dynamics needs to be determined.
 
-As you can see in figure~\ref{fig:signal_processing_model}, the plant of the angular rate control loop  includes the influence of the different voltages applied to the motors, up to the measured angular rate.
+The motor–propeller system is modeled using the well-established electromechanical model of a DC motor. This model can also be applied to brushless DC (BLDC) motors in an equivalent form. It consists of one electrical and one mechanical differential equation.
 
-\paragraph{Motor Dynamics}
-
-The dynamics of the motor–propeller system can be described using the well-established electromechanical model of a DC motor, which is also applicable to brushless DC (BLDC) motors in an equivalent form. The model consists of an electrical and a mechanical differential equation.
-
-The electrical behavior of the motor is given by
+The electrical behavior of the motor is described by
 \begin{equation}
-u(t) = R\,i(t) + L\,\frac{di(t)}{dt}
+u(t) = R\,i(t) + L\,\frac{di(t)}{dt} + k_e\,\omega(t),
 \label{eq:dc_motor_electrical}
 \end{equation}
 where $u(t)$ is the applied motor voltage, $i(t)$ the motor current, $R$ the winding resistance, $L$ the winding inductance, $k_e$ the back electromotive force constant, and $\omega(t)$ the angular velocity.
 
-The mechanical dynamics are described by
+The mechanical dynamics are given by
 \begin{equation}
-J\,\frac{d\omega(t)}{dt} = k_t\,i(t) 
+J\,\frac{d\omega(t)}{dt} = k_t\,i(t),
 \label{eq:dc_motor_mechanical}
 \end{equation}
-where $J$ denotes the combined moment of inertia of the motor and propeller and $k_t$ the torque constant. The viscous friction and the Load Torque are neglected for simplicity.
+where $J$ denotes the combined moment of inertia of the motor and the propeller, and $k_t$ is the torque constant. For simplicity, viscous friction and the aerodynamic load torque are neglected, resulting in a linear and tractable model.
 
-Out of these equations, the transfer function from the applied voltage to the angular velocity can be derived as
+Applying the Laplace transform to Eqs.~(\ref{eq:dc_motor_electrical}) and (\ref{eq:dc_motor_mechanical}) and eliminating the current $i(s)$ leads to the transfer function from the applied voltage to the angular velocity:
 \begin{equation}
-G(s) = \frac{\omega(s)}{u(s)} = \frac{k_t}{Js(Ls + R)}.
+G(s) = \frac{\Omega(s)}{U(s)} =
+\frac{k_t}{J L s^2 + J R s + k_t k_e}.
+\label{eq:dc_motor_transfer}
 \end{equation}
+
+The torque constant and the back electromotive force constant have the same numerical value. Therefore, the transfer function can be simplified to
+\begin{equation}
+G(s) = \frac{\Omega(s)}{U(s)} =
+\frac{k}{J L s^2 + J R s + k^2}.
+\end{equation}
+
+This transfer function represents a second-order (PT2) system, where both the electrical and mechanical dynamics of the motor are taken into account. However, the electrical dynamics typically influence the system only at higher frequencies due to the small electrical time constant. Therefore, in many practical applications, the inductance can be neglected, and the motor can be approximated by a first-order (PT1) system. This simplified model forms the basis for the subsequent analysis and controller design.
+
+\subsubsection{Plant Angular Rate}
+
+The basis of the flight control system is the angular rate controller, which regulates the rotational speed of the drone around its axes. It is also the innermost control loop, which directly influences the other control loops, such as the angle and position hold. Therefore, the plant model of the angular rate controller serves as the fundamental reference for the analysis of the entire control system.
+
+
 
 This transfer function describes a bode plot with a slope of -20dB at the beginning, which corresponds to the integrator behavior of the motor. At higher frequencies, the slope increases to -40dB and an -180° phase shift due to the inductive effects of the motor windings.
 
