@@ -211,7 +211,7 @@ A quadcopter relies on a variety of sensors to measure its state and environment
 \item \textbf{Electronic Speed Controllers (ESCs):} ESCs control the rotational speed of the motors and provide feedback for motor control.
 \end{itemize}
 
-These are the most important sensors used in a quadcopter. However, depending on the application, additional sensors such as cameras or distance sensors can also be used. In practice, the measurements of these sensors are often combined to obtain a more accurate estimate of the drone’s state. These sensor data form the basis for stabilization, navigation, and control.
+These are the most important sensors for us in this thesis used in a quadcopter. With this sensors we get all the necessary data, which are essential for the offline tuning. However, depending on the application, additional sensors such as cameras or distance sensors can also be used. In practice, the measurements of these sensors are often combined to obtain a more accurate estimate of the drone’s state. These sensor data form the basis for stabilization, navigation, and control.
 
 \section{Drone Dynamics and Control Principles}
 
@@ -787,35 +787,36 @@ valuable insights into the stability, robustness, and performance of the control
 
 The closed-loop transfer function from the reference input to the output is given by
 
-$$
+\begin{equation}
 G_{yr}(\omega) =
 \frac{C(\omega)P(\omega)}
 {1 + C(\omega)P(\omega)}.
-$$
+\end{equation}
 
 The sensitivity function, which describes how sensitive the system output is to
 disturbances and model uncertainties, is defined as
 
-$$
+\begin{equation}
 S(\omega) =
 \frac{1}{1 + C(\omega)P(\omega)}.
-$$
+\end{equation}
+
 
 The compliance function, representing the system response to disturbances acting
 on the plant, is given by
 
-$$
+\begin{equation}
 SP(\omega) =
 P(\omega)\,S(\omega).
-$$
+\end{equation}
 
 Finally, the controller effort describes the influence of the reference input on the
 controller output and is defined as
 
-$$
+\begin{equation}
 SC(\omega) =
 C(\omega)\,S(\omega).
-$$
+\end{equation}
 
 \subsection{Compensation of the I-Term}
 
@@ -852,7 +853,35 @@ The resulting compensated controller transfer functions are then reinserted into
 
 \subsection{Step Response Analysis}
 
-To be added.
+The step response provides a direct and intuitive way to evaluate the performance of a control system. By applying a step input to the reference signal, the resulting output response can be analyzed to assess key performance metrics such as rise time, overshoot, settling time, and steady-state error. These metrics provide insights into the speed, stability, and accuracy of the control system.
+
+Starting from the closed-loop transfer function as seen in Figure~\ref{fig:control_loop_easy}, the system output in the time domain can be obtained by transforming the frequency-domain representation back into the time domain. This relationship is expressed as
+\begin{equation}
+y(t) = \mathcal{F}^{-1}\left\{ G_{yr}(\omega) \cdot R(\omega) \right\},
+\end{equation} 
+where \( \mathcal{F}^{-1} \) denotes the inverse Fourier transform, \( G_{yr}(\omega) \) is the closed-loop transfer function from the reference input to the output, and \( R(\omega) \) is the Fourier transform of the step input.
+
+According to the convolution theorem, the system output results from the convolution of the impulse response \( g_{yr}(t) \) with the input signal \( r(t) \). For a step input, the output can be expressed as
+\begin{equation}
+y(t) = g_{yr}(t) * r(t) = \int_{0}^{t} g_{yr}(\tau) \cdot r(t-\tau) \, d\tau,
+\end{equation}
+where \( g_{yr}(t) \) is the impulse response of the system, which can be obtained by taking the inverse Fourier transform of the closed-loop transfer function \( G_{yr}(\omega) \).
+
+Similar to the step response of the system, the step response of the compliance function can be calculated by applying the same procedure to the compliance function \( SP(\omega) \). This allows for a direct comparison of the system response to disturbances with the response to reference inputs.
+
+The step response of the compliance function provides insight into the system's reaction to sudden disturbance forces. While the step response of \( G_{yr} \) evaluates the tracking performance with respect to reference inputs, the compliance step response characterizes the system's disturbance rejection capability and effective stiffness. A small and rapidly settling displacement indicates a stiff and disturbance-resistant system, whereas larger deflections or oscillations suggest higher compliance. Considering both responses therefore enables a more comprehensive assessment of the closed-loop system behavior.
+
+While the step response can be derived analytically from the closed-loop transfer function using the inverse Fourier transform, this approach is not always practical when the system is described by measured or numerically obtained frequency response data. In such cases, the step response is determined directly from the available frequency-domain representation.
+
+In this work, the step response is therefore calculated based on the available frequency response data of the closed-loop system. First, the complex frequency response \( G_{yr}(\omega) \) is limited to a relevant frequency range in order to reduce the influence of high-frequency components. A symmetric spectrum is then constructed to ensure that the resulting time-domain signal is real-valued.
+
+By applying the inverse fast Fourier transform to this spectrum, an approximation of the system's impulse response \( g_{yr}(t) \) is obtained. Since the step response represents the accumulated effect of the impulse response, it is calculated in discrete time as the cumulative sum of the impulse response samples:
+
+\begin{equation}
+y[k] = \sum_{i=0}^{k} g[i].
+\end{equation}
+
+This approach provides a simple and effective way to estimate the time-domain step response directly from frequency response data.
 
 
 \subsection{Theoretical Plant Models}
