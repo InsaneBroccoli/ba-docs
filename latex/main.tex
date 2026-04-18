@@ -1069,6 +1069,33 @@ Thus, the altitude plant consists of the motor dynamics and a double integrator 
 
 In this chapter, the practical application of the theoretical concepts introduced in the previous chapter is described. The focus is on how these principles are implemented in the context of tuning the control loops of a Betaflight-based flight controller. The methodology is structured around the different control loops, starting with the angle controller, followed by the altitude hold controller and the position controller. For each control loop, the specific implementation details and tuning procedures are presented.described.
 
+\section{Gyro Controller Tuning}
+
+The gyro controller is the innermost control loop of the flight controller and directly regulates the angular velocity of the drone. It is responsible for stabilizing the drone's attitude by adjusting the motor speeds based on the measured angular rates from the gyroscope.
+
+\subsection{Betaflight Firmware}
+
+\subsubsection{Angel Mode Controll Loop}
+
+\subsection{Control Loop Calculation}
+
+\subsubsection{Estimation of the Closed-Loop Components}
+
+\subsubsection{Implementation of the Tuning Method}
+
+\subsection{Drone Tuning}
+
+\subsubsection{Evaluation Spectrum}
+
+\subsubsection{Evaluation Spectogram}
+
+\subsubsection{Evaluation Step Response}
+
+\subsubsection{Evaluation Gang of Four}
+
+\subsubsection{Results Tuning}
+
+
 \section{Angle Controller Tuning}
 
 The Betaflight software provides three main flight modes: Angle, Horizon, and Acro.
@@ -1233,6 +1260,22 @@ S_{\text{new}}(\omega) =
 These expressions allow the computation of all relevant performance metrics, such as gain and phase margins, bandwidth, and disturbance attenuation. Based on these metrics, plots can be generated and the suitability of the new controller parameters can be systematically evaluated.
 
 \subsection{Drone Tuning}
+
+With this calculation, the tuning process can be performed. By iteratively adjusting the controller parameters and evaluating the resulting closed-loop performance, the optimal settings for the angle control loop can be determined. This systematic approach ensures that the tuning process is efficient and leads to improved flight performance in Angle mode.
+
+\subsubsection{Evaluation of the Step Response}
+
+To be done.
+
+\subsubsection{Evaluation Gang of Four}
+
+To be done.
+
+\subsubsection{Results Tuning}
+
+To be done. 
+Show that the tuning actually works!
+
 
 
 % *****************************************************************************
