@@ -506,28 +506,28 @@ The method shifts the signal to baseband, applies a low-pass filter, and then sh
 
 The underlying principle can be understood using the Fourier shift theorem. Multiplication of a signal $f(t)$ with a complex exponential results in a shift of its spectrum
 
-$$
+\begin{equation}
 e^{i2\pi\xi_0 t} f(t)
 \;\Longleftrightarrow\;
 \hat{f}(\xi-\xi_0),
-$$
+\end{equation}
 
 which shifts the spectrum by the frequency $\xi_0$.
 
 In this case, the signal of interest is a chirp signal with a continuously changing instantaneous frequency. Therefore, the frequency shift has to be time-dependent. This is achieved using a complex phasor
 
-$$
+\begin{equation}
 p(t)=e^{i\phi(t)},
-$$
+\end{equation}
 
 where \( \phi(t) \) describes the instantaneous phase of the chirp.
 
 Multiplying the measured signal $x(t)$ with this phasor or its complex conjugate results in a rotation of the signal spectrum toward baseband
 
-$$
+\begin{equation}
 y_R(t)=x(t)p(t), \qquad
 y_Q(t)=x(t)p^*(t).
-$$
+\end{equation}
 
 After this rotation, the dominant signal component is centered around $0\,\text{Hz}$, enabling efficient filtering using a low-pass filter.
 
@@ -537,16 +537,17 @@ To avoid phase distortion, forward-backward filtering is employed. This approach
 
 The filtering operation yields the filtered baseband signals
 
-$$
+\begin{equation}
 y_R(t) \rightarrow \tilde{y}_R(t), \qquad
 y_Q(t) \rightarrow \tilde{y}_Q(t),
-$$
+\end{equation}
+
 
 which contain the desired signal components with reduced noise.
 
 After filtering, the signal is shifted back to its original frequency range. This is achieved by multiplying the filtered signals with the corresponding inverse phasors and combining the results to obtain a real-valued signal
 
-$$
+\begin{equation}
 x_f(t)
 =
 \mathrm{Re}
@@ -558,7 +559,7 @@ x_f(t)
 \tilde{y}_Q(t)p(t)
 \right)
 \right).
-$$
+\end{equation}
 
 This step reverses the initial frequency rotation and reconstructs a filtered version of the original signal.
 
@@ -581,23 +582,23 @@ The filtered signal closely follows the underlying system response. A slight amp
 
 To estimate the transfer function, the relation between input and output signals is analyzed in the frequency domain. For a linear time-invariant (LTI) system, this relation can be written as
 
-\[
+\begin{equation}
 G(\omega) = \frac{Y(\omega)}{U(\omega)},
-\]
+\end{equation}
 
 where \(U(\omega)\) and \(Y(\omega)\) denote the Fourier transforms of the input signal \(u(t)\) and the output signal \(y(t)\), respectively.
 
 In practice, however, the measured output signal is affected by disturbances. Even after applying the baseband filtering, residual noise remains, especially at higher frequencies. The measured output can therefore be written as
 
-\[
+\begin{equation}
 Y(\omega) = G(\omega)U(\omega) + D_y(\omega),
-\]
+\end{equation}
 
 where \(D_y(\omega)\) represents an additive disturbance. A direct estimation by dividing \(Y(\omega)\) by \(U(\omega)\) leads to
 
-\[
+\begin{equation}
 \frac{Y(\omega)}{U(\omega)} = G(\omega) + \frac{D_y(\omega)}{U(\omega)},
-\]
+\end{equation}
 
 which shows that the estimate is directly influenced by noise.
 
@@ -1071,17 +1072,103 @@ In this chapter, the practical application of the theoretical concepts introduce
 
 \section{Gyro Controller Tuning}
 
-The gyro controller is the innermost control loop of the flight controller and directly regulates the angular velocity of the drone. It is responsible for stabilizing the drone's attitude by adjusting the motor speeds based on the measured angular rates from the gyroscope.
+The gyro controller is the innermost control loop of the flight controller and directly regulates the angular velocity of the drone. It is responsible for stabilizing the drone's attitude by adjusting the motor speeds based on the measured angular rates from the gyroscope. The Gyro Controller Tuner was already implemented in the Project Thesis. Therefore, not everything is described in detail again, for example the estimation of the spectra and the spectrograms. For more details of that, please refer to the Project Thesis.
 
 \subsection{Betaflight Firmware}
 
-\subsubsection{Angel Mode Controll Loop}
+During the Betaflight realese .... a new feature which adds a chirp signal was added. The head behind this feature was our supervisor Michael Peter. He used this feature to create a prove of concept for a offline tuning method for the gyro controller. The idea was to use the chirp signal to excite the system and then use the recorded data to estimate the transfer function of the control loop. This approach allows for a more accurate estimation of the system dynamics, as it provides a rich excitation signal that covers a wide frequency range.
+
+This bachlor and project thesis builds upon this concept and extends it to the other control loops of the flight controller. The same principle is applied to the angle controller, altitude hold controller, and position controller, allowing for a comprehensive analysis and tuning of the entire control system.
+
+\subsubsection{Acro Mode Control Loop}
+
+In Acro mode, the control loop is designed to directly regulate the angular rates of the drone. The reference input to the controller is the desired angular rate, which is derived from the pilot's stick inputs. The controller then generates the appropriate motor commands to achieve the desired angular rates. The chirp signal is added to the reference input, allowing for the excitation of the system across a wide frequency range. This enables the estimation of the transfer function of the gyro control loop.
+
+The control loop in Acro mode can be represented as follows:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\textwidth]{Regelkreis_Gyro.png}
+    \caption{Control loop structure in Acro mode}
+    \label{fig:control_loop_acro}
+\end{figure}
+
+Figure~\ref{fig:control_loop_acro} shows the complete gyro control loop in Acro mode. The reference input $w$ (desired angular rate) is combined with a chirp signal to excite the system over a broad frequency range. The resulting signal is fed into a PI controller, which generates the main control action.
+
+After the controller, input disturbances are added before the signal enters the plant $P_{\text{real}}$, representing the real drone dynamics. Output disturbances are introduced after the plant and before the gyro filtering stage. The measured angular rate $y$ is then fed back to the controller.
+
+A key feature of this control structure is the placement of the D-controller in the feedback path rather than in the forward path. The derivative action operates on the measured output signal (after passing through the D-path filter) and is fed back negatively. This configuration is specifically chosen to compensate for a zero in the plant dynamics, improving system stability and reducing noise amplification that would occur if the derivative term were applied directly to the reference signal.
+
+Additionally, the use of dedicated filters (gyro filter and D-path filter) ensures that high-frequency noise is attenuated before affecting the control action, which is especially important for the derivative component. 
 
 \subsection{Control Loop Calculation}
 
+Based on the structure of the control loop in Acro mode, the transfer functions of the plant and the controller can be estimated from the measured input and output signals. The chirp signal provides a rich excitation that allows for a comprehensive analysis of the system dynamics across a wide frequency range.
+
 \subsubsection{Estimation of the Closed-Loop Components}
 
+Using the Fourier transforms of the input and output signals, the closed-loop transfer functions can be calculated. The transfer function from the reference input to the output is given by
+
+\begin{equation}
+G_{yr}(\omega) = \frac{Y(\omega)}{W(\omega)}
+\end{equation}
+
+where \( Y(\omega) \) is the Fourier transform of the measured output signal, \( W(\omega) \) is the Fourier transform of the reference input, including the chirp signal. These signals are getting filtered as described in the theory chapter.
+
+To estimate the plant transfer function, the transfer function from the reference input to the controller output v is also calculated:
+
+\begin{equation}
+G_{vr}(\omega) = \frac{V(\omega)}{W(\omega)}
+\end{equation}
+
+where \( V(\omega) \) is the Fourier transform of the controller output signal. By taking the ratio of these two transfer functions, the plant transfer function can be derived as follows:
+
+\begin{equation}
+G_{Plant}(\omega) = \frac{G_{yr}(\omega)}{G_{vr}(\omega)}
+\end{equation}
+
+In this current estimation, we did not have backcalculated the Gyro filter. Therefore we just devide the estimated plant by the gyro filter transfer function to get the real plant of the system.
+
+\begin{equation}
+P_{\text{real}}(\omega) = \frac{G_{Plant}(\omega)}{G_{\text{gyro filter}}(\omega)}
+\end{equation}
+
+This approach allows for the identification of the real plant dynamics, which can then be used for further analysis and controller tuning.
+
+The transfer function of the PI controller can be estimated by rearranging the closed-loop transfer function as follows:
+
+\begin{equation}
+C_{\text{PI}}(\omega) = \frac{G_{yr}(\omega)}{G_{vr}(\omega) - G_{yr}(\omega)}
+\end{equation}
+These estimation is very important to implement the compensation of the I-term, which is described in the theory chapter. By comparing the estimated controller transfer function with the analytical transfer function of a PI controller, the compensation factor can be calculated and applied to both the original analytical PI controller and the newly designed PI controller. This ensures that the effects of the I-Term Relax algorithm are properly accounted for in the controller design and tuning process.
+
 \subsubsection{Implementation of the Tuning Method}
+
+Based on the estimated plant and controller transfer functions, the tuning of the PID controllers can be performed. The goal is to adjust the controller parameters to achieve the desired tuning goals, such as stability, responsiveness and robustness.
+
+To judge the performance and stability of the system with a the new PID and filter parameters, a new closed-loop transfer function is calculated using the estimated plant and the newly designed controller.
+This happens with the following formula:
+\begin{equation}
+G_{yr,\text{new}}(\omega) = \frac{C_{\text{new}}(\omega) P_{\text{real}}(\omega)}{1 + C_{\text{new}}(\omega) P_{\text{real}}(\omega)}
+\end{equation}
+
+The sensitivity function can also be calculated with the new controller as follows:
+\begin{equation}
+S_{\text{new}}(\omega) = \frac{1}{1 + C_{\text{new}}(\omega) P_{\text{real}}(\omega)}
+\end{equation}
+
+Or the compliance function:
+\begin{equation}
+SP_{\text{new}}(\omega) = P_{\text{real}}(\omega) \cdot S_{\text{new}}(\omega)
+\end{equation}
+
+The Controller effort can also be calculated with the new controller as follows:
+\begin{equation}
+SC_{\text{new}}(\omega) = C_{\text{new}}(\omega)
+\cdot S_{\text{new}}(\omega)
+\end{equation}
+
+By analyzing these functions, the performance of the new controller can be evaluated in terms of stability, robustness and disturbance rejection. Based on this analysis, further adjustments to the controller parameters can be made iteratively until the desired performance is achieved.
 
 \subsection{Drone Tuning}
 
@@ -1361,6 +1448,53 @@ To be done.
 
 To be done. 
 Show that the tuning actually works!
+
+\section{Altitude Hold}
+
+\subsection{Betaflight Firmware}
+
+\subsubsection{Altitude Hold Control Loop}
+
+\subsubsection{Firmware Modifications}
+
+\subsection{Control Loop Calculation}
+
+\subsubsection{Estimation of the Closed-Loop Components}
+
+\subsubsection{Implementation of the Tuning Method}
+
+\subsection{Drone Tuning}
+\subsubsection{Evaluation of the Step Response}
+
+\subsubsection{Evaluation Gang of Four}
+
+\subsubsection{Results Tuning}
+
+\section{Position Hold}
+
+\subsection{Betaflight Firmware}
+
+\subsubsection{Position Hold Control Loop}
+
+\subsubsection{Firmware Modifications}
+
+\subsection{Control Loop Calculation}
+
+\subsubsection{Estimation of the Closed-Loop Components}
+
+\subsubsection{Implementation of the Tuning Method}
+
+\subsection{Drone Tuning}
+
+\subsubsection{Evaluation of the Step Response}
+
+\subsubsection{Evaluation Gang of Four}
+
+\subsubsection{Results Tuning}
+
+\section{Software Implementation and Structure}
+
+
 
 
 
