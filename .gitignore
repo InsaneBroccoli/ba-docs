@@ -34,7 +34,7 @@ latex/template/main.pdf
 *.bcf-SAVE-ERROR
 *.blg
 *-blx.aux
-*-blx.bib
+*.bib
 *.run.xml
 
 ## Build tool auxiliary files:
