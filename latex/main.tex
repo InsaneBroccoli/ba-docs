@@ -1657,8 +1657,74 @@ Overall, the tuned angle controller achieves a balanced performance in terms of 
 
 \subsubsection*{Results Tuning}
 
+\newpage
+
 \section{Software Implementation and Structure}
 
+
+This chapter describes the software architecture and implementation of the developed Drone Tuning Tool. The focus lies on the overall modular structure of the project, the migration of the existing MATLAB implementation to Python and the validation process used to ensure consistency between both environments.
+
+First, the final software structure and design philosophy are presented, highlighting the object-oriented and modular approach used throughout the project. Subsequently, the selection of Python libraries and the reasoning behind the migration from MATLAB to Python are discussed. Finally, the process of transferring and validating the MATLAB library functions in Python is explained, including the applied testing methodology and the current implementation status.
+
+\subsubsection*{Final Structure Concept}
+
+As already outlined in the project thesis, the tuning tool was implemented using an object-oriented and modular software architecture. This approach enables future extensions of the tool while promoting code reuse across different control loops. Both the MATLAB and Python implementations follow the same structural design in order to ensure consistency between the two environments.
+
+\dirtree{%
+	.1 bf\_controller\_tuning/.
+	.2 main/.
+    .3 class/.
+	.4 flight\_analyzer.
+	.4 flight\_data.
+	.4 gyro\_ctrl\_tuning.
+	.4 plot\_utils.m.
+    .4 angle\_ctrl\_tuning.
+}
+
+The proof-of-concept implementations for altitude hold and position hold tuning were developed as separate tools without following the same modular architecture. This decision allowed the focus to remain on validating the tuning methodology for these additional control loops without being constrained by the existing software structure. Once the proof of concept is validated, the corresponding implementations can be refactored and integrated into the main modular framework to ensure long-term maintainability and consistency across the entire tuning tool.
+
+Across all controller tuning implementations, the same signal-processing and analysis functions were reused, including functions such as \texttt{apply\_rotfiltfilt} and \texttt{estimate\_frequency\_response}. This ensures a consistent analysis workflow across different control loops while reducing development effort through code reuse.
+
+\subsection*{Conversion from MATLAB to Python}
+
+To make the project more accessible to the FPV community, we decided to migrate the existing MATLAB codebase to Python.
+The first step was to select suitable Python libraries that offer similar functionality to MATLAB while maintaining code efficiency and readability.
+After evaluating several options, we chose the following libraries:
+\begin{itemize}
+	\item \textbf{NumPy}: For numerical operations and array manipulations, analogous to MATLAB's matrix operations.
+	\item \textbf{SciPy}: For scientific computing tasks, including signal processing functions comparable to MATLAB's capabilities.
+	\item \textbf{Matplotlib}: For plotting and visualization, providing features similar to MATLAB's plotting tools.
+	\item \textbf{Pandas}: For data manipulation and analysis, useful for handling tabular data as in MATLAB tables.
+	\item \textbf{Control Systems Library (control)}: For control system analysis and design, offering functions equivalent to MATLAB's Control System Toolbox.
+\end{itemize}
+We selected Python version 3.12, as it is well-supported and compatible with the required libraries.
+To validate these choices, we developed a prototype script that implements the core functionalities needed for the Drone Tuning Tool.
+The script loads flight log data from CSV files, parses and caches the data efficiently and extracts relevant signals such as setpoints and gyro measurements.
+NumPy and Pandas are used for numerical and tabular data handling, while SciPy provides signal processing utilities for windowing and frequency analysis.
+The Control Systems Library is employed to estimate the system's frequency response and step response from flight data, replicating MATLAB's identification routines.
+Matplotlib is used for visualizing raw signals, chirp responses and system characteristics.
+The modular structure, including custom data classes and caching, ensures fast and reproducible analysis.
+This approach demonstrates that Python and its scientific libraries are suitable replacements for MATLAB in the drone tuning workflow.
+While Pandas is not strictly necessary for the prototype, it simplifies data handling and improves code readability.
+However, to minimize dependencies and ensure cross-platform compatibility, we may consider removing Pandas in the final implementation.
+The flexibility of Python also allows for easier integration with other tools and automation of data processing tasks, which is beneficial for large-scale log analysis.
+
+
+\subsection*{Transferring the MATLAB Library to Python}
+
+The core functionality of the Drone Tuning Tool resides in its library functions.
+To ensure that the Python implementation is both reliable and consistent with the original MATLAB code, we systematically transferred each library function from MATLAB to Python.
+For functions with simple numerical outputs, we used \texttt{np.testing.assert\_allclose} with appropriate absolute and relative tolerances, saving the function inputs and outputs from MATLAB and comparing them with the Python implementation.
+For more complex functions, such as those involving state-space outputs, we developed dedicated test scripts to compare the behavior of the MATLAB and Python versions across a range of scenarios.
+
+The initial validation process was conducted using flight data from a single test flight.
+While several core functions successfully passed the comparison tests with the MATLAB reference implementation, some functions still require further refinement.
+Specifically, the functions \texttt{apply\_rotfiltfilt} and \texttt{downsample\_frd} exhibit deviations that exceed the specified tolerance thresholds when compared to their MATLAB counterparts.
+Additionally, \texttt{calculate\_transferfunctions} requires revision in the dynamic gyro low-pass filter configuration, as the current implementation produces runtime errors under certain conditions.
+
+For the ongoing development, a comprehensive testing framework is planned that will validate all library functions against flight data from multiple test flights.
+This extended validation will provide a more robust assessment of the Python implementation's reliability and help identify edge cases that may not have been apparent in single-flight testing.
+The systematic transfer and validation process established so far provides a solid foundation for completing the migration and ensuring consistency between the MATLAB and Python implementations in future work.
 
 \chapter{Results}
 This chapter presents the results obtained from the application of the proposed offline tuning framework. The outcomes of the controller tuning procedures are shown for the different control loops, including the angular rate, angle, altitude, and position controllers. The results are presented objectively without interpretation, focusing on the observed system behaviour and the performance of the tuned controllers. A detailed evaluation and discussion of these results are provided in the subsequent chapter.
@@ -1773,9 +1839,53 @@ Overall, the results highlight that the reliability of the proposed tuning appro
 \chapter*{Declaration of Generative AI Use}
 \addcontentsline{toc}{chapter}{Declaration of Generative AI Use}
 
-The following generative AI systems were used during the preparation of this
-thesis. Their use was limited to the functions described below. All generated
-content was critically reviewed and verified by the authors.
+\paragraph{OpenAI (2025) — ChatGPT 5.1}
+\begin{itemize}
+	\item Available online:
+	      \href{https://chat.openai.com/}{https://chat.openai.com/}
+	\item Functions:
+	      \begin{itemize}
+		      \item Generation of text suggestions
+		      \item Grammar and language correction
+		      \item Support in writing LaTeX and MATLAB code
+	      \end{itemize}
+\end{itemize}
+
+\paragraph{DeepL (2025) — DeepL Translator (Free Version)}
+\begin{itemize}
+	\item Available online:
+	      \href{https://www.deepl.com/translator}{https://www.deepl.com/translator}
+	\item Functions:
+	      \begin{itemize}
+		      \item Translation of text
+	      \end{itemize}
+\end{itemize}
+
+\paragraph{Microsoft (2025) — Copilot AI Assistant}
+\begin{itemize}
+	\item Available online:
+	      \href{https://copilot.microsoft.com/}{https://copilot.microsoft.com/}
+	\item Functions:
+	      \begin{itemize}
+		      \item Generation of text and summaries
+		      \item Integration into Microsoft Office tools such as Word and PowerPoint
+		      \item Assistance in software development (e.g., code suggestions)
+	      \end{itemize}
+\end{itemize}
+
+\paragraph{Anthropic (2025) — Claude AI}
+\begin{itemize}
+	\item Available online:
+	      \href{https://claude.ai/}{https://claude.ai/}
+	\item Functions:
+	      \begin{itemize}
+		      \item Text generation and editing
+		      \item Support for research tasks (e.g., summarization and structuring)
+		      \item Assistance in programming-related workflows
+	      \end{itemize}
+\end{itemize}
+
+\clearpage
 
 % List AI tools as in your PA.
 
