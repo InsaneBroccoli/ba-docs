@@ -1618,17 +1618,116 @@ Overall, the tuned angle controller achieves a balanced performance in terms of 
 
 \section{Altitude Hold}
 
-\subsection*{Betaflight Firmware}
+The altitude hold control loop is responsible for maintaining a constant altitude by adjusting the throttle based on the measured vertical position. The altitude estimation is mainly based on GPS measurements, which are fused with IMU sensor data by the flight controller to determine the current vertical position and vertical motion of the drone.
 
-\subsubsection*{Altitude Hold Control Loop}
+During the development of the drone tuning tool, significant changes were made to the Betaflight firmware, affecting the altitude hold functionality and its control loop. Therefore, it was decided to implement only a proof of concept based on the firmware version from March 2025. As a result, the modified firmware will not be merged into the Betaflight codebase. The tuning tool will also not be implemented in Python, as this version of the tool is not intended to be used by the community.
 
-\subsubsection*{Firmware Modifications}
+This chapter presents the firmware modifications required to apply the tuning method to the altitude hold control loop. It also describes the calculation of the control loop and the tuning process itself, including the evaluation of the step response and the Gang of Four. Additionally, this chapter is intended to support future developers in implementing the tuning method for the altitude hold control loop once the ongoing changes in the Betaflight firmware are completed and the altitude hold control loop has stabilized.
+
+
+\subsection*{Altitude Hold Control Loop}
+In the altitude hold mode, an additional control loop gets activated. It controls the thrust part of the motors as described in the motor mixing chapter. Therefore the drone is able to fly at a constant altitude without the pilot having to adjust the throttle stick. The altitude hold control loop is not cascaded as you can see in the figure \ref{fig:altitude_hold_control_loop}.
+
+% \begin{figure}
+%     \centering
+%     \includegraphics[width=1.0\textwidth]{Figures/Control_Loop_Altitude.png}
+%     \caption{Control structure of the Betaflight altitude hold controller.}
+%     \label{fig:altitude_hold_control_loop}
+% \end{figure}
+
+Figure \ref{fig:altitude_hold_control_loop} shows the complete altitude control loop in the altitdue hold mode. The reference input w which mostly is zero because the drone set the selected altitude to zero. The resulting signal is fed into a PI controller, which generates the main control action.
+
+The output of the PI controller is then added with a feedback signal in which the D-Term is within. This feedback signal is there to compensate the I-term, which stops the drone form overshooting the target altitude. The resulting signal is then fed into the plant, which consists of the drone dynamics, the motors and the tilt multiplier. The tilt multiplier is a factor that scales the thrust based on the current tilt angle of the drone. This is necessary because the vertical component of the thrust decreases as the drone tilts, and the control loop needs to compensate for this effect to maintain a stable altitude.
+
+In the feedback path which includes the D-term, a D-Boost is implemented. During normal altitude hold operation, a rather small D-term is preferred in order to avoid unnecessary noise amplification and throttle oscillations while maintaining a constant altitude. During fast vertical movements of the drone, however, the D-Boost increases the D-term gain dynamically. This helps to improve the damping and transient behavior of the altitude hold control loop, especially during rapid altitude changes. The D-Boost is calculated based on the estimated vertical velocity. For the measurements performed in this work, the D-Boost was disabled in order to obtain a system behavior which is as linear as possible for the frequency-domain system identification.
+
+
+
+\subsection*{Firmware Modifications}
+
 
 \subsection*{Control Loop Calculation}
 
+With the injected chirp signal and the recorded data, the control loop can be calculated. This happens through the same steps as described in the theory chapter, including noise filtering and windowing. The resulting transfer function describes the complete behavior of the altitude hold control loop, including the plant dynamics and the controller. Through some algebraic manipulations, the plant and the controller can be separated, which allows for a systematic tuning of the controller parameters based on the estimated plant dynamics.
+
 \subsubsection*{Estimation of the Closed-Loop Components}
+Using the Fourier transforms of the input and output signals, the closed-loop transfer functions can be calculated. The transfer function from the reference input to the output is given by
+
+\begin{equation}
+G_{yr}(\omega) = \frac{Y(\omega)}{W(\omega)}
+\end{equation}
+
+where \( Y(\omega) \) is the Fourier transform of the measured output signal, \( W(\omega) \) is the Fourier transform of the reference input, including the chirp signal. These signals are getting filtered as described in the theory chapter.
+
+To estimate the plant transfer function, the transfer function from the reference input to the output of the PI controller v is also calculated:
+
+\begin{equation}
+G_{vr}(\omega) = \frac{V(\omega)}{W(\omega)}
+\end{equation}
+
+where \( V(\omega) \) is the Fourier transform of the controller output signal. 
+
+To complete all the necessary estimations for the tuning process, the transfer function from the reference input to the shared output of the PI controller and the D-term u is calculated as well:
+
+\begin{equation}
+G_{ur}(\omega) = \frac{U(\omega)}{W(\omega
+])}\end{equation}
+
+
+With these transfer functions, the plant transfer function can be calculated by rearranging the closed-loop transfer function as follows:
+
+\begin{equation}
+G_{Plant}(\omega) = \frac{G_{yr}(\omega)}{G_{vr}(\omega)}
+\end{equation}
+
+This approach allows for the identification of the real plant dynamics, which can then be used for further analysis and controller tuning.
+
+The transfer function of the PI controller can be estimated by rearranging the closed-loop transfer function as follows:
+
+\begin{equation}
+C_{\text{PI}}(\omega) = \frac{G_{yr}(\omega)}{G_{vr}(\omega) - G_{yr}(\omega)}
+\end{equation}
+
+The D term with its filter can be estimated by calculating:
+
+\begin{equation}
+C_{\text{D}}(\omega) = \frac{G_{vr}(\omega) - G_{ur}(\omega)}{G_{yr}(\omega)}
+\end{equation}
+
+With the estimated plant and controller transfer functions, the complete control loop can be analyzed and the tuning method can be applied to optimize the controller parameters for improved performance.
 
 \subsubsection*{Implementation of the Tuning Method}
+
+The tuning method for the altitude hold control loop is based on the estimated plant and controller transfer functions. By analyzing the frequency response of the plant, the controller parameters can be adjusted to achieve the desired performance characteristics, such as stability margins, bandwidth, and disturbance rejection.
+
+These performance metrics can be computed based on the estimated transfer functions, allowing for a systematic evaluation of the tuning adjustments. They get calulated using following equations:
+
+For the complementary sensitivity function:
+
+\begin{equation}
+G_{cl,\text{new}}(\omega) = \frac{C_{\text{new}}(\omega) G_{\text{Plant}}(\omega)}{1 + C_{\text{new}}(\omega) G_{\text{Plant}}(\omega)}
+\end{equation}
+
+The sensitivity function can be calculated as:
+
+\begin{equation}
+S_{\text{new}}(\omega) = \frac{1}{1 + C_{\
+text{new}}(\omega) G_{\text{Plant}}(\omega)}
+\end{equation}
+
+The controller effort can be calculated as:
+\begin{equation}
+SC_{\text{new}}(\omega) = \frac{C_{\text{new}}
+(\omega) G_{\text{Plant}}(\omega)}{1 + C_{\text{new}}(\omega) G_{\text{Plant}}(\omega)}
+\end{equation}
+
+And the compliance can be calculated as:
+\begin{equation}
+SP_{\text{new}}(\omega) = \frac{1}{1 + C_{\
+text{new}}(\omega) G_{\text{Plant}}(\omega)}
+\end{equation}
+
+These metrics allows us to evaluate the performance of the new controller parameters and make informed decisions about further adjustments to optimize the altitude hold control loop for improved stability, responsiveness, and disturbance rejection. More details about that can be found in the next section, where the results of the tuning process are evaluated based on the step response and the Gang of Four plots.
 
 \subsection*{Drone Tuning}
 \subsubsection*{Evaluation of the Step Response}
