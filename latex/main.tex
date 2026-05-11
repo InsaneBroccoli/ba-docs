@@ -1220,9 +1220,9 @@ Figure~\ref{fig:control_loop_acro} shows the complete gyro control loop in Acro 
 
 After the controller, input disturbances are added before the signal enters the plant $P_{\text{real}}$, representing the real drone dynamics. Output disturbances are introduced after the plant and before the gyro filtering stage. The measured angular rate $y$ is then fed back to the controller.
 
-A key feature of this control structure is the placement of the D-controller in the feedback path rather than in the forward path. The derivative action operates on the measured output signal (after passing through the D-path filter) and is fed back negatively. This configuration is specifically chosen to compensate for a zero in the plant dynamics, improving system stability and reducing noise amplification that would occur if the derivative term were applied directly to the reference signal.
+A key feature of this control structure is the placement of the D-controller in the feedback path instead of the forward path. The derivative action operates on the measured output signal and is fed back negatively. This configuration is used to compensate for a zero in the plant dynamics, improving the system stability while reducing the noise amplification that would occur if the derivative term were applied directly to the reference signal.
 
-Additionally, the use of dedicated filters (gyro filter and D-path filter) ensures that high-frequency noise is attenuated before affecting the control action, which is especially important for the derivative component. 
+Additionally, dedicated filters are used to attenuate high-frequency noise before it affects the control action. This is especially important for the D-controller, since the derivative term is generally very sensitive to noise. Without the D-path filter, measurement noise would strongly affect the D-term and therefore the controller output, which is not desired and could lead to unstable behaviour.
 
 \subsection*{Control Loop Calculation}
 
@@ -1618,22 +1618,23 @@ Overall, the tuned angle controller achieves a balanced performance in terms of 
 
 \section{Altitude Hold}
 
-The altitude hold control loop is responsible for maintaining a constant altitude by adjusting the throttle based on the measured vertical position. The altitude estimation is mainly based on GPS measurements, which are fused with IMU sensor data by the flight controller to determine the current vertical position and vertical motion of the drone.
+The altitude hold control loop maintains a constant altitude by adjusting the throttle based on the measured vertical position. The altitude estimation is mainly based on GPS measurements fused with IMU sensor data to estimate the current vertical position and motion of the drone.
 
-During the development of the drone tuning tool, significant changes were made to the Betaflight firmware, affecting the altitude hold functionality and its control loop. Therefore, it was decided to implement only a proof of concept based on the firmware version from March 2025. As a result, the modified firmware will not be merged into the Betaflight codebase. The tuning tool will also not be implemented in Python, as this version of the tool is not intended to be used by the community.
+During the development of the tuning tool, major changes were made to the Betaflight firmware affecting the altitude hold functionality and control loop. Therefore, only a proof of concept based on the firmware version from March 2025 was implemented. As a result, the modified firmware will not be merged into the Betaflight codebase, and the tuning tool will not be implemented in Python for community use.
 
-This chapter presents the firmware modifications required to apply the tuning method to the altitude hold control loop. It also describes the calculation of the control loop and the tuning process itself, including the evaluation of the step response and the Gang of Four. Additionally, this chapter is intended to support future developers in implementing the tuning method for the altitude hold control loop once the ongoing changes in the Betaflight firmware are completed and the altitude hold control loop has stabilized.
+This chapter presents the firmware modifications required for applying the tuning method to the altitude hold controller. It also describes the control loop calculation and the tuning process, including the evaluation of the step response and the Gang of Four. Furthermore, the chapter is intended to support future developers once the ongoing firmware changes are completed and the altitude hold controller has stabilized.
 
 
 \subsection*{Altitude Hold Control Loop}
 In the altitude hold mode, an additional control loop gets activated. It controls the thrust part of the motors as described in the motor mixing chapter. Therefore the drone is able to fly at a constant altitude without the pilot having to adjust the throttle stick. The altitude hold control loop is not cascaded as you can see in the figure \ref{fig:altitude_hold_control_loop}.
 
-% \begin{figure}
-%     \centering
-%     \includegraphics[width=1.0\textwidth]{Figures/Control_Loop_Altitude.png}
-%     \caption{Control structure of the Betaflight altitude hold controller.}
-%     \label{fig:altitude_hold_control_loop}
-% \end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\textwidth]{control_loop_althold.png}
+    \caption{Control structure of the Betaflight altitude hold controller.}
+    \label{fig:altitude_hold_control_loop}
+\end{figure}
+
 
 Figure \ref{fig:altitude_hold_control_loop} shows the complete altitude control loop in the altitdue hold mode. The reference input w which mostly is zero because the drone set the selected altitude to zero. The resulting signal is fed into a PI controller, which generates the main control action.
 
