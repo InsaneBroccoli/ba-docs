@@ -1191,6 +1191,8 @@ In this chapter, the practical application of the theoretical concepts introduce
 
 The methodology is structured around the different control loops, starting with the gyro controller, followed by the angle controller, the altitude hold controller, and the position controller. For each control loop, the specific implementation details and tuning procedures are presented, along with a brief discussion of the results.
 
+Additionally, the required firmware modifications, measurement procedures, and system identification methods are described. The chapter also highlights practical challenges encountered during the implementation and evaluation of the different control loops.
+
 \section{Gyro Controller Tuning}
 
 The gyro controller is the innermost control loop of the flight controller and directly regulates the angular velocity of the drone. It is responsible for stabilizing the drone's attitude by adjusting the motor speeds based on the measured angular rates from the gyroscope. Due to its position in the control hierarchy, it operates at a high update rate and reacts quickly to disturbances, thereby ensuring fast and precise stabilization.
@@ -1199,9 +1201,9 @@ The Gyro Controller Tuner was already implemented in the Project Thesis. Therefo
 
 \subsection*{Betaflight Firmware}
 
-During a Betaflight release, a new feature was introduced that adds a chirp signal to the system. The main contributor behind this feature was our supervisor Michael Peter. He used this functionality to create a proof of concept for an offline tuning method for the gyro controller. The idea was to use the chirp signal to excite the system and then use the recorded data to estimate the transfer function of the control loop. This approach allows for a more accurate estimation of the system dynamics, as it provides a rich excitation signal that covers a wide frequency range and excites multiple modes of the system.
+During a Betaflight release ..., a new feature was introduced that adds a chirp signal to the system. The main contributor behind this feature was our supervisor Michael Peter. He used this functionality to create a proof of concept for an offline tuning method for the gyro controller. The idea was to use the chirp signal to excite the system and then use the recorded data to estimate the transfer function of the control loop. This approach allows a more accurate analysis of the system dynamics, as the chirp excites the system over a wide frequency range.
 
-This bachelor and project thesis builds upon this concept and extends it to the other control loops of the flight controller. The same principle is applied to the angle controller, altitude hold controller, and position controller, enabling a more comprehensive analysis and systematic tuning of the entire control system. As a result, not only individual loops but also their interactions can be better understood and optimized.
+Further details about the chirp signal and the underlying theory are described in the theoretical part of this thesis.
 
 \subsubsection*{Acro Mode Control Loop}
 
@@ -1226,75 +1228,148 @@ Additionally, dedicated filters are used to attenuate high-frequency noise befor
 
 \subsection*{Control Loop Calculation}
 
-Based on the structure of the control loop in Acro mode, the transfer functions of the plant and the controller can be estimated from the measured input and output signals. By analyzing the relationship between these signals, it is possible to identify the dynamic behavior of the system and to derive meaningful models for further tuning.
+Based on the structure of the control loop in Acro mode, the transfer functions of the individual loop components can be estimated from the measured input and output signals. By applying block diagram algebra to the measured data, mathematical models of the plant, controller, and closed-loop behavior can be derived.
 
-The chirp signal provides a rich excitation that allows for a comprehensive analysis of the system dynamics across a wide frequency range. This makes it possible to capture both low-frequency and high-frequency effects, resulting in a more accurate and reliable estimation of the system characteristics.
+As described in the theoretical part of this thesis, the use of block diagram algebra allows the different loop components to be estimated from measurements referenced to the same input signal. This improves the accuracy of the identified transfer functions, since the signals can be filtered more reliably and the influence of feedback effects is reduced. Using the measured frequency responses from the chirp measurements, the dynamic behavior of the different control loop components can then be analyzed separately, enabling a systematic evaluation and tuning of the control system.
 
 \subsubsection*{Estimation of the Closed-Loop Components}
 
-Using the Fourier transforms of the input and output signals, the closed-loop transfer functions can be calculated. The transfer function from the reference input to the output is given by
+By estimating different transfer functions from the measured data, the behavior of the individual components of the control loop can be analyzed separately. This allows the controller, plant, and feedback paths to be evaluated individually instead of only observing the overall closed-loop response. As already described in the theoretical part, this approach simplifies the system analysis and improves the accuracy of the identified transfer functions.
+
+The first step is to estimate the closed-loop transfer function from the reference input \( r \) to the measured output \( y \), which is denoted as \( G_{yr} \):
 
 \begin{equation}
-G_{yr}(\omega) = \frac{Y(\omega)}{W(\omega)}
+G_{yr}(\omega) = \frac{Y(\omega)}{R(\omega)}
 \end{equation}
 
-where \( Y(\omega) \) is the Fourier transform of the measured output signal, \( W(\omega) \) is the Fourier transform of the reference input, including the chirp signal. These signals are getting filtered as described in the theory chapter.
+where \( Y(\omega) \) is the Fourier transform of the measured output signal and \( R(\omega) \) is the Fourier transform of the reference input, including the chirp signal. These signals are filtered and processed as described in the theory chapter in order to reduce noise and improve the quality of the estimated frequency response.
 
-To estimate the plant transfer function, the transfer function from the reference input to the controller output v is also calculated:
+The transfer function \( G_{yr} \) represents the overall closed-loop behavior of the system and can be used to evaluate important characteristics such as bandwidth, phase behavior, and stability margins.
+
+To estimate the plant transfer function, the transfer function from the reference input to the controller output \( u \) is also calculated:
 
 \begin{equation}
-G_{vr}(\omega) = \frac{V(\omega)}{W(\omega)}
+G_{ur}(\omega) = \frac{U(\omega)}{R(\omega)}
 \end{equation}
 
-where \( V(\omega) \) is the Fourier transform of the controller output signal. By taking the ratio of these two transfer functions, the plant transfer function can be derived as follows:
+where \( U(\omega) \) is the Fourier transform of the controller output signal. This transfer function describes the dynamic relationship between the reference input and the control action applied to the plant.
+
+To estimate the D-term of the controller, the transfer function from the reference input to the signal after the PI controller and the D-path filter is additionally required. This transfer function is denoted as \( G_{vr} \):
 
 \begin{equation}
-G_{Plant}(\omega) = \frac{G_{yr}(\omega)}{G_{vr}(\omega)}
+G_{vr}(\omega) = \frac{V(\omega)}{R(\omega)}
 \end{equation}
 
-In this current estimation, we did not have backcalculated the Gyro filter. Therefore we just devide the estimated plant by the gyro filter transfer function to get the real plant of the system.
+where \( V(\omega) \) is the Fourier transform of the signal after the PI controller and the D-path filter. This additional transfer function is required because the D-term is implemented in the feedback path of the control loop and therefore cannot directly be separated from the remaining controller dynamics.
+
+With these transfer functions, the plant transfer function can be estimated as
 
 \begin{equation}
-P_{\text{real}}(\omega) = \frac{G_{Plant}(\omega)}{G_{\text{gyro filter}}(\omega)}
+G_{\text{Plant}}(\omega) = \frac{G_{yr}(\omega)}{G_{ur}(\omega)}
 \end{equation}
 
-This approach allows for the identification of the real plant dynamics, which can then be used for further analysis and controller tuning.
-
-The transfer function of the PI controller can be estimated by rearranging the closed-loop transfer function as follows:
+In this estimation, the gyro filter is not backcalculated. Therefore, the estimated plant transfer function is divided by the gyro filter transfer function to obtain the real plant dynamics:
 
 \begin{equation}
-C_{\text{PI}}(\omega) = \frac{G_{yr}(\omega)}{G_{vr}(\omega) - G_{yr}(\omega)}
+P_{\text{real}}(\omega) = \frac{G_{\text{Plant}}(\omega)}{G_{\text{gyro filter}}(\omega)}
 \end{equation}
-These estimation is very important to implement the compensation of the I-term, which is described in the theory chapter. By comparing the estimated controller transfer function with the analytical transfer function of a PI controller, the compensation factor can be calculated and applied to both the original analytical PI controller and the newly designed PI controller. This ensures that the effects of the I-Term Relax algorithm are properly accounted for in the controller design and tuning process.
+
+The transfer function of the PI controller can be estimated as
+
+\begin{equation}
+C_{\text{PI}}(\omega) = \frac{G_{ur}(\omega)}{1 - G_{yr}(\omega)}
+\end{equation}
+
+This estimation is required for the compensation of the I-Term Relax algorithm described in the theory chapter. By comparing the estimated transfer function with the analytical PI controller model, a compensation factor can be calculated and applied to both the original and the newly designed controller.
+
+The D-term and its filter can be estimated in a similar way:
+
+\begin{equation}
+C_{\text{D}}(\omega) = \frac{G_{ur}(\omega) - G_{vr}(\omega)}{G_{yr}(\omega)}
+\end{equation}
+
+The estimation of the D-term was especially useful during the development of the tuning tool, since it helped to better understand the D-term behavior and identify implementation issues.
 
 \subsubsection*{Implementation of the Tuning Method}
 
 Based on the estimated plant and controller transfer functions, the tuning of the PID controllers can be performed. The goal is to adjust the controller parameters to achieve the desired tuning goals, such as stability, responsiveness and robustness.
 
-To judge the performance and stability of the system with a the new PID and filter parameters, a new closed-loop transfer function is calculated using the estimated plant and the newly designed controller.
-This happens with the following formula:
+To evaluate the performance and stability of the system with the new PID and filter parameters, a new closed-loop transfer function is calculated using the estimated plant and the newly designed controller. As already described in the theory chapter, the closed-loop transfer function can be used to analyze the dynamic behavior of the system, such as the bandwidth and overall response characteristics. The transfer function is calculated as follows:
+
 \begin{equation}
-G_{yr,\text{new}}(\omega) = \frac{C_{\text{new}}(\omega) P_{\text{real}}(\omega)}{1 + C_{\text{new}}(\omega) P_{\text{real}}(\omega)}
+G_{cl,\text{new}}(\omega)
+=
+\frac{
+C_{\text{PI}}(\omega)\,
+P_{\text{real}}(\omega)\, 
+G_f(\omega)
+}{
+1 +
+P_{\text{real}}(\omega)
+\left(
+C_{\text{PI}}(\omega) + C_d(\omega)
+\right)
+G_f(\omega)
+}
 \end{equation}
 
-The sensitivity function can also be calculated with the new controller as follows:
+The sensitivity function can also be calculated with the new controller as follows. As already discussed in the theoretical part, the sensitivity function is important to evaluate the robustness of the system and the disturbance rejection behavior:
+
 \begin{equation}
-S_{\text{new}}(\omega) = \frac{1}{1 + C_{\text{new}}(\omega) P_{\text{real}}(\omega)}
+S_{\text{new}}(\omega)
+=
+\frac{
+1
+}{
+1 +
+P_{\text{real}}(\omega)
+\left(
+C_{\text{PI}}(\omega) + C_d(\omega)
+\right)
+G_f(\omega)
+}
 \end{equation}
 
-Or the compliance function:
+Or the compliance function, which shows how disturbances acting on the plant affect the system output:
+
 \begin{equation}
-SP_{\text{new}}(\omega) = P_{\text{real}}(\omega) \cdot S_{\text{new}}(\omega)
+SP_{\text{new}}(\omega)
+=
+\frac{
+P_{\text{real}}(\omega)
+}{
+1 +
+P_{\text{real}}(\omega)
+\left(
+C_{\text{PI}}(\omega) + C_d(\omega)
+\right)
+G_f(\omega)
+}
 \end{equation}
 
-The Controller effort can also be calculated with the new controller as follows:
+The controller effort can also be calculated with the new controller as follows. This function can be used to evaluate the controller activity and the amplification of noise at higher frequencies:
+
 \begin{equation}
-SC_{\text{new}}(\omega) = C_{\text{new}}(\omega)
-\cdot S_{\text{new}}(\omega)
+SC_{\text{new}}(\omega)
+=
+\frac{
+\left(
+C_{\text{PI}}(\omega) + C_d(\omega)
+\right)
+G_f(\omega)
+}{
+1 +
+P_{\text{real}}(\omega)
+\left(
+C_{\text{PI}}(\omega) + C_d(\omega)
+\right)
+G_f(\omega)
+}
 \end{equation}
 
 By analyzing these functions, the performance of the new controller can be evaluated in terms of stability, robustness and disturbance rejection. Based on this analysis, further adjustments to the controller parameters can be made iteratively until the desired performance is achieved.
 
+\newpage
 
 \subsection*{Filter tuning}
 Before we start tuning the PID controllers, we need good filtering to have clean signals to work with. The general aim here is to use as little filtering as possible because too much filtering causes delay in the system. However, no quadcopter build is perfect, so at least some filtering is necessary in order to achieve a well-tuned system.
@@ -1314,8 +1389,8 @@ When we analyze this plot, we look for three main things:
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.85\textwidth]{Spectra.png}
-	\caption{Spectra}
+	\includegraphics[width=0.9\textwidth]{Spectra.png}
+	\caption{Frequency spectra of the measured gyro signals}
 	\label{fig:Spectra_tuning}
 \end{figure}
 
@@ -1381,7 +1456,7 @@ Figure~\ref{fig:gangoffour_tuning} shows the Gang of Four plots for our tuned sy
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.9\textwidth]{gang_of_four_pitch_tuned.jpg}
+	\includegraphics[width=1.0\textwidth]{gang_of_four_pitch_tuned.jpg}
 	\caption{Gang of Four}
 	\label{fig:gangoffour_tuning}
 \end{figure}
@@ -1413,12 +1488,15 @@ During this thesis project, an offline tuner for the angular rate controller was
 This extension allows a consistent tuning methodology across different flight modes, improving overall system performance and usability.
 
 \subsection*{Betaflight Firmware}
+This chapter describes the implementation of the Betaflight firmware and the modifications required for the proposed offline tuning approach.
 
-This chapter describes the implementation of the Betaflight firmware and the modifications made to integrate the proposed tuning methods.
+The main focus lies on the Angle mode controller. Compared to the standard Acro mode, Angle mode adds an additional outer control loop for attitude stabilization. This results in a cascaded control structure and changes the overall system dynamics compared to the normal rate-controlled flight mode.
 
-The focus is on the angle control mode, where the drone’s attitude is regulated based on its absolute orientation. In this mode, an additional outer control loop is introduced on top of the rate controller, which changes the system dynamics compared to rate mode.
+In the standard Betaflight implementation, many internal controller signals are not directly accessible through the logging system. However, these signals are required for the offline analysis and transfer function estimation used in this work. Therefore, small modifications were made to the firmware to expose relevant internal controller variables through the existing debug infrastructure.
 
-To enable our analysis and tuning approach, small modifications were made to the firmware, mainly to access relevant internal signals of the control loop. These changes allow a better evaluation of the system behavior without affecting the real-time performance.
+Additionally, the chirp signal injection used for system excitation had to be adapted for the Angle mode controller. Depending on the injection point of the chirp signal, different parts of the control loop can be analyzed. The implemented modifications therefore also allow the chirp signal to be injected at different positions in the control structure depending on the active flight mode.
+
+The modifications were intentionally kept as small as possible in order to avoid influencing the original flight behavior and the real-time performance of the firmware. The goal was not to redesign the existing controller implementation, but rather to extend the firmware with the functionality required for offline analysis and controller tuning.
 
 \subsubsection*{Angle Mode Control Loop}
 
@@ -1426,24 +1504,34 @@ In Angle mode, the angular rate controller is extended by an outer angle control
 
 The stick input initially generates a rate setpoint. Unlike in Acro mode, this rate setpoint is then converted into a target angle. This target angle serves as the reference input for the inner angular rate controller.
 
+The outer angle loop operates at a slower dynamic compared to the inner rate loop. Its task is to generate stable angular rate setpoints that move the drone toward the desired orientation. The inner angular rate controller then reacts much faster and stabilizes the rotational motion of the quadcopter.
+
 The cascaded architecture separates attitude control from angular rate stabilization. While the outer loop ensures convergence toward the desired orientation, the inner loop provides fast dynamic stabilization by regulating the angular velocity. As a result, the system achieves improved disturbance rejection and more intuitive handling characteristics, since the pilot directly commands an angle rather than a rotational rate.
+
+This behavior makes Angle mode especially suitable for beginner pilots and for applications where stable and predictable flight behavior is required. In contrast to Acro mode, the drone automatically returns to the commanded orientation when the stick input is centered.
 
 The Angle mode controller therefore consists of two cascaded loops:
 \begin{itemize}
-    \item The outer angle loop, which computes the angle error.
-    \item The inner angular rate loop, which computes the rate error.
+\item The outer angle loop, which computes the angle error.
+\item The inner angular rate loop, which computes the rate error.
 \end{itemize}
 
 \begin{figure}[htbp]
-    \centering
-    \includegraphics[width=1.0\textwidth]{Figures/Chirp_Control_Loop_Angle.png}
-    \caption{Cascaded control structure of the Betaflight Angle mode controller.}
-    \label{fig:angle_mode_control_loop}
+\centering
+\includegraphics[width=1.0\textwidth]{Figures/Chirp_Control_Loop_Angle.png}
+\caption{Cascaded control structure of the Betaflight Angle mode controller.}
+\label{fig:angle_mode_control_loop}
 \end{figure}
 
-The angle control loop consists of a proportional controller with an additional feedforward term. Within the offline tuning framework, however, only the proportional controller is optimized. The feedforward path is included in the control structure for completeness but was deliberately disabled during the tuning process.
+The angle control loop consists of a proportional controller with an additional feedforward term. Within the offline tuning framework, however, only the proportional controller is optimized.
 
-\subsection*{Derivation of the Target Angle}
+The feedforward term directly maps the target angle stick input into the control loop. In normal flight operation, this improves the responsiveness of the controller by directly reacting to stick movements.
+
+However, for offline system identification and transfer function estimation, this additional control path complicates the analysis because parts of the controller action no longer originate purely from the feedback control loop.
+
+To simplify the tuning process and focus solely on the proportional controller behavior, the feedforward term is disabled in the modified firmware. This enables a more straightforward analysis of the control loop dynamics without additional influence from the feedforward component.
+
+\subsubsection*{Derivation of the Target Angle}
 
 The target angle is obtained by scaling the commanded angular rate with respect to the maximum achievable rate and the configured maximum tilt angle:
 
@@ -1495,7 +1583,7 @@ As already mentioned in the gyro control tuning section, a chirp signal is injec
 
 If the chirp signal were added in the same way as for the gyro control tuning, it would not be possible to directly calculate the transfer function of the complete system from the target angle to the measured angle. In such a configuration, the chirp signal would be added to the current setpoint and therefore inside the closed control loop. Consequently, the system would have two inputs: the stick input and the injected chirp signal. Additionally, the noise on the signal could not be filtered as described in the theory chapter.
 
-This situation is illustrated in Figure~\ref{fig:angle_loop_original}, which shows the control loop structure currently implemented in the Betaflight firmware.
+This situation is illustrated in Figure~\ref{fig:angle_mode_control_loop}, which shows the control loop structure currently implemented in the Betaflight firmware.
 
 To overcome this issue, a small modification to the firmware allows the chirp signal to be added directly to the setpoint before it is converted into the target angle. Due to the linear transformation from the rate setpoint to the target angle, the parameters of the chirp signal do not need to be adjusted.
 
@@ -1544,18 +1632,20 @@ G_{\text{plant}}(\omega) =
 \label{eq:G_plant}
 \end{equation}
 
+The resulting plant transfer function does not only contain the physical drone dynamics, but also the complete closed-loop behaviour of the inner angular rate controller. From the perspective of the outer angle loop, the stabilized rate controller therefore becomes part of the plant dynamics.
+
 This transfer function forms the foundation for the subsequent tuning of the angle control loop. With the measured plant dynamics, all the necessary information is available to optimize the controller parameters and improve the performance of the Angle mode.
 
 \subsubsection*{Implementation of the Tuning Method}
 
-The tuning method for the angle control loop is based on the estimated plant dynamics. By analysing the frequency response of the plant, the controller parameters can be adjusted to achieve the desired performance characteristics, such as stability margins and bandwidth.
+The tuning method for the angle control loop is based on the estimated plant dynamics. By analysing the frequency response of the plant, the controller parameters can be adjusted to achieve the desired performance characteristics such as stability margins and bandwidth.
 
-As all components of the control loop are now known—including the plant and the inner angular rate control loop—the new closed-loop transfer function for a set of updated controller parameters can be calculated as
+As all components of the control loop are now known, including the plant and the inner angular rate control loop, the new closed loop transfer function for a set of updated controller parameters can be calculated as
 
 \begin{equation}
 G_{cl,\text{new}}(\omega) =
-\frac{C_{\text{new}}(\omega)\,G_{\text{Gyro}}(\omega)\,G_{\text{plant}}(\omega)}
-{1 + C_{\text{new}}(\omega)\,G_{\text{Gyro}}(\omega)\,G_{\text{plant}}(\omega)}.
+\frac{C_{\text{new}}(\omega)\,T_{\text{Gyro}}(\omega)\,G_{\text{plant}}(\omega)}
+{1 + C_{\text{new}}(\omega)\,T_{\text{Gyro}}(\omega)\,G_{\text{plant}}(\omega)}.
 \label{eq:G_cl_new}
 \end{equation}
 
@@ -1563,11 +1653,29 @@ Furthermore, the sensitivity function, which characterizes the disturbance rejec
 
 \begin{equation}
 S_{\text{new}}(\omega) =
-\frac{1}{1 + C_{\text{new}}(\omega)\,G_{\text{Gyro}}(\omega)\,G_{\text{plant}}(\omega)}.
+\frac{1}{1 + C_{\text{new}}(\omega)\,T_{\text{Gyro}}(\omega)\,G_{\text{plant}}(\omega)}.
 \label{eq:S_new}
 \end{equation}
 
-These expressions allow the computation of all relevant performance metrics, such as gain and phase margins, bandwidth, and disturbance attenuation. Based on these metrics, plots can be generated and the suitability of the new controller parameters can be systematically evaluated.
+The controller effort can also be calculated. It describes how strongly the controller output reacts to the reference input and is given by
+
+\begin{equation}
+SC_{\text{new}}(\omega) =
+\frac{C_{\text{new}}(\omega)}
+{1 + C_{\text{new}}(\omega)\,T_{\text{Gyro}}(\omega)\,G_{\text{plant}}(\omega)}.
+\label{eq:G_u_new}
+\end{equation}
+
+Additionally, the compliance transfer function can be calculated. This transfer function describes how disturbances acting on the plant influence the system output:
+
+\begin{equation}
+SP_{\text{new}}(\omega) =
+\frac{G_{\text{plant}}(\omega)}
+{1 + C_{\text{new}}(\omega)\,T_{\text{Gyro}}(\omega)\,G_{\text{plant}}(\omega)}.
+\label{eq:G_c_new}
+\end{equation}
+
+These expressions allow the computation of all relevant performance metrics such as gain margin, phase margin, bandwidth, controller effort, disturbance attenuation, and robustness properties. Based on these metrics, plots can be generated and the suitability of the new controller parameters can be systematically evaluated.
 
 \newpage
 
