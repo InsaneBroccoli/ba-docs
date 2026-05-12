@@ -1517,10 +1517,10 @@ The Angle mode controller therefore consists of two cascaded loops:
 \end{itemize}
 
 \begin{figure}[htbp]
-\centering
-\includegraphics[width=1.0\textwidth]{Figures/Chirp_Control_Loop_Angle.png}
-\caption{Cascaded control structure of the Betaflight Angle mode controller.}
-\label{fig:angle_mode_control_loop}
+    \centering
+    \includegraphics[width=1.0\textwidth,height=0.28\textwidth]{Figures/Control_Loop_Angle.png}
+    \caption{Cascaded control structure of the Betaflight Angle mode controller.}
+    \label{fig:angle_mode_control_loop}
 \end{figure}
 
 The angle control loop consists of a proportional controller with an additional feedforward term. Within the offline tuning framework, however, only the proportional controller is optimized.
@@ -1543,7 +1543,6 @@ The target angle is obtained by scaling the commanded angular rate with respect 
 \label{eq:target_angle}
 \end{equation}
 
-where
 \begin{itemize}
     \item $\theta_{\text{limit}}$ is the maximum allowed tilt angle (e.g., $60^\circ$),
     \item $\omega_{\text{set}}$ is the commanded angular rate derived from the stick input,
@@ -1551,7 +1550,6 @@ where
 \end{itemize}
 
 This relation ensures a proportional mapping between stick deflection and the resulting target angle.
-
 For example,
 \begin{equation}
 \omega_{\text{set}} = \omega_{\text{max}}
@@ -1591,7 +1589,7 @@ The modified control structure used for the offline tuning framework is illustra
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=1.0\textwidth]{Figures/Control_Loop_Angle_new.png}
+    \includegraphics[width=1.0\textwidth,height=0.3\textwidth]{Figures/Control_Loop_Angle_new.png}
     \caption{Cascaded control structure of the Betaflight Angle mode controller.}
     \label{fig:angle_loop_modified}
 \end{figure}
