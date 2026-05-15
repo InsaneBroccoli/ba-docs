@@ -314,6 +314,7 @@ The flight control system consists of multiple control loops that regulate the d
 \newpage
 
 \section{System Identification Using Chirp Signals}
+it\label{sec:System Identification Using Chirp Signals}
 
 In this chapter, the theoretical background of the approach used for the estimation and calculation of the different controll loops is described. Since the fundamental approuch of all the control loops is the same, the general approach is described here and the specific details of each control loop are described in the Methodology chapter.
 
@@ -1774,7 +1775,7 @@ where \( U(\omega) \) is the Fourier transform of the controller output signal. 
 To estimate the D-term of the controller, the transfer function from the reference input to the shared output of the PI controller and the D-term is additionally required. This transfer function is denoted as \( G_{vw} \):
 
 \begin{equation}
-G_{vw}(\omega) = \frac{V(\omega)}{W(\omega)}
+G_{ur}(\omega) = \frac{U(\omega)}{W(\omega)}
 \end{equation}
 
 where \( V(\omega) \) is the Fourier transform of the signal after the PI controller and before the D-term feedback path. This additional transfer function is required because the D-term is implemented in the feedback path of the control loop and therefore cannot directly be separated from the remaining controller dynamics.
@@ -1845,75 +1846,143 @@ These metrics allows us to evaluate the performance of the new controller parame
 
 These metrics allows us to evaluate the performance of the new controller parameters and make informed decisions about further adjustments to optimize the altitude hold control loop for improved stability, responsiveness, and disturbance rejection. More details about that can be found in the next section, where the results of the tuning process are evaluated based on the step response and the Gang of Four plots.
 
-\subsection*{Drone Tuning}
-\subsubsection*{Evaluation of the Step Response}
+Position Hold is an autonomous control mode that maintains the aircraft at a fixed geographic location and constant altitude without pilot intervention. By combining simultaneous altitude hold and position hold, the system processes GPS position data alongside barometric or GPS altitude measurements. These inputs are used to compute corrective attitude commands that resist external disturbances such as wind or drift. In Angle and Acro modes, a stable hover requires continuous pilot input to compensate for these disturbances. In Position Hold, the system establishes a target position based on the current GPS location and aims to maintain the aircraft close to this point by evaluating the position error in both the North-South and East-West axes. These errors are converted into corrective attitude commands through a PIDA controller. This controller operates as an outer control loop commanding the inner angle controller, integrating cleanly with the existing flight control structure.
 
-\subsubsection*{Evaluation Gang of Four}
+One major aspect of this control strategy is the coordinate transformation. The controller calculates corrective efforts in the Earth-Fixed (EF) frame (North, East, Down) based on GPS data, which must be mapped into the aircraft's Body Frame (BF) (roll, pitch, yaw) for execution by the flight controller. This coordinate transformation is performed after the entire PID calculation, directly rotating the computed attitude commands using the aircraft's instantaneous yaw angle. 
 
-\section{Position Hold}
-
-Position Hold is an autonomous control mode that maintains the aircraft at a fixed geographic location and constant altitude without pilot intervention. By combining simultaneous altitude hold and position hold, the system processes real-time GPS position data alongside barometric or GPS altitude measurements. These inputs are used to compute corrective attitude commands that resist external disturbances such as wind and environmental drift. In traditional Angle and Acro modes, a stable hover requires continuous pilot input to compensate for these naturally occurring forces. Position Hold fundamentally eliminates this requirement. When activated, the system establishes a target position based on the current GPS location and aims to maintain the aircraft within 1--2 meters of this reference point by evaluating the position error in both the North-South and East-West axes. These errors are converted into corrective attitude commands through a dedicated position controller. This controller operates as an outer control loop commanding the inner angle controller. Such a hierarchical architecture seamlessly integrates with the existing flight control structure, enabling a consistent application of the tuning methodologies developed for rate and angle control loops.
-
-\textbf{Umrechnung EF in BF und erwähnen, das das auf dem aktuellen stand nicht optimal ist..}
-
-One major aspect of this control strategy is the coordinate transformation. The controller calculates corrective efforts in the Earth-Fixed (EF) frame (North, East, Down) based on GPS data, which must then be mapped into the aircraft's Body Frame (BF) (roll, pitch, yaw) to be executed by the flight controller. Currently, this coordinate transformation is performed after the entire PID calculation, directly rotating the computed attitude commands using the aircraft's instantaneous yaw angle. While functional, applying coordinate rotations on the final PID output rather than mapping the error signals prior to the control loops can lead to suboptimal transient behavior, particularly during rapid heading changes or under severe wind conditions. 
-
-Reliable Position Hold operation depends on a functioning GPS module with a strong satellite fix, providing fundamental position and velocity measurements. A magnetometer (compass) is strongly recommended, as accurate heading estimation directly determines whether corrective attitudes point toward or away from the target location. Without a magnetometer, the system must estimate its heading from the aircraft's flight path. This is achieved by flying a straight-line segment for around 50 to 100 meters at sufficient speed, with a positive pitch angle and zero roll or yaw input. Since the drone is commanded to fly strictly forward, its body-frame forward axis aligns with the direction of motion. By comparing this known thrust direction with the displacement vector derived from GPS over time, the system can resolve the absolute heading of the drone.
+Reliable Position Hold operation depends on a functioning GPS module with a strong satellite fix, providing fundamental position and velocity measurements. A magnetometer (compass) is strongly recommended, as accurate heading estimation directly determines whether corrective attitudes point toward or away from the target location. Without a magnetometer, the system must estimate its heading from the aircraft's flight path by flying a straight-line segment for around 50 to 100 meters at sufficient speed, with a positive pitch angle and zero roll or yaw input.
 
 Once Position Hold stabilizes, the system maintains altitude using an automatically-adjusted throttle command, while roll and pitch are regulated to zero out position errors.
 
-The position controller employs Proportional (P), Integral (I), Derivative (D), and Acceleration (A) feedback terms to compute corrective attitudes. Tuning these gains determines the aircraft's responsiveness to disturbances, its ability to track the target location, and the control effort required from the attitude controller.
-
 \subsection*{Betaflight Firmware}
-In the Betaflight firmware, Position Hold operates asynchronously, executing once per GPS update (typically at 5 to 10 Hz) rather than at the fixed, high-speed rate of the main control loop. The algorithm processes distance and velocity estimates in Earth-fixed coordinates before rotating the computed PID sum into the aircraft's body frame as roll and pitch angle commands. 
 
-Upon receiving new GPS data, the controller first computes the horizontal distance vector from the current aircraft position to the target hold point using spherical trigonometry. This computation runs only when fresh GPS data arrives, effectively reducing computational overhead and exploiting the natural update rate of the GPS unit. The result is a 2D vector with components in the East-West (longitude) and North-South (latitude) directions, expressed in centimeters.
+In the Betaflight firmware, Position Hold operates asynchronously, executing once per GPS update rather than at the fixed, high-speed rate of the main control loop. The algorithm processes distance and velocity estimates in Earth-fixed coordinates before rotating the computed PID sum into the aircraft's body frame as roll and pitch angle commands. 
 
-The position controller operates with an intelligent two-phase strategy that distinguishes between the deceleration (stopping) phase and the steady-state (holding) phase. When activated—such as upon mode entry or stick release—the controller enters the \textbf{stopping phase} independently for each axis. Here, the Proportional, Derivative, and Acceleration terms are active, while the Integral term is disabled to prevent windup. Furthermore, the Derivative term is artificially boosted by a factor of 1.6 to ensure rapid deceleration. Once the aircraft's velocity reverses direction on a given axis, which is detected by a sign change between the raw calculated velocity and its low-pass-filtered counterpart, the controller transitions that axis into the \textbf{holding phase}. During the holding phase, the Integral term becomes active to compensate for steady-state disturbances such as wind, while the P and D terms provide stabilization and the Acceleration term contributes feedforward damping.
+Upon receiving new GPS data, the controller computes the horizontal distance vector from the current aircraft position to the target hold point. This computation runs only when fresh GPS data arrives, effectively reducing computational overhead and exploiting the update rate of the GPS unit. The result is a 2D vector with components in the East-West (longitude) and North-South (latitude) directions, expressed in centimeters.
+
+The position controller operates with two distinct operational phases: the \textbf{stopping phase} and the \textbf{holding phase}. The stopping phase is triggered when the pilot deflects the control sticks while in position hold. During this phase, the proportional, derivative, and acceleration terms remain active while the integral term accumulation is suppressed. Additionally, the derivative term is boosted by a factor of 1.6 to enable rapid deceleration. The controller monitors both the raw velocity and its low-pass filtered counterpart. When their signs differ (indicating direction reversal), the aircraft has stopped on that axis, which then transitions into the holding phase. However, if the sticks are already centered when position hold is activated, the controller enters the holding phase directly, bypassing the stopping phase and its 1.6x D-boost. This behavior is critical for system identification with chirp excitation, as it maintains linear controller operation throughout the measurement.
+
+During the holding phase, all four feedback terms (P, I, D, A) contribute to the control output. The integral term becomes active and accumulates position error over time, enabling steady-state error elimination. This phase persists as long as the sticks remain centered.
 
 For each axis, the four feedback terms are computed and summed:
 
-\begin{equation}
-u_{\text{axis}} = K_p \cdot d_{\text{axis}} + K_i \cdot \int d_{\text{axis}} \, dt - K_d \cdot v_{\text{filtered}} - K_a \cdot a_{\text{filtered}}
+\begin{equation} 
+u_{\text{axis}} = K_p \cdot d_{\text{axis}} + K_i \cdot \int d_{\text{axis}} \, dt + K_d \cdot \dot{d}_{\text{axis}} + K_a \cdot \ddot{d}_{\text{axis}}
 \end{equation}
 
-where $d$ is the position error in centimeters. Velocity is computed numerically as the finite difference of successive position measurements multiplied by the GPS update frequency, then low-pass-filtered using an adaptive first-order (PT1) filter with a cutoff frequency scaled to the current GPS data interval. Acceleration is derived by differentiating the filtered velocity and applying a second layer of low-pass filtering to attenuate high-frequency noise.
+where $d_{\text{axis}}$ is the position error in centimeters, $\dot{d}_{\text{axis}} = v_{\text{filtered}}$ and $\ddot{d}_{\text{axis}} = a_{\text{filtered}}$ represent the velocity and acceleration of the position error. Velocity is computed numerically as the finite difference of successive position measurements scaled by the GPS update frequency, then low-pass filtered using an adaptive first-order (PT1) filter. The cutoff frequency is adjusted dynamically based on the current GPS data interval. Acceleration is derived by differentiating the filtered velocity and applying a second adaptive PT1 filter to further attenuate high-frequency noise.
 
-After computing the components for both axes, the combined D+A vector magnitude is constrained to a predefined limit (typically 35 degrees) to prevent overly aggressive braking actions during high-speed entries. The total attitude command vector is then limited to the maximum allowed angle (e.g., 50 degrees) by proportional scaling:
+After computing both P+I and D+A components for each axis, the combined D+A vector magnitude is evaluated and constrained if necessary. The firmware limits the magnitude of the combined D and A contributions to 35 degrees. Should this limit be exceeded, the vector is scaled proportionally:
+
+\begin{equation}
+\text{if} \quad \|\vec{u}_{\text{DA}}\| > 35\text{°}, \quad
+\vec{u}_{\text{DA}} \leftarrow \vec{u}_{\text{DA}} \cdot \frac{35\text{°}}{\|\vec{u}_{\text{DA}}\|}
+\end{equation}
+
+This 35-degree limit applies only to the D+A components. The proportional and integral terms can push the total attitude command beyond this threshold. The complete attitude command vector is then further constrained to the maximum allowed tilt angle through proportional scaling:
 
 \begin{equation}
 \text{if} \quad \|\vec{u}\| > \theta_{\max}, \quad
 \vec{u} \leftarrow \vec{u} \cdot \frac{\theta_{\max}}{\|\vec{u}\|}
 \end{equation}
 
-Because the position controller updates only at the slower GPS frequency while the inner angle controller operates at 100 Hz, a PT3 upsampling filter is utilized. This filter smoothly interpolates the body-frame attitude commands into continuous 100 Hz references, reducing step-change aliasing and minimizing control delays. Finally, a sanity check continuously monitors the distance from the target against a dynamically-scaled threshold based on ground speed. If the aircraft drifts beyond this limit, indicating a GPS anomaly or an extreme disturbance, Position Hold disengages to return manual control to the pilot.
+Because the position controller updates only at the slower GPS frequency (< 10 Hz)while the inner angle controller operates at 100 Hz, a PT3 upsampling filter interpolates the body-frame attitude commands to 100 Hz reference rates. This reduces aliasing effects from discrete GPS updates and minimizes control latency. 
+
+Finally, a sanity check continuously monitors the distance from the target against a dynamically-scaled threshold based on ground speed. The sanity distance is computed as twice the distance the aircraft would travel in one second at the current ground speed, with a minimum of 10 meters. If the aircraft drifts beyond this limit, indicating a GPS anomaly or extreme external disturbance, Position Hold disengages to return manual control to the pilot.
 
 \subsubsection*{Position Hold Control Loop}
 
-[INSERT IMAGE OF BLOCK DIAGRAM HERE]
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\textwidth]{Position_hold_control_loop_handsketch.png}
+    \caption{Control structure of the Betaflight position hold controller.}
+    \label{fig:Position_hold_control_loop_handsketch.png}
+\end{figure}
 
-The Position Hold control loop represents the outermost control layer in the hierarchical flight controller architecture. The schematic above, extracted directly from the underlying Betaflight firmware execution path, illustrates the signal flow from the GPS inputs to the final body-frame attitude commands.
+The Position Hold control loop represents the outermost control layer in the hierarchical flight controller architecture. Figure \ref{fig:Position_hold_control_loop_handsketch.png} illustrates the signal flow from the GPS inputs to the final body-frame attitude commands. The structure begins with position estimation derived from the GPS module, which provides geographic coordinates. These are compared to the target hold point to generate position error signals in the North-East plane (Earth-Fixed frame). The error signals feed into the multi-term P-I-D-A feedback controller, which computes velocity and acceleration by numerically differentiating the position measurements. These derivatives are heavily smoothed using adaptive PT1 filters before being scaled by their respective gains. 
 
-The structure begins with the position estimation derived from the GPS module, which provides the real-time geographic coordinates. These are compared to the target hold point to generate position error signals in the North-East plane (Earth-Fixed frame). The error signals are then fed into the multi-term P-I-D-A feedback controller. The diagram highlights how velocity and acceleration are numerically differentiated from the position measurements and heavily smoothed using adaptive PT1 filters before being scaled by their respective gains. 
-
-After the P, I, D, and A terms are summed and limited, the resulting control vector undergoes a coordinate transformation. Using the current yaw angle from the attitude estimator, the Earth-Fixed correction vector is rotated into the aircraft's Body Frame, resulting in target pitch and roll angles. Finally, the diagram shows the PT3 upsampling block, which interpolates the low-frequency GPS-driven commands into the high-frequency reference signals demanded by the inner angle controller loop.  
+After the P, I, D, and A terms are summed and limited, the resulting control vector undergoes a coordinate transformation. Using the current yaw angle from the attitude estimator, the Earth-Fixed correction vector is rotated into the aircraft's Body Frame, resulting in target pitch and roll angles. Finally, the PT3 upsampling block interpolates the low-frequency GPS-driven commands into the high-frequency reference signals demanded by the inner angle controller loop.
 
 \subsubsection*{Firmware Modifications}
-To rigorously evaluate and mathematically tune the Position Hold controller, several custom modifications were implemented within the firmware to facilitate System Identification (SysID) and frequency response analysis. 
 
-The primary addition is the injection of a sinusoidal frequency sweep, or chirp signal, directly into the target position error. By artificially shifting the position setpoint over a predefined frequency range, the drone is forced into a controlled excitation. This allows the tracking performance and disturbance rejection of the position PID to be measured in flight. To ensure the physical system effectively tracks the mathematical chirp, a lead-lag filter (phase compensator) is applied to the chirp excitation, correcting inherent phase delays before the signal is injected into the distance error computation.
+To evaluate and tune the Position Hold controller, an exponential chirp signal (as described in Section \ref{sec:System Identification Using Chirp Signals}) is injected directly into the position error during flight. By sweeping through a predefined frequency range, the position controller is forced into a controlled response, allowing its frequency-dependent behavior to be measured. 
 
-For precise measurement repeatability, an automated alignment sequence was introduced prior to the chirp execution. When the chirp mode is activated, a proportional yaw controller automatically rotates the drone to face true North (0 degrees heading). Once the heading error falls within an acceptable tolerance, the alignment is locked, all filters are reset, and the first chirp phase begins on the East-West (longitude) axis. Because the drone faces North, the East-West Earth-Fixed axis cleanly maps to the aircraft's body-frame roll axis. After the first sweep completes the excitation is applied to the North-South (latitude) axis, which corresponds to the aircraft's body-frame pitch axis. This strategic alignment ensures that the Earth-Fixed controller axes and the Body-Frame control axes are perfectly coupled during the system identification flights.
+The controller computes derivative (D) and acceleration (A) terms for both the latitude and longitude axes, forming a two-dimensional D+A vector. This vector represents the predictive braking force of the controller. When the magnitude of this vector exceeds 35 degrees, it is proportionally scaled to this limit. This limitation prevents overly aggressive braking actions when the drone moves at high speeds. For system identification, this introduces nonlinear behavior. To mitigate this, a lead-lag filter is applied to the chirp signal before injection, reducing its amplitudes at higher frequencies. This results in less acceleration of the drone and therefore a smaller combined D+A vector length. Figure \ref{fig:pidDA_limit} illustrates how the D+A magnitude can easily exceed the 35-degree limit during chirp excitation without the lead-lag filter.
 
-CLI commands added...
+\begin{figure}[H]
+    \centering
+    \begin{minipage}[t]{0.49\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{pidDA_limit_without_leadlag.png}
+        \caption*{without Lead-Lag filter}
+    \end{minipage}
+    \hfill
+    \begin{minipage}[t]{0.49\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{pidDA_limit_with_leadlag.png}
+        \caption*{with Lead-Lag filter}
+    \end{minipage}
+    \caption{Comparison of combined D+A vector magnitude during chirp measurements}
+    \label{fig:pidDA_limit}
+\end{figure}
 
-To support post-flight data analysis, a comprehensive suite of new Blackbox debug variables was added. The firmware now logs the active injected excitation, the instantaneous chirp frequency, the phase argument, and the resulting position error as seen by the PID controller. Furthermore, the intermediate Earth-Fixed PID sum and the final upsampled Body-Frame angle commands are recorded at the loop rate. These high-resolution logs are exported into MATLAB, where Welch’s method is utilized to estimate the open and closed-loop transfer functions, enabling precise adjustments to the P, I, D, and A parameters based on empirical flight data.
+To enable repeatable measurements, an automated heading alignment sequence precedes each chirp sweep. Upon activation, a proportional yaw controller rotates the drone to face true North (0 degrees heading). Once the heading error falls within tolerance, alignment is locked, controller state is reset, and the first chirp phase begins on the East-West (longitude) axis. At 0-degree heading, this Earth-Fixed axis maps cleanly to the body-frame roll axis. After the first sweep completes, the second chirp excites the North-South (latitude) axis, corresponding to body-frame pitch. This alignment ensures that Earth-Fixed and body-frame dynamics are directly observable.
+
+CLI commands were added to configure all chirp parameters including start and end frequencies, sweep duration, amplitude, yaw alignment gains, and lead-lag filter frequencies via the Betaflight configurator. New Blackbox debug variables log all required signals for analysis.
 
 \subsection*{Control Loop Calculation}
 
 \subsubsection*{Estimation of the Closed-Loop Components}
 
+In position hold mode, the chirp signal is injected directly into the target location in the Earth-fixed frame. This differs from angle or altitude modes, where the chirp is injected into attitude or throttle commands. The key insight is that the position error drives the controller rather than the absolute position. The measurement approach was designed around this principle. Instead of logging absolute GPS coordinates the position error in centimetres (gps\_error) is logged, as the firmware calculates the control outputs based on this relative distance.
+
+The injected chirp signal specifies the offset target position in centimetres. Before the chirp injection begins the drone is assumed to maintain the target position with zero error. This allows us to establish that the target position equals the injected chirp signal:
+
+\begin{equation}
+\text{target\_position} = \text{chirp}.
+\end{equation}
+
+The current physical position is computed from the measured GPS error and target position:
+
+\begin{equation}
+\text{current\_position} = \text{target\_position} - \text{gps\_error} = \text{chirp} - \text{gps\_error}.
+\end{equation}
+
+This reconstruction yields the physical system response from logged data. The position error driving the controller remains the primary input for transfer function analysis:
+
+\begin{equation}
+E_{\text{pos}}(\omega) = \text{target\_position} - \text{current\_position} = \text{gps\_error}.
+\end{equation}
+
+\textbf{The position error flows through the position controller, generating a corrective command (pid\_sum\_EF) in the Earth frame. This is then rotated into the body frame (angle\_target) based on the drone's heading. The position controller operates at the GPS update rate, significantly slower than the rate control loop. Velocity and acceleration are numerically differentiated from successive position measurements and heavily filtered using adaptive PT1 low-pass filters to attenuate noise introduced by discrete GPS measurements.}
+
+The chirp is applied alternately to two orthogonal Earth-frame axes. The active\_axis flag indicates which axis receives excitation: 0 for longitude (East-West, corresponding to roll) and 1 for latitude (North-South, corresponding to pitch). This enables separate system identification for each axis.
+
+Using the Fourier transforms of the position error $E_{\text{pos}}(\omega)$ and the resulting body-frame angle command $\Theta_{\text{BF}}(\omega)$, the transfer function of the position controller is obtained as:
+
+\begin{equation}
+G_{\text{pos\_ctrl}}(\omega) = \frac{\Theta_{\text{BF}}(\omega)}{E_{\text{pos}}(\omega)}
+\end{equation}
+
+This measured transfer function encapsulates the position controller path: the P, I, D, A gains, the Earth-frame to body-frame coordinate rotation, the heading-dependent mapping, and the PT3 upsampling filter. It does not include inner angle or rate controller dynamics, since $\Theta_{\text{BF}}$ represents the command sent to those inner loops.
+
+The debug output provides the instantaneous chirp frequency (chirp\_inst\_freq), the phase argument of the chirp, and the D+A magnitude (pidDA\_limit). These signals enable precise phase tracking and reveal when the D+A limiting constraint becomes active—crucial for understanding nonlinear behavior at the boundaries of the control authority.
+
 \subsubsection*{Implementation of the Tuning Method}
+
+The tuning method for the position hold controller follows the same general approach as altitude hold and angle controllers, with adjustments for the multi-axis nature and lower GPS update rate.
+
+From the measured closed-loop transfer function, the plant dynamics can be separated by considering known inner loop behavior. The plant encompasses the cascaded angle and rate controllers:
+
+\begin{equation}
+P_{\text{pos}}(\omega) = \frac{G_{\text{cl}}(\omega)}{C_{\text{pos}}(\omega)},
+\end{equation}
+
+where $C_{\text{pos}}(\omega)$ represents the combined position controller transfer function including P, I, D, and acceleration feedback.
+
+By iteratively adjusting these parameters and evaluating closed-loop performance through Bode plots and step responses, optimal tuning is achieved. Position hold tuning challenges include balancing responsiveness to position errors against the bandwidth limitations imposed by GPS update rates. Aggressive tuning can cause limit-cycle oscillations from discrete GPS measurements, while insufficient tuning leaves the drone susceptible to wind disturbances.
+
+Evaluation employs the Gang of Four analysis framework used for angle and altitude control: tracking transfer function $G_{\text{yr}}(\omega)$, sensitivity $S(\omega)$, compliance $SP(\omega)$, and controller effort $SC(\omega)$. This provides comprehensive insight into stability margins, disturbance rejection, and control effort required from the attitude controller during position hold.
 
 \subsection*{Drone Tuning}
 
