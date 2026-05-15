@@ -60,22 +60,22 @@
 \frontmatter
 
 % --- Title page ---------------------------------------------------------------
-% Option A: External PDF (uncomment when Titelblatt.pdf exists)
-% \begin{titlepage}
-%   \includepdf[pages=1]{pdf/Titelblatt.pdf}
-% \end{titlepage}
+ %Option A: External PDF (uncomment when Titelblatt.pdf exists)
+ \begin{titlepage}
+   \includepdf[pages=1]{pdf/Titelblatt.pdf}
+ \end{titlepage}
 
 % Option B: Auto-generated fallback title page
-\makethesistitle
+%\makethesistitle
 
 % --- Declaration of Originality -----------------------------------------------
-\makedeclaration{Winterthur}{\today}
+%\makedeclaration{Winterthur}{\today}
 
 % --- Abstract (German + English) ----------------------------------------------
-\chapter*{Zusammenfassung}
+\chapter*{Summary}
 \addcontentsline{toc}{chapter}{Zusammenfassung}
 
-Diese Bachelorarbeit beschäftigt sich mit der Entwicklung eines Offline-Tuning-Tools für verschiedene Regelkreise in FPV-Drohnen mit Betaflight-Firmware. Das Tool analysiert die aufgezeichneten Flugdaten, um die Systemdynamik abschätzen zu können und daraus optimierte Reglerparameter zu berechnen, ohne dass mehrere Flugtests erforderlich sind.
+Diese Bachelorarbeit befasst sich mit der Entwicklung eines Offline-Tuning-Tools für verschiedene Regelkreise in FPV-Drohnen mit Betaflight-Firmware. Das Tool analysiert die aufgezeichneten Flugdaten, um die Systemdynamik abschätzen zu können und daraus optimierte Reglerparameter zu berechnen, ohne dass mehrere Flugtests erforderlich sind.
 
 Die Messung beruht auf der Injektion eines Chirp-Signals in den zu tunenenden Regelkreisen, um das System über einen breiten Frequenzbereich systematisch anzuregen. Durch Anwendung von Signalverarbeitungstechniken werden die aufgezeichneten Daten ausgewertet. Dadurch können die Übertragungsfunktionen der Regelkreise identifiziert und auf dieser Grundlage geeignete Reglerparameter bestimmt werden, um das Flugverhalten zu verbessern.
 
@@ -138,53 +138,22 @@ We would like to express our sincere gratitude to our supervisors, Michael Peter
 \chapter{Introduction}
 \label{ch:introduction}
 
-First-Person-View (FPV) racing drones require precise and responsive control 
-to achieve stable flight behaviour, suppress disturbances such as propeller 
-wash and maintain agility during rapid manoeuvres. The flight performance 
-strongly depends on the tuning of the flight controller’s feedback loops. 
-In particular, the parameters of the angular rate controller determine how 
-quickly and accurately the drone reacts to pilot inputs and external disturbances.
+First-Person-View (FPV) racing drones require precise and responsive control to achieve stable flight behaviour, suppress disturbances such as propeller wash and maintain agility during rapid manoeuvres. The flight performance strongly depends on the tuning of the flight controller’s feedback loops. 
+In particular, the parameters of the angular rate controller determine how quickly and accurately the drone reacts to pilot inputs and external disturbances.
 
-In practice, controller tuning is still often performed manually through 
-iterative trial-and-error procedures. This requires extensive flight testing 
-and considerable piloting experience, making the process time-consuming and 
-difficult to reproduce. Although modern flight controller firmware such as 
-Betaflight provides extensive configuration options and detailed flight data 
-logging, systematic tuning remains a challenge.
+In practice, controller tuning is still often performed manually through iterative trial-and-error procedures. This requires extensive flight testing and considerable piloting experience, making the process time-consuming and difficult to reproduce. Although modern flight controller firmware such as Betaflight provides extensive configuration options and detailed flight data logging, systematic tuning remains a challenge.
 
-One commonly used tool for offline tuning is the PID-Toolbox. In this approach, 
-flight logs are recorded during normal flights and later analysed to derive 
-suitable controller parameters. However, the system excitation depends entirely 
-on the pilot’s inputs and the natural flight behaviour of the drone. As a result, 
-not all relevant frequency ranges are sufficiently excited, which can limit the 
-quality of the measurements.
+One commonly used tool for offline tuning is the PID-Toolbox. In this approach, flight logs are recorded during normal flights and later analysed to derive suitable controller parameters. However, the system excitation depends entirely on the pilot’s inputs and the natural flight behaviour of the drone. As a result, not all relevant frequency ranges are sufficiently excited, which can limit the quality of the measurements.
 
-In the approach proposed in this thesis, a chirp excitation signal is injected 
-directly into the control loop. This allows the system to be excited over a wide 
-range of frequencies in a controlled and systematic way, resulting in higher 
-quality measurements for system identification and controller tuning.
+In the approach proposed in this thesis, a chirp excitation signal is injected directly into the control loop. This allows the system to be excited over a wide range of frequencies in a controlled and systematic way, resulting in higher quality measurements for system identification and controller tuning.
 
-A previous project introduced a proof-of-concept approach for offline tuning of 
-angular rate controllers based on recorded flight data. In the preceding project 
-thesis, this concept was restructured and modularized and now serves as the 
-foundation for the present work.
+A previous project introduced a proof-of-concept approach for offline tuning of angular rate controllers based on recorded flight data. In the preceding project thesis, this concept was restructured and  modularized and now serves as the foundation for the present work.
 
-The objective of this bachelor thesis is to further refine and extend this 
-approach into an offline tuning framework for multiple control loops used in 
-Betaflight-based flight controllers. In addition to the existing angular rate 
-controller tuner, the framework will be extended with code extensions for tuning 
-the angle controller, the altitude hold controller and the position controller. 
-This extends the tuning framework beyond the inner rate control loop and enables 
-the analysis and tuning of higher-level control layers.
+The objective of this bachelor thesis is to further refine and extend this approach into an offline tuning framework for multiple control loops used in Betaflight-based flight controllers. In addition to the existing angular rate controller tuner, the framework will be extended with code extensions for tuning the angle controller, the altitude hold controller and the position controller. This extends the tuning framework beyond the inner rate control loop and enables the analysis and tuning of higher-level control layers.
 
-The framework will be implemented primarily in MATLAB and Python and will provide 
-tools for analysing flight logs, estimating system dynamics and generating 
-controller parameters without requiring repeated flight tests. The software will 
-be developed as an open-source library with accompanying documentation for the 
-FPV community.
+The framework will be implemented primarily in MATLAB and Python and will provide tools for analysing flight logs, estimating system dynamics and generating controller parameters without requiring repeated flight tests. The software will be developed as an open-source library with accompanying documentation for the FPV community.
 
-By providing a structured, data-driven approach to controller tuning, this 
-project aims to simplify the tuning process and improve flight performance.
+By providing a structured, data-driven approach to controller tuning, this project aims to simplify the tuning process and improve flight performance.
 
 \newpage
 % =============================================================================
@@ -1239,7 +1208,7 @@ By estimating different transfer functions from the measured data, the behavior 
 The first step is to estimate the closed-loop transfer function from the reference input \( r \) to the measured output \( y \), which is denoted as \( G_{yr} \):
 
 \begin{equation}
-T_{Gyro}(\omega)=G_{yr}(\omega) = \frac{Y(\omega)}{R(\omega)}
+T_{Gyro,meas}(\omega)=G_{yr}(\omega) = \frac{Y(\omega)}{R(\omega)}
 \end{equation}
 
 where \( Y(\omega) \) is the Fourier transform of the measured output signal and \( R(\omega) \) is the Fourier transform of the reference input, including the chirp signal. These signals are filtered and processed as described in the theory chapter in order to reduce noise and improve the quality of the estimated frequency response.
@@ -1265,19 +1234,19 @@ where \( V(\omega) \) is the Fourier transform of the signal after the PI contro
 With these transfer functions, the plant transfer function can be estimated as
 
 \begin{equation}
-G_{\text{Plant}}(\omega) = \frac{G_{yr}(\omega)}{G_{ur}(\omega)}
+P_{meas}(\omega) = \frac{T_{Gyro,meas}(\omega)}{G_{ur}(\omega)}
 \end{equation}
 
 In this estimation, the gyro filter is not backcalculated. Therefore, the estimated plant transfer function is divided by the gyro filter transfer function to obtain the real plant dynamics:
 
 \begin{equation}
-P_{\text{real}}(\omega) = \frac{G_{\text{Plant}}(\omega)}{G_{\text{FilterGyro}}(\omega)}
+P_{\text{real,meas}}(\omega) = \frac{P_{\text{meas}}(\omega)}{G_{\text{FilterGyro}}(\omega)}
 \end{equation}
 
 The transfer function of the PI controller can be estimated as
 
 \begin{equation}
-C_{\text{PI}}(\omega) = \frac{G_{ur}(\omega)}{1 - G_{yr}(\omega)}
+C_{\text{PI,meas}}(\omega) = \frac{G_{ur}(\omega)}{1 - T_{Gyro,meas}(\omega)}
 \end{equation}
 
 This estimation is required for the compensation of the I-Term Relax algorithm described in the theory chapter. By comparing the estimated transfer function with the analytical PI controller model, a compensation factor can be calculated and applied to both the original and the newly designed controller.
@@ -1285,7 +1254,7 @@ This estimation is required for the compensation of the I-Term Relax algorithm d
 The D-term and its filter can be estimated in a similar way:
 
 \begin{equation}
-C_{\text{D}}(\omega) = \frac{G_{ur}(\omega) - G_{vr}(\omega)}{G_{yr}(\omega)}
+C_{\text{D,meas}}(\omega) = \frac{G_{ur}(\omega) - G_{vr}(\omega)}{T_{Gyro,meas}(\omega)}
 \end{equation}
 
 The estimation of the D-term was especially useful during the development of the tuning tool, since it helped to better understand the D-term behavior and identify implementation issues.
@@ -1294,7 +1263,7 @@ The estimation of the D-term was especially useful during the development of the
 
 Based on the estimated plant and controller transfer functions, the tuning of the PID controllers can be performed. The goal is to adjust the controller parameters to achieve the desired tuning characteristics, such as stability, responsiveness, and robustness.
 
-The calculation of the tuning parameters for the angular rate control loop follows the same approach as for the angle control loop, but uses different control loop components. The relevant components are the PI controller \(C_{\text{PI}}\), the D-controller \(C_d\), the gyro filter \(G_{\text{FilterGyro}}\), and the estimated plant \(P_{\text{real}}\).
+The calculation of the tuning parameters for the angular rate control loop follows the same approach as for the angle control loop, but uses different control loop components. The relevant components are the PI controller \(C_{\text{PI}}\), the D-controller \(C_d\), the gyro filter \(G_{\text{FilterGyro}}\), which can be adjusted during tuning, and the estimated plant \(P_{\text{real}}\), which was obtained from the measured data.
 
 With these components, the transfer functions for the Gang of Four analysis can be calculated. First, the closed-loop transfer function of the angular rate control loop is given by
 
@@ -1612,29 +1581,29 @@ Based on the modified control structure, the dynamic behaviour of the Angle mode
 
 \subsubsection*{Estimation of the Closed-Loop Components}
 
-Using the Fourier transforms of the target angle $\Theta_{\text{target}}(\omega)$ and the measured angle $\Theta(\omega)$, the closed-loop transfer function is obtained as
+Using the Fourier transforms of the target angle which is in Figure~\ref{fig:angle_loop_modified} $w$ and the measured angle $q$, the closed-loop transfer function is obtained as
 
 \begin{equation}
-G_{cl}(\omega) =
-\frac{\Theta(\omega)}{\Theta_{\text{target}}(\omega)}.
+T_{Angle,meas} = G_{cl}(\omega) =
+\frac{Q(\omega)}{W(\omega)}.
 \label{eq:G_cl}
 \end{equation}
 
 This transfer function describes the complete behaviour of the cascaded control structure, including both the outer angle controller and the inner angular rate controller, as well as the plant dynamics.
 
-As described in the theory chapter, it is also necessary to estimate the transfer function from the target angle to the angular rate $\Omega(\omega)$:
+As described in the theory chapter, it is also necessary to estimate the transfer function from the target angle $w$ to the angular rate $y$:
 
 \begin{equation}
 G_{wy}(\omega) =
-\frac{\Omega(\omega)}{\Theta_{\text{target}}(\omega)}.
+\frac{Y(\omega)}{W(\omega)}.
 \label{eq:G_wy}
 \end{equation}
 
-With the two transfer functions $G_{cl}(\omega)$ and $G_{wy}(\omega)$, the plant of the angle control loop can be calculated as follows:
+With the two transfer functions $T_{Angle,meas}(\omega)$ and $G_{wy}(\omega)$, the plant of the angle control loop can be calculated as follows:
 
 \begin{equation}
-G_{\text{plant}}(\omega) =
-\frac{G_{cl}(\omega)}{G_{wy}(\omega)}.
+P_{\text{Angle}}(\omega) =
+\frac{T_{Angle,meas}(\omega)}{G_{wy}(\omega)}.
 \label{eq:G_plant}
 \end{equation}
 
@@ -1644,7 +1613,7 @@ This transfer function forms the foundation for the subsequent tuning of the ang
 
 \subsubsection*{Implementation of the Tuning Method}
 
-The calculation of the tuning parameters for the angle control loop follows the same approach as for the angular rate control loop, but uses different control loop components. The relevant components are the gyro control loop \(T_{\text{Gyro}}\), the angle controller and filter \(C_{\text{Angle}}\), and the plant \(P_{\text{Angle}}\).
+The calculation of the tuning parameters for the angle control loop follows the same approach as for the angular rate control loop, but uses different control loop components. The relevant components are the gyro control loop \(T_{\text{Gyro}}\) which we get out of the calculations of the gyro control loop, the angle controller and filter which are combined into \(C_{\text{Angle}}\), and the plant \(P_{\text{Angle}}\).
 
 With these components, the transfer functions for the Gang of Four plot can be calculated. First, the closed-loop transfer function of the angle control loop is
 
@@ -1691,13 +1660,13 @@ With this calculation, the tuning process can be performed. By iteratively adjus
 
 \subsubsection*{Evaluation Step Response}
 
-The \textbf{step response} of the angle controller illustrates how the drone reacts to a commanded step change in the desired roll angle. It provides insight into the rise time, settling behavior, and overall stability of the system.
+The step response of the angle controller illustrates how the drone reacts to a commanded step change in the desired roll angle. It provides insight into the rise time, settling behavior, and overall stability of the system.
 
 As shown in Fig.~\ref{fig:angle_step_response_tuning}, three curves are compared: the measured response (yellow), the calculated response based on the plant model (blue), and the predicted response using the newly tuned controller parameters (red).
 
 All three responses exhibit a fast rise time and converge smoothly to the desired angle without significant overshoot, indicating stable system behavior. The predicted response (red) reaches the target angle slightly faster than the calculated and measured responses, suggesting an improved controller tuning. The measured response closely follows the predicted curve, demonstrating that the model represents the real system with good accuracy.
 
-Since the angle controller is implemented as a \textbf{pure P-controller}, it mainly influences the response speed by mapping the angle error directly to a desired angular rate. The damping and transient characteristics are primarily governed by the inner angular rate controller.
+Since the angle controller is implemented as a pure P-controller, it mainly influences the response speed by mapping the angle error directly to a desired angular rate. The damping and transient characteristics are primarily governed by the inner angular rate controller.
 
 Overall, the results confirm that the cascaded control structure achieves a fast, stable, and accurate tracking of the commanded angle.
 
