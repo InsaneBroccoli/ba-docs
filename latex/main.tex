@@ -75,7 +75,7 @@
 \chapter*{Summary}
 \addcontentsline{toc}{chapter}{Zusammenfassung}
 
-Diese Bachelorarbeit befasst sich mit der Entwicklung eines Offline-Tuning-Tools für verschiedene Regelkreise in FPV-Drohnen mit Betaflight-Firmware. Das Tool analysiert die aufgezeichneten Flugdaten, um die Systemdynamik abschätzen zu können und daraus optimierte Reglerparameter zu berechnen, ohne dass mehrere Flugtests erforderlich sind.
+Diese Bachelorarbeit befasst sich mit der Entwicklung eines Offline-Tuning-Tools für verschiedene Regelkreise in FPV-Drohnen mit Betaflight-Firmware. Das Tool analysiert aufgezeichnete Flugdaten, um die Systemdynamik abzuschätzen und dadurch das Verhalten verschiedener Reglerparameter vorherzusagen, ohne dass für jede Änderung neue Flugtests durchgeführt werden müssen.
 
 Die Messung beruht auf der Injektion eines Chirp-Signals in den zu tunenenden Regelkreisen, um das System über einen breiten Frequenzbereich systematisch anzuregen. Durch Anwendung von Signalverarbeitungstechniken werden die aufgezeichneten Daten ausgewertet. Dadurch können die Übertragungsfunktionen der Regelkreise identifiziert und auf dieser Grundlage geeignete Reglerparameter bestimmt werden, um das Flugverhalten zu verbessern.
 
@@ -86,7 +86,7 @@ Die Ergebnisse dieser Arbeit werden in einem öffentlichen GitHub-Repository ver
 \chapter*{Abstract}
 \addcontentsline{toc}{chapter}{Abstract}
 
-This project presents the development of an offline tuning tool for multiple control loops in FPV drones based on the Betaflight firmware. The tool analyzes recorded flight data to estimate the system dynamics, enabling the calculation of optimized controller parameters without the need for iterative flight testing.
+This project presents the development of an offline tuning tool for multiple control loops in FPV drones based on the Betaflight firmware. The tool analyzes recorded flight data to estimate the system dynamics and predict the behavior of different controller parameters without requiring additional flight tests for every parameter change.
 
 The proposed approach is based on the injection of a chirp signal into the control loop, allowing systematic excitation of the system over a wide frequency range. Using signal processing techniques, the recorded data is evaluated to identify the transfer functions of the control loops. Based on these models, suitable controller parameters are derived to improve flight performance.
 
@@ -767,7 +767,7 @@ To determine the controller, the same principle is applied. The controller trans
 function can be calculated as
 
 \begin{equation}
-C(\omega) =
+C(\omega) = \frac{G_{ur}(\omega)}{1-G_{yr}(\omega)} =
 \frac{\dfrac{C(\omega)}{1 + C(\omega)P(\omega)}}
      {1 - \dfrac{C(\omega)P(\omega)}{1 + C(\omega)P(\omega)}}
 \end{equation}
@@ -1205,28 +1205,28 @@ As described in the theoretical part of this thesis, the use of block diagram al
 
 By estimating different transfer functions from the measured data, the behavior of the individual components of the control loop can be analyzed separately. This allows the controller, plant, and feedback paths to be evaluated individually instead of only observing the overall closed-loop response. As already described in the theoretical part, this approach simplifies the system analysis and improves the accuracy of the identified transfer functions.
 
-The first step is to estimate the closed-loop transfer function from the reference input \( r \) to the measured output \( y \), which is denoted as \( G_{yr} \):
+The first step is to estimate the closed-loop transfer function from the reference input \( w \) to the measured output \( y \), which is denoted as \( G_{yw} \):
 
 \begin{equation}
-T_{Gyro,meas}(\omega)=G_{yr}(\omega) = \frac{Y(\omega)}{R(\omega)}
+T_{Gyro,meas}(\omega)=G_{yw}(\omega) = \frac{Y(\omega)}{W(\omega)}
 \end{equation}
 
-where \( Y(\omega) \) is the Fourier transform of the measured output signal and \( R(\omega) \) is the Fourier transform of the reference input, including the chirp signal. These signals are filtered and processed as described in the theory chapter in order to reduce noise and improve the quality of the estimated frequency response.
+where \( Y(\omega) \) is the Fourier transform of the measured output signal and \( W(\omega) \) is the Fourier transform of the reference input, including the chirp signal. These signals are filtered and processed as described in the theory chapter in order to reduce noise and improve the quality of the estimated frequency response.
 
-The transfer function \( G_{yr} \) represents the overall closed-loop behavior of the system and can be used to evaluate important characteristics such as bandwidth, phase behavior, and stability margins.
+The transfer function \( G_{yw} \) represents the overall closed-loop behavior of the system and can be used to evaluate important characteristics such as bandwidth, phase behavior, and stability margins.
 
 To estimate the plant transfer function, the transfer function from the reference input to the controller output \( u \) is also calculated:
 
 \begin{equation}
-G_{ur}(\omega) = \frac{U(\omega)}{R(\omega)}
+G_{uw}(\omega) = \frac{U(\omega)}{W(\omega)}
 \end{equation}
 
 where \( U(\omega) \) is the Fourier transform of the controller output signal. This transfer function describes the dynamic relationship between the reference input and the control action applied to the plant.
 
-To estimate the D-term of the controller, the transfer function from the reference input to the signal after the PI controller and the D-path filter is additionally required. This transfer function is denoted as \( G_{vr} \):
+To estimate the D-term of the controller, the transfer function from the reference input to the signal after the PI controller and the D-path filter is additionally required. This transfer function is denoted as \( G_{vw} \):
 
 \begin{equation}
-G_{vr}(\omega) = \frac{V(\omega)}{R(\omega)}
+G_{vw}(\omega) = \frac{V(\omega)}{W(\omega)}
 \end{equation}
 
 where \( V(\omega) \) is the Fourier transform of the signal after the PI controller and the D-path filter. This additional transfer function is required because the D-term is implemented in the feedback path of the control loop and therefore cannot directly be separated from the remaining controller dynamics.
@@ -1234,19 +1234,19 @@ where \( V(\omega) \) is the Fourier transform of the signal after the PI contro
 With these transfer functions, the plant transfer function can be estimated as
 
 \begin{equation}
-P_{meas}(\omega) = \frac{T_{Gyro,meas}(\omega)}{G_{ur}(\omega)}
+P_{real}(\omega) = \frac{T_{Gyro,meas}(\omega)}{G_{uw}(\omega)}
 \end{equation}
 
 In this estimation, the gyro filter is not backcalculated. Therefore, the estimated plant transfer function is divided by the gyro filter transfer function to obtain the real plant dynamics:
 
 \begin{equation}
-P_{\text{real,meas}}(\omega) = \frac{P_{\text{meas}}(\omega)}{G_{\text{FilterGyro}}(\omega)}
+P_{{Gyro}}(\omega) = \frac{P_{real}(\omega)}{G_{\text{FilterGyro}}(\omega)}
 \end{equation}
 
 The transfer function of the PI controller can be estimated as
 
 \begin{equation}
-C_{\text{PI,meas}}(\omega) = \frac{G_{ur}(\omega)}{1 - T_{Gyro,meas}(\omega)}
+C_{\text{PI,meas}}(\omega) = \frac{G_{uw}(\omega)}{1 - T_{Gyro,meas}(\omega)}
 \end{equation}
 
 This estimation is required for the compensation of the I-Term Relax algorithm described in the theory chapter. By comparing the estimated transfer function with the analytical PI controller model, a compensation factor can be calculated and applied to both the original and the newly designed controller.
@@ -1254,7 +1254,7 @@ This estimation is required for the compensation of the I-Term Relax algorithm d
 The D-term and its filter can be estimated in a similar way:
 
 \begin{equation}
-C_{\text{D,meas}}(\omega) = \frac{G_{ur}(\omega) - G_{vr}(\omega)}{T_{Gyro,meas}(\omega)}
+C_{\text{D,meas}}(\omega) = \frac{G_{uw}(\omega) - G_{vw}(\omega)}{T_{Gyro,meas}(\omega)}
 \end{equation}
 
 The estimation of the D-term was especially useful during the development of the tuning tool, since it helped to better understand the D-term behavior and identify implementation issues.
@@ -1263,7 +1263,7 @@ The estimation of the D-term was especially useful during the development of the
 
 Based on the estimated plant and controller transfer functions, the tuning of the PID controllers can be performed. The goal is to adjust the controller parameters to achieve the desired tuning characteristics, such as stability, responsiveness, and robustness.
 
-The calculation of the tuning parameters for the angular rate control loop follows the same approach as for the angle control loop, but uses different control loop components. The relevant components are the PI controller \(C_{\text{PI}}\), the D-controller \(C_d\), the gyro filter \(G_{\text{FilterGyro}}\), which can be adjusted during tuning, and the estimated plant \(P_{\text{real}}\), which was obtained from the measured data.
+The calculation of the tuning parameters for the angular rate control loop follows the same approach as for the angle control loop, but uses different control loop components. The relevant components are the PI controller \(C_{\text{PI}}\), the D-controller \(C_d\), the gyro filter \(G_{\text{FilterGyro}}\), which can be adjusted during tuning, and the estimated plant \(P_{\text{Gyro}}\), which was obtained from the measured data.
 
 With these components, the transfer functions for the Gang of Four analysis can be calculated. First, the closed-loop transfer function of the angular rate control loop is given by
 
@@ -1272,11 +1272,11 @@ T_{Gyro}(\omega)
 =
 \frac{
 C_{\text{PI}}(\omega)\,
-P_{\text{real}}(\omega)\, 
+P_{\text{Gyro}}(\omega)\, 
 G_{\text{FilterGyro}}(\omega)
 }{
 1 +
-P_{\text{real}}(\omega)
+P_{\text{Gyro}}(\omega)
 \left(
 C_{\text{PI}}(\omega) + C_d(\omega)
 \right)
@@ -1292,7 +1292,7 @@ S_{Gyro}(\omega)
 1
 }{
 1 +
-P_{\text{real}}(\omega)
+P_{\text{Gyro}}(\omega)
 \left(
 C_{\text{PI}}(\omega) + C_d(\omega)
 \right)
@@ -1306,10 +1306,10 @@ Or the compliance function, which shows how disturbances acting on the plant aff
 SP_{Gyro}(\omega)
 =
 \frac{
-P_{\text{real}}(\omega)
+P_{\text{Gyro}}(\omega)
 }{
 1 +
-P_{\text{real}}(\omega)
+P_{\text{Gyro}}(\omega)
 \left(
 C_{\text{PI}}(\omega) + C_d(\omega)
 \right)
@@ -1329,7 +1329,7 @@ C_{\text{PI}}(\omega) + C_d(\omega)
 G_{\text{FilterGyro}}(\omega)
 }{
 1 +
-P_{\text{real}}(\omega)
+P_{\text{Gyro}}(\omega)
 \left(
 C_{\text{PI}}(\omega) + C_d(\omega)
 \right)
@@ -1729,87 +1729,109 @@ In the feedback path which includes the D-term, a D-Boost is implemented. During
 
 \subsection*{Firmware Modifications}
 
+To be done.
+
+\newpage
 
 \subsection*{Control Loop Calculation}
 
 With the injected chirp signal and the recorded data, the control loop can be calculated. This happens through the same steps as described in the theory chapter, including noise filtering and windowing. The resulting transfer function describes the complete behavior of the altitude hold control loop, including the plant dynamics and the controller. Through some algebraic manipulations, the plant and the controller can be separated, which allows for a systematic tuning of the controller parameters based on the estimated plant dynamics.
 
+By analyzing the estimated transfer functions in the frequency domain, important system characteristics such as bandwidth and phase behavior can be evaluated. The separated transfer functions also simplify the tuning process and help to identify possible controller or filtering issues.
+
 \subsubsection*{Estimation of the Closed-Loop Components}
-Using the Fourier transforms of the input and output signals, the closed-loop transfer functions can be calculated. The transfer function from the reference input to the output is given by
+
+By estimating different transfer functions from the measured data, the behavior of the individual components of the control loop can be analyzed separately. This allows the controller, plant, and feedback paths to be evaluated individually instead of only observing the overall closed-loop response. As already described in the theoretical part, this approach simplifies the system analysis and improves the accuracy of the identified transfer functions.
+
+The first step is to estimate the closed-loop transfer function from the reference input \( w \) to the measured output \( y \), which is denoted as \( G_{yw} \):
 
 \begin{equation}
-G_{yr}(\omega) = \frac{Y(\omega)}{W(\omega)}
+T_{AltHold,meas}(\omega)=G_{yw}(\omega) = \frac{Y(\omega)}{W(\omega)}
 \end{equation}
 
-where \( Y(\omega) \) is the Fourier transform of the measured output signal, \( W(\omega) \) is the Fourier transform of the reference input, including the chirp signal. These signals are getting filtered as described in the theory chapter.
+where \( Y(\omega) \) is the Fourier transform of the measured output signal and \( W(\omega) \) is the Fourier transform of the reference input, including the chirp signal. These signals are filtered and processed as described in the theory chapter in order to reduce noise and improve the quality of the estimated frequency response.
 
-To estimate the plant transfer function, the transfer function from the reference input to the output of the PI controller v is also calculated:
+The transfer function \( G_{yw} \) represents the overall closed-loop behavior of the system and can be used to evaluate important characteristics such as bandwidth, phase behavior, and stability margins.
+
+To estimate the plant transfer function, the transfer function from the reference input to the controller output \( u \) is also calculated:
 
 \begin{equation}
-G_{vr}(\omega) = \frac{V(\omega)}{W(\omega)}
+G_{uw}(\omega) = \frac{U(\omega)}{W(\omega)}
 \end{equation}
 
-where \( V(\omega) \) is the Fourier transform of the controller output signal. 
+where \( U(\omega) \) is the Fourier transform of the controller output signal. This transfer function describes the dynamic relationship between the reference input and the control action applied to the plant.
 
-To complete all the necessary estimations for the tuning process, the transfer function from the reference input to the shared output of the PI controller and the D-term u is calculated as well:
-
-\begin{equation}
-G_{ur}(\omega) = \frac{U(\omega)}{W(\omega
-])}\end{equation}
-
-
-With these transfer functions, the plant transfer function can be calculated by rearranging the closed-loop transfer function as follows:
+To estimate the D-term of the controller, the transfer function from the reference input to the shared output of the PI controller and the D-term is additionally required. This transfer function is denoted as \( G_{vw} \):
 
 \begin{equation}
-G_{Plant}(\omega) = \frac{G_{yr}(\omega)}{G_{vr}(\omega)}
+G_{vw}(\omega) = \frac{V(\omega)}{W(\omega)}
 \end{equation}
 
-This approach allows for the identification of the real plant dynamics, which can then be used for further analysis and controller tuning.
+where \( V(\omega) \) is the Fourier transform of the signal after the PI controller and before the D-term feedback path. This additional transfer function is required because the D-term is implemented in the feedback path of the control loop and therefore cannot directly be separated from the remaining controller dynamics.
 
-The transfer function of the PI controller can be estimated by rearranging the closed-loop transfer function as follows:
-
-\begin{equation}
-C_{\text{PI}}(\omega) = \frac{G_{yr}(\omega)}{G_{vr}(\omega) - G_{yr}(\omega)}
-\end{equation}
-
-The D term with its filter can be estimated by calculating:
+With these transfer functions, the plant transfer function can be estimated as
 
 \begin{equation}
-C_{\text{D}}(\omega) = \frac{G_{vr}(\omega) - G_{ur}(\omega)}{G_{yr}(\omega)}
+P_{\text{AltHold}}(\omega) = \frac{G_{yw}(\omega)}{G_{vw}(\omega)}
 \end{equation}
+
+This approach allows the estimation of the real plant dynamics, which can then be used for further analysis and controller tuning.
+
+The transfer function of the PI controller can be estimated as
+
+\begin{equation}
+C_{\text{PI,meas}}(\omega) = \frac{G_{yw}(\omega)}{G_{vw}(\omega) - G_{yw}(\omega)}
+\end{equation}
+
+This estimation is required for the compensation of the I-Term Relax algorithm described in the theory chapter. By comparing the estimated transfer function with the analytical PI controller model, a compensation factor can be calculated and applied to both the original and the newly designed controller.
+
+The D-term and its filter can be estimated in a similar way:
+
+\begin{equation}
+C_{\text{D,meas}}(\omega) = \frac{G_{uw}(\omega) - G_{vw}(\omega)}{T_{AltHold,meas}(\omega)}
+\end{equation}
+
+The estimation of the D-term was especially useful during the development of the tuning tool, since it helped to better understand the D-term behavior and identify implementation issues.
 
 With the estimated plant and controller transfer functions, the complete control loop can be analyzed and the tuning method can be applied to optimize the controller parameters for improved performance.
 
 \subsubsection*{Implementation of the Tuning Method}
 
-The tuning method for the altitude hold control loop is based on the estimated plant and controller transfer functions. By analyzing the frequency response of the plant, the controller parameters can be adjusted to achieve the desired performance characteristics, such as stability margins, bandwidth, and disturbance rejection.
+Based on the estimated plant and controller transfer functions, the tuning of the PID controllers can be performed. The goal is to adjust the controller parameters to achieve the desired tuning characteristics, such as stability, responsiveness, and robustness.
 
-These performance metrics can be computed based on the estimated transfer functions, allowing for a systematic evaluation of the tuning adjustments. They get calulated using following equations:
+The calculation of the tuning parameters for the altitude hold control loop follows the same approach as for the previously described control loops, but uses different control loop components. The relevant components are the PI controller \( C_{\text{PI}} \), the D-controller with the PT2 filter \( C_d \), and the estimated plant \( P_{\text{AltHold}} \), which was obtained from the measured data.
 
-For the complementary sensitivity function:
-
-\begin{equation}
-G_{cl,\text{new}}(\omega) = \frac{C_{\text{new}}(\omega) G_{\text{Plant}}(\omega)}{1 + C_{\text{new}}(\omega) G_{\text{Plant}}(\omega)}
-\end{equation}
-
-The sensitivity function can be calculated as:
+With these components, the transfer functions for the Gang of Four analysis can be calculated. First, the closed-loop transfer function of the altitude hold control loop is given by
 
 \begin{equation}
-S_{\text{new}}(\omega) = \frac{1}{1 + C_{\
-text{new}}(\omega) G_{\text{Plant}}(\omega)}
+T_{\text{AltHold}} = \frac{C_{\text{PI}}(\omega) P_{\text{AltHold}}(\omega)}{1 + P_{\text{AltHold}}(\omega)(C_{\text{PI}}(\omega) + C_d(\omega))}
 \end{equation}
 
-The controller effort can be calculated as:
+The sensitivity function can also be calculated with the new controller as follows. As already discussed in the theoretical part, the  sensitivity function is important to evaluate the robustness of the system and the disturbance rejection behavior:
+
 \begin{equation}
-SC_{\text{new}}(\omega) = \frac{C_{\text{new}}
-(\omega) G_{\text{Plant}}(\omega)}{1 + C_{\text{new}}(\omega) G_{\text{Plant}}(\omega)}
+S_{\text{AltHold}}(\omega) = \frac{1}{1 + P_{\text{AltHold}}(\omega)(C_{\text{PI}}(\omega) + C_d(\omega))}
 \end{equation}
 
-And the compliance can be calculated as:
+The controller effort can also be calculated with the new controller as follows. This function can be used to evaluate the controller activity and the amplification of noise at higher frequencies:
+
 \begin{equation}
-SP_{\text{new}}(\omega) = \frac{1}{1 + C_{\
-text{new}}(\omega) G_{\text{Plant}}(\omega)}
+SC_{\text{AltHold}}(\omega) = \frac{C_{\text{PI}}(\omega) + C_d(\omega)}
+{1 + P_{\text{AltHold}}(\omega)(C_{\text{PI}}(\omega) + C_d(\omega))}
 \end{equation}
+
+Or the compliance function, which shows how disturbances acting on the plant affect the system output:
+\begin{equation}
+SP_{\text{AltHold}}(\omega) = \frac{P_{\text{AltHold}}(\omega)}
+{1 + P_{\text{AltHold}}(\omega)(C_{\text{PI}}(\omega) + C_d(\omega))}
+\end{equation}
+
+These metrics allows us to evaluate the performance of the new controller parameters and make informed decisions about further adjustments to optimize the altitude hold control loop for improved stability, responsiveness, and disturbance rejection. More details about that can be found in the next section, where the results of the tuning process are evaluated based on the step response and the Gang of Four plots.
+
+\subsection*{Drone Tuning}
+\subsubsection*{Evaluation of the Step Response}
+
+\subsubsection*{Evaluation Gang of Four}
 
 These metrics allows us to evaluate the performance of the new controller parameters and make informed decisions about further adjustments to optimize the altitude hold control loop for improved stability, responsiveness, and disturbance rejection. More details about that can be found in the next section, where the results of the tuning process are evaluated based on the step response and the Gang of Four plots.
 
@@ -2057,6 +2079,15 @@ Overall, the results highlight that the reliability of the proposed tuning appro
 \section{Discussion Position Hold Controller Tuning}
 
 \chapter{Conclusion}
+
+The goal of this bachelor thesis was to develop an offline tuning tool for the Betaflight flight controller, allowing users to optimize controller parameters based on recorded flight data. The tool was designed to be modular and extendable, enabling future additions of tuning methods for different control loops. The implementation was carried out in both MATLAB and Python, with a focus on maintaining consistency between the two environments.
+
+Within this work, the existing tuning framework was successfully extended with support for the angle control loop. The developed tool is therefore able to tune both the gyro and angle controllers based on flight data. The results showed that the tool can predict the system response with good accuracy for moderate parameter changes, while larger changes lead to reduced estimation accuracy due to nonlinear effects. This provides FPV pilots with a structured and data-driven alternative to traditional trial-and-error tuning methods.
+
+Additionally, proof-of-concept implementations for the altitude hold and position hold control loops were developed, demonstrating the potential for further extensions of the framework. At the same time, these experiments highlighted limitations and challenges of the proposed tuning approach. In particular, the low update rate and noise of the GPS measurements in the position and altitude hold control loops complicate accurate system identification and controller tuning. These limitations may require additional methods such as sensor fusion or more advanced filtering techniques in future implementations.
+
+An important outcome of this work was the strong interest from the Betaflight and FPV community. Discussions within the Betaflight project regarding possible integrations of offline tuning methods, as well as feedback and feature requests from developers of existing tuning tools, demonstrated the practical relevance of the developed framework beyond the academic scope of this thesis.
+All in all, the interesst in this project and the tuning tool is high,
 
 
 
