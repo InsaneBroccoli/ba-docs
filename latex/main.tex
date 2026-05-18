@@ -1458,15 +1458,11 @@ The tuning process involved iteratively adjusting PID gains in MATLAB while moni
 
 \section{Angle Controller Tuning}
 
-The Betaflight software provides three main flight modes: Angle, Horizon, and Acro.
+The Betaflight firmware provides different flight modes with different control structures. While Acro mode directly controls the angular rate of the drone, Angle mode introduces an additional outer control loop which regulates the drone angle based on the pilot stick position.
 
-In Angle mode, the drone’s tilt angle is directly linked to the stick position. The maximum tilt is limited to a predefined value, preventing flips and making this mode particularly suitable for beginners.
+During the previous project thesis, an offline tuning framework for the angular rate controller in Acro mode was developed. Within this thesis, the framework was extended to also support the Angle mode controller. This required modifications to the chirp injection method and additional transfer function estimations due to the cascaded control loop structure of Angle mode.
 
-In contrast, Acro mode provides full manual control. In this mode, stick inputs define an angular rate rather than a target angle, meaning that the drone continues rotating as long as the stick remains deflected. This allows aggressive maneuvers such as flips and rolls but also requires greater pilot experience.
-
-During this thesis project, an offline tuner for the angular rate controller was further developed to systematically optimize the rate control loop and improveccontroller. As Acro mode performance. The tuner was subsequently extended to also support Angle mode, enabling improved stability and responsiveness while maintaining intuitive handling for beginner pilots.
-
-This extension allows a consistent tuning methodology across different flight modes, improving overall system performance and usability.
+The extension of the tuning framework allows the angle controller and the inner angular rate controller to be analyzed and tuned consistently using recorded flight data. This enables the influence of different controller parameters on the overall flight behavior to be evaluated offline without requiring repeated flight tests.
 
 \subsection*{Betaflight Firmware}
 This chapter describes the implementation of the Betaflight firmware and the modifications required for the proposed offline tuning approach.
@@ -1481,15 +1477,11 @@ The modifications were intentionally kept as small as possible in order to avoid
 
 \subsubsection*{Angle Mode Control Loop}
 
-In Angle mode, the angular rate controller is extended by an outer angle control loop, resulting in a cascaded control structure.
+In Angle mode, the angular rate controller is extended by an additional outer angle control loop, resulting in a cascaded control structure. Unlike Acro mode, the pilot stick input no longer directly defines an angular rate, but instead a target angle for the drone orientation.
 
-The stick input initially generates a rate setpoint. Unlike in Acro mode, this rate setpoint is then converted into a target angle. This target angle serves as the reference input for the inner angular rate controller.
+The outer angle controller calculates the required angular rate setpoint based on the angle error, while the inner angular rate controller stabilizes the rotational motion of the drone. Due to the significantly faster dynamics of the inner rate loop, the cascaded structure allows stable angle control while maintaining fast disturbance rejection and responsive flight behavior.
 
-The outer angle loop operates at a slower dynamic compared to the inner rate loop. Its task is to generate stable angular rate setpoints that move the drone toward the desired orientation. The inner angular rate controller then reacts much faster and stabilizes the rotational motion of the quadcopter.
-
-The cascaded architecture separates attitude control from angular rate stabilization. While the outer loop ensures convergence toward the desired orientation, the inner loop provides fast dynamic stabilization by regulating the angular velocity. As a result, the system achieves improved disturbance rejection and more intuitive handling characteristics, since the pilot directly commands an angle rather than a rotational rate.
-
-This behavior makes Angle mode especially suitable for beginner pilots and for applications where stable and predictable flight behavior is required. In contrast to Acro mode, the drone automatically returns to the commanded orientation when the stick input is centered.
+The extension of the offline tuning framework to Angle mode required additional firmware modifications and transfer function estimations compared to the Acro mode controller. The corresponding control structure is shown in Figure~\ref{fig:angle_mode_control_loop}.
 
 The Angle mode controller therefore consists of two cascaded loops:
 \begin{itemize}
@@ -1498,23 +1490,21 @@ The Angle mode controller therefore consists of two cascaded loops:
 \end{itemize}
 
 \begin{figure}[htbp]
-    \centering
-    \includegraphics[width=1.0\textwidth]{Figures/Control_Loop_Angle.png}
-    \caption{Cascaded control structure of the Betaflight Angle mode controller.}
-    \label{fig:angle_mode_control_loop}
+\centering
+\includegraphics[width=1.0\textwidth]{Figures/Control_Loop_Angle.png}
+\caption{Cascaded control structure of the Betaflight Angle mode controller.}
+\label{fig:angle_mode_control_loop}
 \end{figure}
 
-The angle control loop consists of a proportional controller with an additional feedforward term. Within the offline tuning framework, however, only the proportional controller is optimized.
-
-The feedforward term directly maps the target angle stick input into the control loop. In normal flight operation, this improves the responsiveness of the controller by directly reacting to stick movements.
+The angle control loop consists of a proportional controller with an additional feedforward term. During normal flight operation, the feedforward term improves the responsiveness of the controller by directly reacting to stick movements.
 
 However, for offline system identification and transfer function estimation, this additional control path complicates the analysis because parts of the controller action no longer originate purely from the feedback control loop.
 
-To simplify the tuning process and focus solely on the proportional controller behavior, the feedforward term is disabled in the modified firmware. This enables a more straightforward analysis of the control loop dynamics without additional influence from the feedforward component.
+To simplify the tuning process and focus only on the proportional controller behavior, the feedforward term is disabled in the modified firmware. This allows a more straightforward analysis of the control loop dynamics without additional influence from the feedforward component.
 
 \subsubsection*{Derivation of the Target Angle}
 
-The target angle is obtained by scaling the commanded angular rate with respect to the maximum achievable rate and the configured maximum tilt angle:
+In the control structure shown in Figure~\ref{fig:angle_mode_control_loop}, the block ``Transformation into Degree'' converts the commanded angular rate into a target angle for the outer angle control loop. The target angle is obtained by scaling the commanded angular rate with respect to the configured maximum angular rate and the maximum allowed tilt angle:
 
 \begin{equation}
 \theta_{\text{target}} =
@@ -1527,37 +1517,12 @@ The target angle is obtained by scaling the commanded angular rate with respect 
 where
 
 \begin{itemize}
-    \item $\theta_{\text{limit}}$ is the maximum allowed tilt angle (e.g., $60^\circ$),
+    \item $\theta_{\text{limit}}$ is the maximum allowed tilt angle,
     \item $\omega_{\text{set}}$ is the commanded angular rate derived from the stick input,
-    \item $\omega_{\text{max}}$ is the maximum achievable angular rate determined by the rate configuration.
+    \item $\omega_{\text{max}}$ is the maximum configured angular rate.
 \end{itemize}
 
-This relation ensures a proportional mapping between stick deflection and the resulting target angle.
-
-For example,
-\begin{equation}
-\omega_{\text{set}} = \omega_{\text{max}}
-\Rightarrow
-\theta_{\text{target}} = \theta_{\text{limit}}
-\label{eq:target_angle_max}
-\end{equation}
-
-\begin{equation}
-\omega_{\text{set}} = 0
-\Rightarrow
-\theta_{\text{target}} = 0
-\label{eq:target_angle_zero}
-\end{equation}
-
-Thus, the stick position scales the target angle continuously within the range
-\begin{equation}
--\theta_{\text{limit}}
-\le
-\theta_{\text{target}}
-\le
-+\theta_{\text{limit}}.
-\label{eq:target_angle_range}
-\end{equation}
+This proportional mapping allows the pilot to control the drone orientation directly through the stick position while limiting the maximum achievable tilt angle.
 
 \newpage
 
@@ -1588,11 +1553,13 @@ This approach allows the same chirp signal to be used for both modes. As a resul
 
 \subsection*{Control Loop Calculation}
 
-Based on the modified control structure, the dynamic behaviour of the Angle mode control loop can be analysed using the recorded input and output signals. Due to the chirp signal being injected before the transformation to the target angle, the system can be treated as a single-input single-output (SISO) system from the target angle to the measured angle. This allows the same signal processing steps as described in the theory chapter to be applied, including noise filtering and windowing.
+Based on the modified control structure, the dynamic behavior of the Angle mode control loop can be analyzed using the recorded input and output signals. By injecting the chirp signal before the transformation to the target angle, the system can be treated as a single-input single-output (SISO) system from the target angle to the measured angle.
+
+This allows the same signal processing steps as described in the theory chapter to be applied, including noise filtering and windowing. Based on the measured frequency responses, the transfer functions of the cascaded control loop components can then be estimated directly from the recorded flight data.
 
 \subsubsection*{Estimation of the Closed-Loop Components}
 
-Using the Fourier transforms of the target angle which is in Figure~\ref{fig:angle_loop_modified} $w$ and the measured angle $q$, the closed-loop transfer function is obtained as
+Using the Fourier transforms of the target angle reference signal \(w\) and the measured angle \(q\), shown in Figure~\ref{fig:angle_loop_modified}, the closed-loop transfer function can be estimated as
 
 \begin{equation}
 T_{Angle,meas} = G_{cl}(\omega) =
@@ -1600,9 +1567,9 @@ T_{Angle,meas} = G_{cl}(\omega) =
 \label{eq:G_cl}
 \end{equation}
 
-This transfer function describes the complete behaviour of the cascaded control structure, including both the outer angle controller and the inner angular rate controller, as well as the plant dynamics.
+This transfer function describes the complete behavior of the cascaded control structure, including both the outer angle controller and the inner angular rate controller, as well as the plant dynamics.
 
-As described in the theory chapter, it is also necessary to estimate the transfer function from the target angle $w$ to the angular rate $y$:
+As described in the theoretical part of this thesis, it is also necessary to estimate the transfer function from the target angle \(w\) to the angular rate \(y\):
 
 \begin{equation}
 G_{wy}(\omega) =
@@ -1610,7 +1577,7 @@ G_{wy}(\omega) =
 \label{eq:G_wy}
 \end{equation}
 
-With the two transfer functions $T_{Angle,meas}(\omega)$ and $G_{wy}(\omega)$, the plant of the angle control loop can be calculated as follows:
+With the two transfer functions \(T_{Angle,meas}(\omega)\) and \(G_{wy}(\omega)\), the plant of the angle control loop can be calculated as follows:
 
 \begin{equation}
 P_{\text{Angle}}(\omega) =
@@ -1618,13 +1585,13 @@ P_{\text{Angle}}(\omega) =
 \label{eq:G_plant}
 \end{equation}
 
-The resulting plant transfer function does not only contain the physical drone dynamics, but also the complete closed-loop behaviour of the inner angular rate controller. From the perspective of the outer angle loop, the stabilized rate controller therefore becomes part of the plant dynamics.
+The resulting plant transfer function does not only contain the physical drone dynamics, but also the complete closed-loop behavior of the inner angular rate controller. From the perspective of the outer angle loop, the stabilized rate controller therefore becomes part of the plant dynamics.
 
-This transfer function forms the foundation for the subsequent tuning of the angle control loop. With the measured plant dynamics, all the necessary information is available to optimize the controller parameters and improve the performance of the Angle mode.
+The estimated plant transfer function can then be used to analyze the influence of different controller parameters on the Angle mode behavior without performing additional flight tests.
 
 \subsubsection*{Implementation of the Tuning Method}
 
-The calculation of the tuning parameters for the angle control loop follows the same approach as for the angular rate control loop, but uses different control loop components. The relevant components are the gyro control loop \(T_{\text{Gyro}}\) which we get out of the calculations of the gyro control loop, the angle controller and filter which are combined into \(C_{\text{Angle}}\), and the plant \(P_{\text{Angle}}\).
+The calculation of the tuning parameters for the angle control loop follows the same approach as for the angular rate control loop, but uses different control loop components. The relevant components are the gyro control loop \(T_{\text{Gyro}}\), which is obtained from the gyro control loop analysis, the angle controller and its associated filtering, combined into \(C_{\text{Angle}}\), and the plant \(P_{\text{Angle}}\).
 
 With these components, the transfer functions for the Gang of Four plot can be calculated. First, the closed-loop transfer function of the angle control loop is
 
@@ -1661,30 +1628,28 @@ SP_{\text{Angle}}(\omega) =
 \label{eq:G_c_new}
 \end{equation}
 
-These expressions allow the computation of all relevant performance metrics such as gain margin, phase margin, bandwidth, controller effort, disturbance attenuation, and robustness properties. Based on these metrics, plots can be generated and the suitability of the new controller parameters can be systematically evaluated.
+These transfer functions allow the influence of different angle controller parameters on the closed-loop behavior to be evaluated offline. Based on the resulting plots and performance metrics, the controller parameters can systematically be adjusted before performing additional flight tests.
 
 \newpage
 
 \subsection*{Drone Tuning}
 
-With this calculation, the tuning process can be performed. By iteratively adjusting the controller parameters and evaluating the resulting closed-loop performance, the optimal settings for the angle control loop can be determined. This systematic approach ensures that the tuning process is efficient and leads to improved flight performance in Angle mode.
+Based on the calculated transfer functions and tuning plots, the influence of different angle controller parameters on the drone behavior can be evaluated offline. By adjusting the controller gains and analyzing the resulting closed-loop responses, the controller tuning can be optimized before performing additional flight tests.
+
+During the tuning process, particular attention is paid to the tradeoff between responsiveness and robustness. Increasing the controller gain can improve the responsiveness of the Angle mode, but may also lead to oscillations or reduced stability margins. The Gang of Four plots and predicted step responses therefore provide important information for evaluating the resulting flight behavior.
 
 \subsubsection*{Evaluation Step Response}
 
-The step response of the angle controller illustrates how the drone reacts to a commanded step change in the desired roll angle. It provides insight into the rise time, settling behavior, and overall stability of the system.
+The step response is used to evaluate the responsiveness, damping, and tracking behavior of the Angle mode controller. As shown in Fig.~\ref{fig:angle_step_response_tuning}, three responses are compared: the measured response (yellow), the calculated response based on the estimated plant model (blue), and the predicted response using the newly tuned controller parameters (red).
 
-As shown in Fig.~\ref{fig:angle_step_response_tuning}, three curves are compared: the measured response (yellow), the calculated response based on the plant model (blue), and the predicted response using the newly tuned controller parameters (red).
+All three responses converge quickly and stably toward the target angle without significant overshoot. The predicted response reaches the target angle slightly faster than the original controller configuration, indicating improved responsiveness. Furthermore, the measured response closely follows the predicted response, showing that the estimated plant model represents the real system behavior with good accuracy.
 
-All three responses exhibit a fast rise time and converge smoothly to the desired angle without significant overshoot, indicating stable system behavior. The predicted response (red) reaches the target angle slightly faster than the calculated and measured responses, suggesting an improved controller tuning. The measured response closely follows the predicted curve, demonstrating that the model represents the real system with good accuracy.
-
-Since the angle controller is implemented as a pure P-controller, it mainly influences the response speed by mapping the angle error directly to a desired angular rate. The damping and transient characteristics are primarily governed by the inner angular rate controller.
-
-Overall, the results confirm that the cascaded control structure achieves a fast, stable, and accurate tracking of the commanded angle.
+Since the angle controller is implemented as a pure proportional controller, it mainly affects the responsiveness of the outer angle loop, while the damping and transient behavior are primarily determined by the inner angular rate controller. Overall, the results demonstrate that the offline tuning approach can predict the Angle mode behavior with good accuracy while improving the responsiveness of the control loop.
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=1.0\textwidth]{Step_Response_Angle_Tuning.png}
-	\caption{Step Response (Angle Controller)}
+	\includegraphics[width=0.85\textwidth]{Step_Response_Angle_Tuning.png}
+	\caption{Step response of the Angle mode controller.}
 	\label{fig:angle_step_response_tuning}
 \end{figure}
 
