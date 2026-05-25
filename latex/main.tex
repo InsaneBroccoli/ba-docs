@@ -138,7 +138,7 @@ We would like to express our sincere gratitude to our supervisors, Michael Peter
 \chapter{Introduction}
 \label{ch:introduction}
 
-First-Person-View (FPV) racing drones require precise and responsive control to achieve stable flight behaviour, suppress disturbances such as propeller wash and maintain agility during rapid maneuvers. The flight performance strongly depends on the tuning of the flight controller’s feedback loops. 
+First-Person-View (FPV) racing drones require precise and responsive control to achieve stable flight behaviour, suppress disturbances such as propwash and maintain agility during rapid maneuvers. The flight performance strongly depends on the tuning of the flight controller’s feedback loops. 
 In particular, the parameters of the angular rate controller determine how quickly and accurately the drone reacts to pilot inputs and external disturbances.
 
 In practice, controller tuning is still often performed manually through iterative trial-and-error procedures. This requires extensive flight testing and considerable piloting experience, making the process time-consuming and difficult to reproduce. Although modern flight controller firmware such as Betaflight provides extensive configuration options and detailed flight data logging, systematic tuning remains a challenge.
@@ -149,7 +149,7 @@ In the approach proposed in this thesis, a chirp excitation signal is injected d
 
 A previous project introduced a proof-of-concept approach for offline tuning of angular rate controllers based on recorded flight data. In the preceding project thesis, this concept was restructured and  modularized and now serves as the foundation for the present work.
 
-The objective of this bachelor thesis is to further refine and extend this approach into an offline tuning framework for multiple control loops used in Betaflight-based flight controllers. In addition to the existing angular rate controller tuner, the framework will be extended with code extensions for tuning the angle controller, the altitude hold controller and the position controller. This extends the tuning framework beyond the inner rate control loop and enables the analysis and tuning of higher-level control layers.
+The objective of this bachelor thesis is to further refine and extend this approach into an offline tuning framework for multiple control loops used in Betaflight-based flight controllers. In addition to the existing angular rate controller tuner, the framework will be extended with code extensions for tuning the angle controller, the altitude controller and the position controller. This extends the tuning framework beyond the inner rate control loop and enables the analysis and tuning of higher-level control layers.
 
 The framework will be implemented primarily in MATLAB and Python and will provide tools for analyzing flight logs, estimating system dynamics and generating controller parameters without requiring repeated flight tests. The software will be developed as an open-source library with accompanying documentation for the FPV community.
 
@@ -163,7 +163,7 @@ By providing a structured, data-driven approach to controller tuning, this proje
 
 The open-source firmware Betaflight is one of the most widely used platforms for FPV racing drones and is continuously developed by a large community. The quality of the control algorithms is crucial for flight performance, as it determines how quickly and accurately the drone can respond to pilot inputs and external disturbances.
 
-Currently, controller tuning is often performed manually through iterative trial-and-error procedures or with the support of tools such as the PID Toolbox. However, these approaches rely on the natural flight behaviour of the drone and the pilot’s inputs, which may not sufficiently excite all relevant frequency ranges. As a result, this can lead to suboptimal tuning outcomes and requires extensive flight testing as well as significant piloting experience.
+Currently, controller tuning is often performed manually through iterative trial-and-error procedures or with the support of tools such as the PID Toolbox by Brian White. However, these approaches rely on the natural flight behaviour of the drone and the pilot’s inputs, which may not sufficiently excite all relevant frequency ranges. As a result, this can lead to suboptimal tuning outcomes and requires extensive flight testing as well as significant piloting experience.
 
 During our project thesis, a proof-of-concept approach for offline tuning of the angular rate controller based on recorded flight data, originally developed by Michael Peter, was restructured and modularized. This approach serves as the foundation for the present work and is further refined and extended to include additional control loops.
 
@@ -193,7 +193,7 @@ Unmanned Aerial Vehicles (UAVs) can generally be classified into different categ
 
 Among multirotor UAVs, the most common configurations are quadcopters, hexacopters and octocopters, which differ in the number of rotors (see Fig.~\ref{fig:multirotor_types}). Quadcopters use four rotors and represent the simplest fully controllable multirotor configuration. Due to their comparatively low mechanical complexity, good maneuverability and widespread use in research and practical applications, they are particularly relevant for modeling and control tasks.
 
-Hexacopters and octocopters extend this concept by using six and eight rotors, respectively. These configurations offer increased thrust, improved fault tolerance and higher payload capacity, but they also involve greater weight, higher energy consumption and more complex control allocation.
+Hexacopters and octocopters extend this concept by using six or eight rotors. These configurations offer increased thrust, improved fault tolerance and higher payload capacity, but they also involve greater weight, higher energy consumption and more complex control allocation.
 
 Since this work is focused with the analysis and modeling of quadcopters, the quadcopter configuration is used as the reference platform throughout the remainder of this chapter.
 
@@ -210,13 +210,13 @@ A quadcopter relies on a variety of sensors to measure its state and environment
 
 \begin{itemize}
 \item \textbf{Inertial Measurement Unit (IMU):} The IMU consists of accelerometers and gyroscopes that measure linear acceleration and angular velocity. These measurements are used to estimate the drone's orientation and motion.
-\item \textbf{Barometer:} A barometer measures atmospheric pressure, which can be used to estimate altitude. This is important for altitude control.
-\item \textbf{GPS:} GPS provides position and velocity information and is mainly used for navigation and position control.
-\item \textbf{Magnetometer:} A magnetometer measures the Earth's magnetic field and is used to estimate the heading of the drone.
 \item \textbf{Electronic Speed Controllers (ESC's):} ESC's control the rotational speed of the motors and provide feedback for motor control.
+\item \textbf{GPS:} GPS provides 3D position and velocity information and is mainly used for GPS rescue, navigation and position control.
+\item \textbf{Magnetometer:} A magnetometer measures the Earth's magnetic field and is used to estimate the heading of the drone.
+\item \textbf{Barometer:} A barometer measures atmospheric pressure, which can be used to estimate altitude.
 \end{itemize}
 
-These are the most important sensors for us in this thesis used in a quadcopter. With these sensors we get all the necessary data, which are essential for the offline tuning. However, depending on the application, additional sensors such as cameras or distance sensors can also be used. In practice, the measurements of these sensors are often combined to obtain a more accurate estimate of the drone’s state. These sensor data form the basis for stabilization, navigation and control.
+These sensors provide the measurements needed for offline tuning. Depending on the application, additional sensors such as cameras or distance sensors may be used. In practice, measurements from multiple sensors are often combined through sensor fusion to obtain a more accurate estimate of the drone’s state. Sensor data form the basis for stabilization, navigation and control.
 
 \section{Drone Dynamics and Control Principles}
 
@@ -234,8 +234,8 @@ The dynamics of a quadcopter are typically described using a body-fixed coordina
 
 \begin{itemize}
 \item The \(x\)-axis points forward, in the direction the drone is facing.
-\item The \(y\)-axis points to the right, perpendicular to the \(x\)-axis.
-\item The \(z\)-axis points downward, perpendicular to both the \(x\)- and \(y\)-axes.
+\item The \(y\)-axis points to the left, perpendicular to the \(x\)-axis.
+\item The \(z\)-axis points up, perpendicular to both the \(x\)- and \(y\)-axes.
 \end{itemize}
 
 This coordinate system follows the standard aerospace convention and moves together with the drone. All rotational motions are defined with respect to these axes.
@@ -245,7 +245,7 @@ The orientation of the quadcopter is described by three rotational degrees of fr
 \begin{itemize}
 \item \textbf{Roll} (\(\phi\)) describes a rotation around the \(x\)-axis. A positive roll angle tilts the drone to the right.
 \item \textbf{Pitch} (\(\theta\)) describes a rotation around the \(y\)-axis. A positive pitch angle tilts the drone forward.
-\item \textbf{Yaw} (\(\psi\)) describes a rotation around the \(z\)-axis. A positive yaw angle rotates the drone clockwise when viewed from above.
+\item \textbf{Yaw} (\(\psi\)) describes a rotation around the \(z\)-axis. A positive yaw angle rotates the drone counterclockwise.
 \end{itemize}
 
 The sign conventions for these rotations follow the right-hand rule. This means that if the thumb of the right-hand points in the direction of the axis, the curled fingers indicate the direction of positive rotation.
@@ -265,7 +265,7 @@ All this motion is controlled by adjusting the rotatioal speeds of the four moto
 
 As already mentioned, a quadcopter generates all forces and torques through the thrust produced by the propellers. Therefore, the control of the drone is achieved by adjusting the speed of each motor, which in turn changes the thrust and the resulting forces and torques.
 
-To roll the drone is relatively straightforward. This is achieved by increasing the speed of two motors on one side and decreasing the speed of the opposite motors. For example, to roll the drone to the left, the speed of the right motors is increased while the speed of the left motors is decreased. This creates a torque around the \(x\)-axis, causing the drone to tilt to the right, as illustrated in Figure~\ref{fig:roll_pitch}. The same principle also applies to pitch control, where the front and rear motors are adjusted to create a torque around the \(y\)-axis.
+Rolling the drone is achieved by increasing the speed of two motors on one side and decreasing the speed of the opposite motors. For example, to roll the drone to the left, the speeds of the right motors is increased while the speeds of the left motors is decreased. This creates a torque around the \(x\)-axis, causing the drone to tilt to the right, as illustrated in Figure~\ref{fig:roll_pitch}. The same principle also applies to pitch control, where the front and rear motors are adjusted to create a torque around the \(y\)-axis.
 
 \begin{figure}[htbp]
     \centering
@@ -276,7 +276,7 @@ To roll the drone is relatively straightforward. This is achieved by increasing 
 
 To move along the \(x\)- and \(y\)-axes, the drone needs to tilt in the corresponding direction, which is achieved by adjusting the roll and pitch angles. For example, to move forward, the drone pitches forward by increasing the speed of the rear motors and decreasing the speed of the front motors. This creates a horizontal component of the thrust that propels the drone forward. Similarly, to move to the right, the drone rolls to the right by increasing the speed of the left motors and decreasing the speed of the right motors. Therefore, movement in the \(x\)- and \(y\)-directions is indirectly controlled through roll and pitch.
 
-Yaw control is slightly more complex. Since the drone has no direct control surfaces, yaw is achieved by creating a torque around the \(z\)-axis. The propellers of quadcopters do not all rotate in the same direction but instead alternate between clockwise and counterclockwise rotation. As a result, the torque generated by the propellers also alternates in direction. To create a yaw motion, the speed of the motors rotating in one direction is increased, while the speed of the motors rotating in the opposite direction is decreased. This results in a net torque around the \(z\)-axis, causing the drone to rotate in the desired direction, as shown in Figure~\ref{fig:yaw}.
+Yaw control is slightly more complex. Since the drone has no direct control surfaces, yaw is achieved by creating a torque around the \(z\)-axis. The propellers of quadcopters do not all rotate in the same direction but instead alternate between clockwise and counterclockwise. As a result, the torque generated by the propellers also alternates in direction. To create a yaw motion, the speed of the motors rotating in one direction is increased, while the speed of the motors rotating in the opposite direction is decreased. This results in a torque around the \(z\)-axis, causing the drone to rotate in the desired direction, as shown in Figure~\ref{fig:yaw}.
 
 \begin{figure}[htbp]
     \centering
@@ -314,7 +314,7 @@ The flight control system consists of multiple control loops that regulate the d
 \newpage
 
 \section{System Identification Using Chirp Signals}
-it\label{sec:System Identification Using Chirp Signals}
+\label{sec:System Identification Using Chirp Signals}
 
 In this chapter, the theoretical background of the approach used for the estimation and calculation of the different control loops is described. Since the fundamental approach of all the control loops is the same, the general approach is described here and the specific details of each control loop are described in the Methodology chapter.
 
@@ -1858,6 +1858,7 @@ Reliable Position Hold operation depends on a functioning GPS module with a stro
 Once Position Hold stabilizes, the system maintains altitude using an automatically-adjusted throttle command, while roll and pitch are regulated to zero out position errors.
 
 \subsection*{Betaflight Firmware}
+\label{Position Hold Betaflight Firmware}
 
 In the Betaflight firmware, Position Hold operates asynchronously, executing once per GPS update rather than at the fixed, high-speed rate of the main control loop. The algorithm processes distance and velocity estimates in Earth-fixed coordinates before rotating the computed PID sum into the aircraft's body frame as roll and pitch angle commands. 
 
@@ -1910,7 +1911,7 @@ After the P, I, D and A terms are summed and limited, the resulting control vect
 
 To evaluate and tune the Position Hold controller, an exponential chirp signal (as described in Section \ref{sec:System Identification Using Chirp Signals}) is injected directly into the position error during flight. By sweeping through a predefined frequency range, the position controller is forced into a controlled response, allowing its frequency-dependent behaviour to be measured. 
 
-As mentioned in Section \ref{Position Hold bf firmware}, the magnitude of the D+A vector is limited to 35 degrees. For system identification, this limitation introduces nonlinear behavior. To mitigate this, a lead-lag filter is applied to the chirp signal before injection, reducing its amplitudes at higher frequencies. This results in less acceleration of the drone and therefore a smaller combined D+A vector length. Figure \ref{fig:pidDA_limit} illustrates how the D+A magnitude can easily exceed the 35-degree limit during chirp excitation without the lead-lag filter and how the filter affects the magnitude of the vector.
+As mentioned in Section \ref{Position Hold Betaflight Firmware}, the magnitude of the D+A vector is limited to 35 degrees. For system identification, this limitation introduces nonlinear behavior. To mitigate this, a lead-lag filter is applied to the chirp signal before injection, reducing its amplitudes at higher frequencies. This results in less acceleration of the drone and therefore a smaller combined D+A vector length. Figure \ref{fig:pidDA_limit} illustrates how the D+A magnitude can easily exceed the 35-degree limit during chirp excitation without the lead-lag filter and how the filter affects the magnitude of the vector.
 
 \begin{figure}[H]
     \centering
