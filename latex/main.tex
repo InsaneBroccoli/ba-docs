@@ -75,13 +75,13 @@
 \chapter*{Summary}
 \addcontentsline{toc}{chapter}{Zusammenfassung}
 
-Diese Bachelorarbeit befasst sich mit der Entwicklung eines Offline-Tuning-Tools für verschiedene Regelkreise in FPV-Drohnen mit Betaflight-Firmware. Das Tool analysiert aufgezeichnete Flugdaten, um die Systemdynamik abzuschätzen und dadurch das Verhalten verschiedener Reglerparameter vorherzusagen, ohne dass für jede Änderung neue Flugtests durchgeführt werden müssen.
+Diese Bachelorarbeit befasst sich mit der Entwicklung eines Offline-Tuning-Tools für verschiedene Regelkreise von FPV-Drohnen mit Betaflight-Firmware. Ziel des Tools ist es, aufgezeichnete Flugdaten zu analysieren, um die Systemdynamik zu identifizieren und dadurch das Verhalten verschiedener Reglerparameter vorherzusagen, ohne dass für jede Änderung zusätzliche Flugtests erforderlich sind.
 
-Die Messung beruht auf der Injektion eines Chirp-Signals in den zu tunenenden Regelkreisen, um das System über einen breiten Frequenzbereich systematisch anzuregen. Durch Anwendung von Signalverarbeitungstechniken werden die aufgezeichneten Daten ausgewertet. Dadurch können die Übertragungsfunktionen der Regelkreise identifiziert und auf dieser Grundlage geeignete Reglerparameter bestimmt werden, um das Flugverhalten zu verbessern.
+Die Messmethode basiert auf der Einbringung eines Chirp-Signals in die zu untersuchenden Regelkreise, wodurch das System über einen breiten Frequenzbereich gezielt angeregt wird. Mithilfe geeigneter Signalverarbeitungstechniken werden die aufgezeichneten Flugdaten ausgewertet, um die Frequenzgänge der Regelkreise zu identifizieren. Auf dieser Grundlage können geeignete Reglerparameter bestimmt werden, um das Flugverhalten zu verbessern.
 
-Die Tuning-Algorithmen für den Winkelgeschwindigkeitsregler und den Winkelregler wurden in MATLAB und Python implementiert, um eine breite Zugänglichkeit für die FPV-Community zu gewährleisten. Zusätzlich wurde ein "Prove of Concept" für die Höhen- und Positionsregelung in MATLAB entwickelt. Diese Testversuche sollten die Anwendbarkeit, aber auch die Grenzen der Methode für andere Regelkreise aufzeigen. Von der Implementation in Python wurde aufgrund der laufenden Entwicklung der Betaflight-Firmware abgesehen.
+Die Tuning-Algorithmen für den Winkelgeschwindigkeitsregler und den Winkelregler wurden sowohl in MATLAB als auch in Python implementiert, um eine möglichst breite Zugänglichkeit für die FPV-Community zu gewährleisten. Zusätzlich wurde ein Proof of Concept für die Höhen- und Positionsregelung in MATLAB entwickelt. Diese Untersuchungen sollten sowohl die Anwendbarkeit als auch die Grenzen der Methode für weitere Regelkreise aufzeigen. Aufgrund der laufenden Weiterentwicklung der Betaflight-Firmware wurde auf eine Python-Implementierung dieser Regelkreise verzichtet.
 
-Die Ergebnisse dieser Arbeit werden in einem öffentlichen GitHub-Repository veröffentlicht und in einem umfassenden Bericht dokumentiert. Die experimentelle Validierung erfolgt durch reale FPV-Drohnenflüge, um die Wirksamkeit der vorgeschlagenen Methoden zu überprüfen.
+Die Ergebnisse dieser Arbeit werden der Betaflight-Community über ein GitHub-Repository zur Verfügung gestellt und in einem umfassenden Bericht dokumentiert. Die experimentelle Validierung erfolgt durch reale FPV-Flüge, um die Wirksamkeit der vorgeschlagenen Methoden zu überprüfen.
 
 \chapter*{Abstract}
 \addcontentsline{toc}{chapter}{Abstract}
@@ -118,11 +118,11 @@ The results of this work are published in a public GitHub repository and documen
 
 This thesis is the result of our bachelor project at the ZHAW School of Engineering, conducted at the Institute of Mechatronic Systems (IMS) during the spring semester of 2026.
 
-As systems engineering students, this project provided an excellent opportunity to apply and deepen our theoretical knowledge in advanced control, signal processing and firmware modification within a highly dynamic mechatronic system. FPV drones represent a particularly challenging application due to their fast dynamics and the requirement for precise and robust control, making them an ideal platform to bridge theory and practice.
+As systems engineering students, this project provided an excellent opportunity to apply and deepen our theoretical knowledge in advanced control, signal processing, software development, and firmware modification within a highly dynamic mechatronic system. FPV drones represent a particularly challenging application due to their fast dynamics and the requirement for precise and robust control, making them an ideal platform to bridge theory and practice.
 
 Our motivation was to translate the control theory and signal processing concepts we have learned throughout our studies into a real-world application. At the same time, we aimed to contribute meaningful value to the FPV drone community by replacing subjective, experience-based tuning approaches with a structured, data-driven methodology.
 
-The primary goal of this work was therefore to develop an offline tuning framework for Betaflight-based flight controllers. This framework is intended to simplify the tuning process, improve flight performance and provide a systematic and reproducible approach to controller optimization.
+The primary goal of this work was therefore to develop an offline tuning framework for Betaflight-based flight controllers. This framework is intended to simplify the tuning process, improve flight performance and provide a systematic and reproducible approach to controller tuning.
 
 We would like to express our sincere gratitude to our supervisors, Michael Peter and Prof. Dr. Ruprecht Altenburger, for their continuous guidance and support throughout the project. Their expertise, constructive feedback and commitment were invaluable in shaping the direction of this work and ensuring its successful completion.
 
@@ -147,7 +147,7 @@ One commonly used tool for offline tuning is the PID-Toolbox. In this approach, 
 
 In the approach proposed in this thesis, a chirp excitation signal is injected directly into the control loop. This allows the system to be excited over a wide range of frequencies in a controlled and systematic way, resulting in higher quality measurements for system identification and controller tuning.
 
-A previous project introduced a proof-of-concept approach for offline tuning of angular rate controllers based on recorded flight data. In the preceding project thesis, this concept was restructured and  modularized and now serves as the foundation for the present work.
+A previous project introduced a proof of concept for the offline tuning approach of angular rate controllers based on recorded flight data, originally proposed by our supervisor Michael Peter. In the subsequent project thesis, this concept was restructured and modularized, forming the foundation for the present work.
 
 The objective of this bachelor thesis is to further refine and extend this approach into an offline tuning framework for multiple control loops used in Betaflight-based flight controllers. In addition to the existing angular rate controller tuner, the framework will be extended with code extensions for tuning the angle controller, the altitude hold controller and the position controller. This extends the tuning framework beyond the inner rate control loop and enables the analysis and tuning of higher-level control layers.
 
@@ -161,7 +161,7 @@ By providing a structured, data-driven approach to controller tuning, this proje
 \section*{Initial Situation}
 \label{sec:IniSituation}
 
-The open-source firmware Betaflight is one of the most widely used platforms for FPV racing drones and is continuously developed by a large community. The quality of the control algorithms is crucial for flight performance, as it determines how quickly and accurately the drone can respond to pilot inputs and external disturbances.
+Betaflight is currently the most popular open-source flight controller firmware for FPV racing and freestyle drones and is continuously developed by a large community \parencite{betaflight_website}. The quality of the control algorithms is crucial for flight performance, as it determines how quickly and accurately the drone can respond to pilot inputs and external disturbances.
 
 Currently, controller tuning is often performed manually through iterative trial-and-error procedures or with the support of tools such as the PID Toolbox. However, these approaches rely on the natural flight behaviour of the drone and the pilot’s inputs, which may not sufficiently excite all relevant frequency ranges. As a result, this can lead to suboptimal tuning outcomes and requires extensive flight testing as well as significant piloting experience.
 
@@ -174,7 +174,7 @@ The objective of this bachelor thesis is to further develop and extend the exist
 
 Furthermore, proof-of-concept implementations for altitude hold and position hold controllers are developed in MATLAB. These implementations are intended to demonstrate the applicability of the proposed method to additional control loops, while also highlighting its limitations in these contexts.
 
-Due to the ongoing development of the Betaflight firmware, a full Python implementation of these additional controllers is deferred until the firmware has reached a more stable state.
+Due to the ongoing development of the Betaflight firmware and the continuous changes to the corresponding control functionalities, the implementation of these additional controllers in Python was intentionally deferred until a more stable firmware state has been reached.
 
 The results of this work are published in a public GitHub repository and documented in a comprehensive report. The overall goal is to provide a structured, data-driven approach to controller tuning that simplifies the process and improves flight performance for FPV drone pilots.
 
@@ -211,7 +211,7 @@ A quadcopter relies on a variety of sensors to measure its state and environment
 \begin{itemize}
 \item \textbf{Inertial Measurement Unit (IMU):} The IMU consists of accelerometers and gyroscopes that measure linear acceleration and angular velocity. These measurements are used to estimate the drone's orientation and motion.
 \item \textbf{Barometer:} A barometer measures atmospheric pressure, which can be used to estimate altitude. This is important for altitude control.
-\item \textbf{GPS:} GPS provides position and velocity information and is mainly used for navigation and position control.
+\item \textbf{GPS:} GPS provides position and velocity measurements in a global Earth-fixed reference frame, which are mainly used for navigation and position control.
 \item \textbf{Magnetometer:} A magnetometer measures the Earth's magnetic field and is used to estimate the heading of the drone.
 \item \textbf{Electronic Speed Controllers (ESC's):} ESC's control the rotational speed of the motors and provide feedback for motor control.
 \end{itemize}
@@ -222,7 +222,7 @@ These are the most important sensors for us in this thesis used in a quadcopter.
 
 A quadcopter is a dynamic system that uses four rotors to generate lift and control its motion. By adjusting the rotational speeds of the individual motors, the drone can control its orientation and movement in three-dimensional space.
 
-Since no direct control surfaces are present, all forces and torques are generated by the propellers. This makes the system inherently unstable and requires continuous feedback control.
+In multicopters, all translational and rotational forces are generated by the individual propellers. Stable flight therefore requires continuous feedback control to maintain the desired orientation and compensate for disturbances.
 
 In this work, the focus lies on the rotational dynamics of the drone, which are described by the three degrees of freedom: roll, pitch and yaw. These rotational motions are controlled by varying the thrust of the individual motors.
 
@@ -234,27 +234,25 @@ The dynamics of a quadcopter are typically described using a body-fixed coordina
 
 \begin{itemize}
 \item The \(x\)-axis points forward, in the direction the drone is facing.
-\item The \(y\)-axis points to the right, perpendicular to the \(x\)-axis.
-\item The \(z\)-axis points downward, perpendicular to both the \(x\)- and \(y\)-axes.
+\item The \(y\)-axis points to the left, perpendicular to the \(x\)-axis.
+\item The \(z\)-axis points upward, perpendicular to both the \(x\)- and \(y\)-axes.
 \end{itemize}
 
-This coordinate system follows the standard aerospace convention and moves together with the drone. All rotational motions are defined with respect to these axes.
+This coordinate system moves together with the drone. All rotational motions are defined with respect to these axes.
 
-The orientation of the quadcopter is described by three rotational degrees of freedom: roll, pitch and yaw.
+The orientation of the quadcopter is described by the three rotational degrees of freedom roll, pitch, and yaw. The sign conventions for these rotations follow the right-hand rule.
 
 \begin{itemize}
-\item \textbf{Roll} (\(\phi\)) describes a rotation around the \(x\)-axis. A positive roll angle tilts the drone to the right.
-\item \textbf{Pitch} (\(\theta\)) describes a rotation around the \(y\)-axis. A positive pitch angle tilts the drone forward.
-\item \textbf{Yaw} (\(\psi\)) describes a rotation around the \(z\)-axis. A positive yaw angle rotates the drone clockwise when viewed from above.
+\item \textbf{Roll} (\(\phi\)) describes a rotation around the \(x\)-axis.
+\item \textbf{Pitch} (\(\theta\)) describes a rotation around the \(y\)-axis.
+\item \textbf{Yaw} (\(\psi\)) describes a rotation around the \(z\)-axis.
 \end{itemize}
-
-The sign conventions for these rotations follow the right-hand rule. This means that if the thumb of the right-hand points in the direction of the axis, the curled fingers indicate the direction of positive rotation.
 
 Figure~\ref{fig:body_axes} illustrates the body-fixed coordinate system and the associated rotational axes.
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.45\linewidth]{body_axes.png}
+\includegraphics[width=0.6\linewidth]{body_axes.png}
 \caption{Body-fixed coordinate system and rotational axes of a quadcopter.}
 \label{fig:body_axes}
 \end{figure}
@@ -267,23 +265,30 @@ As already mentioned, a quadcopter generates all forces and torques through the 
 
 To roll the drone is relatively straightforward. This is achieved by increasing the speed of two motors on one side and decreasing the speed of the opposite motors. For example, to roll the drone to the left, the speed of the right motors is increased while the speed of the left motors is decreased. This creates a torque around the \(x\)-axis, causing the drone to tilt to the right, as illustrated in Figure~\ref{fig:roll_pitch}. The same principle also applies to pitch control, where the front and rear motors are adjusted to create a torque around the \(y\)-axis.
 
+
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.7\textwidth]{Drone_Roll.png}
-    \caption{Illustration of roll and pitch control of a quadcopter through differential motor speeds, producing torques about the \(x\)- and \(y\)-axes.}
-    \label{fig:roll_pitch}
+
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[height=6cm]{Drone_Roll.png}
+        \caption{Roll and pitch control through differential motor speeds.}
+        \label{fig:roll_pitch}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[height=6cm]{Drone_yaw.png}
+        \caption{Yaw control through differential motor speeds.}
+        \label{fig:yaw}
+    \end{minipage}
+
 \end{figure}
+
 
 To move along the \(x\)- and \(y\)-axes, the drone needs to tilt in the corresponding direction, which is achieved by adjusting the roll and pitch angles. For example, to move forward, the drone pitches forward by increasing the speed of the rear motors and decreasing the speed of the front motors. This creates a horizontal component of the thrust that propels the drone forward. Similarly, to move to the right, the drone rolls to the right by increasing the speed of the left motors and decreasing the speed of the right motors. Therefore, movement in the \(x\)- and \(y\)-directions is indirectly controlled through roll and pitch.
 
 Yaw control is slightly more complex. Since the drone has no direct control surfaces, yaw is achieved by creating a torque around the \(z\)-axis. The propellers of quadcopters do not all rotate in the same direction but instead alternate between clockwise and counterclockwise rotation. As a result, the torque generated by the propellers also alternates in direction. To create a yaw motion, the speed of the motors rotating in one direction is increased, while the speed of the motors rotating in the opposite direction is decreased. This results in a net torque around the \(z\)-axis, causing the drone to rotate in the desired direction, as shown in Figure~\ref{fig:yaw}.
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.5\textwidth]{Drone_yaw.png}
-    \caption{Top view of a quadcopter illustrating yaw control. Increasing the speed of one pair of counter-rotating propellers while decreasing the opposite pair generates a net torque about the \(z\)-axis.}
-    \label{fig:yaw}
-\end{figure}
 
 If we combine all these control principles, it becomes clear that the drone can perform all maneuvers by adjusting the speeds of the four motors. For this purpose, the software mixes the desired roll, pitch, yaw and throttle commands into individual motor speed commands. This process is known as motor mixing or control allocation and is a crucial part of the flight controller’s functionality. The simplified motor mixing for a quadcopter can be represented by the following equations:
 
@@ -294,7 +299,7 @@ M_3 &= T - \phi - \theta - \psi, \\
 M_4 &= T + \phi - \theta + \psi,
 \end{align}
 
-where \(M_i\) represents the speed command for the \(i\)-th motor, \(T\) is the throttle command and \(\phi\), \(\theta\) and \(\psi\) are the desired roll, pitch and yaw commands, respectively. The specific coefficients in these equations depend on the configuration of the drone and the direction of rotation of the motors.
+where \(M_i\) represents the speed command for the \(i\)-th motor, \(T\) is the throttle command and \(\phi\), \(\theta\) and \(\psi\) are the desired roll, pitch and yaw commands, respectively. The specific coefficients in these equations depend on the configuration of the drone and the direction of rotation of the motors \parencite{Drone_Control}.
 
 \subsection*{Flight Control}
 
@@ -302,11 +307,11 @@ With the principles of force and torque generation in mind, the flight control s
 
 The general structure of the flight control system is illustrated in Figure~\ref{fig:control_loop}. It shows how the desired maneuver (setpoint) is processed by the controller, which computes motor commands to influence the drone. The resulting motion is measured by sensors and fed back into the system, forming a closed control loop.
 
-The flight control system consists of multiple control loops that regulate the drone's behaviour. These control loops are the primary subject of this work and will be analysed and tuned in the following sections.
+The flight control system consists of multiple control loops that regulate the drone's behaviour. These control loops are the primary subject of this work and will be analysed and tuned in the following sections \parencite{Drone_Control}.
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=1.0\textwidth]{General_Cont_Structur.png}
+    \includegraphics[width=0.68\textwidth]{General_Cont_Structur.png}
     \caption{General structure of the quadcopter flight control system showing the closed control loop between setpoint, controller, motors, drone dynamics and sensor feedback.}
     \label{fig:control_loop}
 \end{figure}
@@ -314,7 +319,7 @@ The flight control system consists of multiple control loops that regulate the d
 \newpage
 
 \section{System Identification Using Chirp Signals}
-it\label{sec:System Identification Using Chirp Signals}
+\label{sec:System Identification Using Chirp Signals}
 
 In this chapter, the theoretical background of the approach used for the estimation and calculation of the different control loops is described. Since the fundamental approach of all the control loops is the same, the general approach is described here and the specific details of each control loop are described in the Methodology chapter.
 
@@ -354,56 +359,21 @@ In practical implementations such as \textbf{Betaflight}, the phase is wrapped o
 
 The behaviour of the chirp signal is determined by several parameters defining the frequency sweep.
 
+The behaviour and quality of the chirp excitation depend strongly on the selected sweep parameters. Parameters such as the frequency range, sweep duration, sampling frequency, and amplitude influence the excitation quality and the resulting frequency response estimation. Therefore, the parameter values used for the simulation model are defined in the following.
+
 For the simulation model introduced in this chapter, the following parameter values are used:
 
 \begin{itemize}
 \item \( f_0 \) — starting frequency of the chirp signal (simulation: \( 1\,\text{Hz} \))
-\item \( f_1 \) — final frequency of the chirp signal (simulation: \( 600\,\text{Hz} \))
+\item \( f_1 \) — final frequency of the chirp signal (simulation: \( 50\,\text{Hz} \))
 \item \( T \) — total duration of the frequency sweep (simulation: \( 20\,\text{s} \))
 \item \( f_s \) — sampling frequency used in the discrete-time simulation (simulation: \( 2000\,\text{Hz} \))
 \item \( A \) — amplitude of the chirp signal (simulation: \( 230 \))
 \end{itemize}
 
-These parameters are chosen to reflect the typical operating range of the angular rate and the attitude while ensuring that the relevant frequency dynamics are sufficiently excited.
-
 These parameters directly influence the quality of the system excitation and therefore the accuracy of the subsequent frequency response estimation.
 
-\subsubsection*{Common Frequency Profiles}
-
-The chirp signal can be generated using different frequency profiles, which define how the frequency changes over time. The two most common profiles are the linear chirp and the exponential chirp. \parencite{Matlab_Chirp}
-
-\textbf{Linear chirp:}
-
-For a linear chirp, the instantaneous frequency increases linearly over time. \parencite{Matlab_Chirp}
-
-The instantaneous frequency is therefore given by
-
-\begin{equation}
-f(t) = f_0 + \frac{f_1 - f_0}{T} \cdot t,
-\end{equation}
-
-and the corresponding phase follows by integrating the frequency over time. \parencite{Matlab_Chirp}
-
-\begin{equation}
-\varphi(t) = 2\pi\left(f_0 t + \tfrac{1}{2}k t^2\right),
-\end{equation}
-where \( k = \frac{f_1 - f_0}{T} \) denotes the rate of change of the frequency.
-
-Figure~\ref{fig:linear_chirp} illustrates the resulting chirp signal, the instantaneous frequency \( f(t) \) and the corresponding phase trajectory \( \varphi(t) \) for the simulation parameters introduced above.
-
-\begin{figure}[h]
-\centering
-\includegraphics[width=0.95\linewidth]{Figures/linear_chirp.png}
-\caption{Linear chirp signal used for the simulation.}
-\label{fig:linear_chirp}
-\end{figure}
-
-The apparent gaps visible in the chirp signal and in the wrapped phase are not actual
-discontinuities. They result from the finite sampling time of the simulation and the limited
-resolution of the plotted data.
-\newpage
-
-\textbf{Exponential chirp (as used in Betaflight):}
+\subsubsection*{Exponential chirp (as used in Betaflight):}
 
 For an exponential chirp, the instantaneous frequency increases exponentially
 from the starting frequency \( f_0 \) to the final frequency \( f_1 \) over the time
@@ -413,7 +383,7 @@ while higher frequencies are reached more rapidly. \parencite{Matlab_Chirp}
 The instantaneous frequency is defined as
 
 \begin{equation}
-f(t) = f_0 \left(\frac{f_1}{f_0}\right)^{t/T}.
+f(t) = f_0 \left(\frac{f_1}{f_0}\right)^{\frac{t}{T}}.
 \end{equation}
 
 Compared to the linear chirp, this results in a more uniform excitation in logarithmic
@@ -425,7 +395,7 @@ The corresponding phase trajectory is obtained by integrating the frequency \par
 \varphi(t) =
 \frac{2\pi T f_0}{\ln(f_1/f_0)}
 \left[
-\left(\frac{f_1}{f_0}\right)^{t/T}-1
+\left(\frac{f_1}{f_0}\right)^{\frac{t}{T}}-1
 \right].
 \end{equation}
 
@@ -436,13 +406,12 @@ are illustrated in Figure~\ref{fig:exponential_chirp}.
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.9\linewidth]{Figures/exponential_chirp.png}
+\includegraphics[width=1.0\linewidth]{Figures/exponential_chirp.png}
 \caption{Exponential chirp signal used for the simulation.}
 \label{fig:exponential_chirp}
 \end{figure}
 
-As with the linear chirp, the apparent gaps in the signal and the wrapped phase are caused by
-the discrete sampling time and the limited resolution of the plot.
+
 
 \subsubsection*{Lag Filter for Chirp Input Shaping}
 
@@ -487,7 +456,7 @@ The structure of the simulation model is illustrated in Figure~\ref{fig:signal_p
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.7\textwidth]{signal_processing_block.png}
+    \includegraphics[width=0.6\textwidth]{signal_processing_block.png}
     \caption{Simulation model used for the signal processing analysis.}
     \label{fig:signal_processing_model}
 \end{figure}
@@ -575,9 +544,9 @@ The method is based on shifting the signal to baseband, applying a low-pass filt
 
 The filtered signal closely follows the underlying system response. A slight amplitude reduction at higher frequencies can be observed, which is consistent with the low-pass behaviour \parencite{signal_processing}.
 
-\begin{figure}[h]
+\begin{figure}[H]
     \centering
-    \includegraphics[width=0.95\linewidth]{rotfilt_signal.png}
+    \includegraphics[height=9.5cm]{rotfilt_signal.png}
     \caption{Time-domain signal before (top) and after (bottom) baseband filtering.}
     \label{fig:time_filtered}
 \end{figure}
@@ -615,11 +584,11 @@ In particular, the estimation becomes unreliable in frequency regions where the 
 
 \subsubsection*{Spectral Estimation Using Welch’s Method}
 
-To obtain reliable estimates of the spectral densities, Welch’s method is applied. As discussed in the previous section, direct computation from finite data is sensitive to noise. Therefore, averaging techniques are required to approximate the expected values of the spectral quantities \parencite{System_Identification}.
+To obtain reliable estimates of the spectral densities, Welch’s method is applied. As discussed in the previous section, direct computation from finite data is sensitive to noise. Therefore, averaging techniques are required to approximate the expected values of the spectral quantities \parencite{System_Identification}. 
 
 The spectral densities describe how the signal energy is distributed over frequency and form the basis for estimating the transfer function \parencite{System_Identification}.
 
-Let \(u[n]\) and \(y[n]\) denote the discrete-time input and output signals of length \(N\). In Welch’s method, the signals are divided into \(K\) overlapping segments of length \(L\). Each segment is multiplied by a window function \(w[n]\) to reduce spectral leakage \parencite{System_Identification}.
+Let \(u[n]\) and \(y[n]\) denote the discrete-time input and output signals of length \(N\). In Welch’s method, the signals are divided into \(K\) overlapping segments of length \(L\). Each segment is multiplied by a window function \(w[n]\) to reduce spectral leakage \parencite{System_Identification}. können wir das noch ganz leicht kürzen
 
 The \(k\)-th segment of the input signal is given by
 
@@ -627,18 +596,14 @@ The \(k\)-th segment of the input signal is given by
 u_k[n] = u[n + kD]\, w[n], \qquad n = 0, \dots, L-1,
 \end{equation}
 
-where \(D\) defines the shift between segments and determines the overlap \parencite{System_Identification}.
-
-For each segment, the discrete Fourier transform (DFT) is computed as
+where \(D\) defines the shift between segments and determines the overlap \parencite{System_Identification}. For each segment, the discrete Fourier transform (DFT) is computed as
 
 \begin{equation}
 U_k(\omega) = \sum_{n=0}^{L-1} u_k[n] e^{-j\omega n}, \qquad
 Y_k(\omega) = \sum_{n=0}^{L-1} y_k[n] e^{-j\omega n}.
 \end{equation}
 
-To obtain a stable representation in the frequency domain, the squared magnitude of the Fourier transform is used. This corresponds to the signal power and makes the spectral estimate less sensitive to noise \parencite{System_Identification}.
-
-The periodogram estimates are defined as
+To obtain a stable representation in the frequency domain, the squared magnitude of the Fourier transform is used. This corresponds to the signal power and makes the spectral estimate less sensitive to noise \parencite{System_Identification}. The periodogram estimates are defined as
 
 \begin{equation}
 P_{uu,k}(\omega) = \frac{1}{L} |U_k(\omega)|^2, \qquad
@@ -651,8 +616,6 @@ Welch’s method reduces the variance of the estimates by averaging over all seg
 S_{uu}(\omega) = \frac{1}{K} \sum_{k=1}^{K} P_{uu,k}(\omega), \qquad
 S_{yu}(\omega) = \frac{1}{K} \sum_{k=1}^{K} P_{yu,k}(\omega), 
 \end{equation}
-
-\newpage
 
 Using these quantities, the transfer function estimate is computed as
 
@@ -667,7 +630,7 @@ The estimated transfer function is shown in Fig.~\ref{fig:transfer_estimation_fi
 \begin{figure}[h]
     \centering
     \includegraphics[width=\linewidth]{transferfunction_after_processing.png}
-    \caption{Bode plot of the true and estimated transfer function using Welch’s method. The agreement is improved due to the reduced influence of noise.}
+    \caption{Bode plot of the true and estimated transfer function using Welch’s method. The magnitude response is shown at the top, the phase response in the middle, and the coherence at the bottom.}
     \label{fig:transfer_estimation_filtered}
 \end{figure}
 
@@ -679,16 +642,8 @@ $$
 
 and takes values in the range \(0 \leq \gamma^2(\omega) \leq 1\). It provides a frequency-dependent measure of how strongly the output is linearly related to the input \parencite{signal_processing}.
 
-The coherence is shown in Fig.~\ref{fig:coherence_estimation}. Values close to one indicate a reliable estimate, whereas lower values indicate that noise or disturbances dominate the measurement.
+The coherence is shown in Figure~\ref{fig:transfer_estimation_filtered}. Values close to one indicate a reliable estimate, whereas lower values indicate that noise or disturbances dominate the measurement.
 
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=\linewidth]{coherence_processing.png}
-    \caption{Magnitude-squared coherence between input and output signals. High values indicate a reliable transfer function estimate.}
-    \label{fig:coherence_estimation}
-\end{figure}
-
-\newpage
 
 \section{Control Loop Calculations}
 
@@ -712,7 +667,7 @@ in the flight controller.
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.85\textwidth]{Control_Loop_easy.png}
+    \includegraphics[width=0.75\textwidth]{Control_Loop_easy.png}
    \caption{Simplified feedback control loop with controller \(C\) and plant \(P\), including reference \(r\), error \(e\), control signal \(u\) and input/output disturbances.}
     \label{fig:control_loop_easy}
 \end{figure}
@@ -1647,25 +1602,17 @@ These expressions allow the computation of all relevant performance metrics such
 
 \subsection*{Drone Tuning}
 
-Based on the calculated transfer functions and tuning plots, the influence of different angle controller parameters on the drone behavior can be evaluated offline. By adjusting the controller gains and analyzing the resulting closed-loop responses, the controller tuning can be optimized before performing additional flight tests.
-
-During the tuning process, particular attention is paid to the tradeoff between responsiveness and robustness. Increasing the controller gain can improve the responsiveness of the Angle mode, but may also lead to oscillations or reduced stability margins. The Gang of Four plots and predicted step responses therefore provide important information for evaluating the resulting flight behavior.
+Based on the calculated transfer functions and tuning plots, the influence of different angle controller parameters on the drone behavior can be evaluated offline. By adjusting the controller gains and analyzing the resulting closed-loop responses, the controller tuning can be optimized before performing additional flight tests. During the tuning process, particular attention is paid to the tradeoff between responsiveness and robustness. Increasing the controller gain can improve the responsiveness of the Angle mode, but may also lead to oscillations or reduced stability margins. The Gang of Four plots and predicted step responses therefore provide important information for evaluating the resulting flight behavior.
 
 \subsubsection*{Evaluation Step Response}
 
-The step response of the angle controller illustrates how the drone reacts to a commanded step change in the desired roll angle. It provides insight into the rise time, settling behavior, and overall stability of the system.
+The step response of the angle controller illustrates how the drone reacts to a commanded step change in the desired roll angle and provides insight into the rise time, settling behavior, and overall stability of the system. As shown in Fig.~\ref{fig:angle_step_response_tuning}, three curves are compared: the measured response (yellow), the calculated response based on the plant model (blue), and the predicted response using the newly tuned controller parameters (red).
 
-As shown in Fig.~\ref{fig:angle_step_response_tuning}, three curves are compared: the measured response (yellow), the calculated response based on the plant model (blue), and the predicted response using the newly tuned controller parameters (red).
-
-All three responses exhibit a fast rise time and converge smoothly to the desired angle without significant overshoot, indicating stable system behavior. The predicted response (red) reaches the target angle slightly faster than the calculated and measured responses, suggesting an improved controller tuning. The measured response closely follows the predicted curve, demonstrating that the model represents the real system with good accuracy.
-
-Since the angle controller is implemented as a pure P-controller, it mainly influences the response speed by mapping the angle error directly to a desired angular rate. The damping and transient characteristics are primarily governed by the inner angular rate controller.
-
-Overall, the results confirm that the cascaded control structure achieves a fast, stable, and accurate tracking of the commanded angle.
+All three responses exhibit a fast rise time and converge smoothly to the desired angle without significant overshoot, indicating stable system behavior. The predicted response reaches the target angle slightly faster than the calculated and measured responses, suggesting an improved controller tuning. The measured response also closely follows the predicted curve, demonstrating that the model represents the real system with good accuracy. Since the angle controller is implemented as a pure P-controller, it mainly influences the response speed by mapping the angle error directly to a desired angular rate, while the damping and transient characteristics are primarily governed by the inner angular rate controller. Overall, the results confirm that the cascaded control structure achieves a fast, stable, and accurate tracking of the commanded angle.
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.85\textwidth]{Step_Response_Angle_Tuning.png}
+	\includegraphics[width=0.9\textwidth]{Step_Response_Angle_Tuning.png}
 	\caption{Step response of the Angle mode controller.}
 	\label{fig:angle_step_response_tuning}
 \end{figure}

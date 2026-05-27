@@ -3,7 +3,7 @@ clear; clc; close all;
 
 %% Parameters
 f0 = 1;        % start frequency [Hz]
-f1 = 600;      % end frequency [Hz]
+f1 = 100;      % end frequency [Hz]
 T  = 20;       % duration [s]
 fs = 2000;     % sampling frequency [Hz]
 A = 230;
@@ -106,7 +106,7 @@ ylabel('Amplitude [deg/s]');
 y_ideal = lsim(Gges, x_e_f, t);
 
 % Disturbance / measurement noise
-noise_std = 20;                          
+noise_std =400;                          
 noise = noise_std * randn(size(y_ideal));   % gleiche Größe wie y_ideal
 
 % Measured output
@@ -158,11 +158,18 @@ G_filt = Syu ./ Suu;
 
 G_filt = frd(G_filt(idx), 2*pi*f(idx));
 
+% Transfer function estimation
+u = x_e_f(:) - mean(x_e_f);
+y = y_meas(:) - mean(y_meas);
+
+
+
 figure(66)
 subplot(2,1,1)
-plot(t, y, t, y_ideal-mean(y_ideal), LineWidth=1);
+plot(t, y, t, y_ideal-mean(y_ideal), LineWidth=1.5);
 title('Unfiltert Signal')
 legend('Signal','Real Chirp');
+xlim([0 10])
 
 
 subplot(2,1,2)
@@ -175,63 +182,128 @@ figure(6)
 bode(Gges, G_filt)
 grid on
 legend('Real Plant', 'Measured')
-xlim([1 600])
+xlim([1 50])
 
 
-%% Welch
-u = x_e_f(:) - mean(x_e_f);
-y = y_filt(:) - mean(y_filt);
 
-Nseg = 1024*4;
-Noverlap = round(Nseg * 0.9);
+%% Welch Transfer Function Estimation
 
-step = Nseg - Noverlap;
-win = hann(Nseg);
-Nfreq = Nseg/2 + 1;
+% -------------------------------------------------------------------------
+% Use ORIGINAL signals for transfer function estimation
+% (without Rotfiltfilt processing)
+% -------------------------------------------------------------------------
 
-Suu = zeros(Nfreq,1);
-Syu = zeros(Nfreq,1);
-Syy = zeros(Nfreq,1);
-K = 0;
+u = x_e_f(:)      - mean(x_e_f);
+% y = y_ideal(:)    - mean(y_ideal);
 
-for k = 1:step:(length(u)-Nseg+1)
-    idx = k:k+Nseg-1;
-    
-    U = fft(u(idx).*win);
-    Y = fft(y(idx).*win);
-    
-    U = U(1:Nfreq);
-    Y = Y(1:Nfreq);
-    
-    Suu = Suu + U .* conj(U);
-    Syu = Syu + Y .* conj(U);
-    Syy = Syy + Y .* conj(Y);
-    
-    K = K + 1;
-end
+% Uncomment for noisy measurement
+y = y_meas(:) - mean(y_meas);
 
-Suu = Suu / K;
-Syu = Syu / K;
-Syy = Syy / K;
+% -------------------------------------------------------------------------
+% Welch Parameters
+% -------------------------------------------------------------------------
 
-G_welch = Syu ./ Suu;
-Coh_welch = abs(Syu).^2 ./ (Suu .* Syy);
-f = (0:Nseg/2)' * fs / Nseg;
+Nseg      = 1024*4;
+Noverlap  = round(Nseg * 0.9);
+win       = hann(Nseg);
 
-idx = f > 0 & f <= 600;
+% -------------------------------------------------------------------------
+% Transfer function and coherence estimation
+% -------------------------------------------------------------------------
 
-G_welch_frd = frd(G_welch(idx), f(idx), 'Units', 'Hz');
+[G_welch, f] = tfestimate(u, y, win, Noverlap, Nseg, fs);
+Coh_welch    = mscohere(u, y, win, Noverlap, Nseg, fs);
 
-figure(7)
-bode(Gges, G_welch_frd)
+% -------------------------------------------------------------------------
+% Frequency range for plotting
+% -------------------------------------------------------------------------
+
+idx = f > 0 & f <= 50;
+
+% -------------------------------------------------------------------------
+% Real plant frequency response
+% -------------------------------------------------------------------------
+
+Greal = squeeze(freqresp(Gges, 2*pi*f(idx)));
+
+% Estimated frequency response
+Gwelch = G_welch(idx);
+
+% -------------------------------------------------------------------------
+% Magnitude
+% -------------------------------------------------------------------------
+
+mag_real  = 20*log10(abs(Greal));
+mag_welch = 20*log10(abs(Gwelch));
+
+% -------------------------------------------------------------------------
+% Phase
+% -------------------------------------------------------------------------
+
+phase_real  = angle(Greal)*180/pi;
+phase_welch = angle(Gwelch)*180/pi;
+
+% -------------------------------------------------------------------------
+% Plot Layout
+% -------------------------------------------------------------------------
+
+pos_bode = [0.13, 0.58, 0.78, 0.32;
+            0.13, 0.32, 0.78, 0.22;
+            0.13, 0.10, 0.78, 0.16];
+
+figure
+
+% -------------------------------------------------------------------------
+% Magnitude Plot
+% -------------------------------------------------------------------------
+
+ax(1) = subplot('Position', pos_bode(1,:));
+
+semilogx(f(idx), mag_real, 'LineWidth', 1.5);
+hold on
+semilogx(f(idx), mag_welch, 'LineWidth', 1.5);
+
 grid on
-legend('Real Plant', 'Welch Estimate')
-xlim([1 600])
 
-figure(8)
-plot(f(idx), Coh_welch(idx))
+ylabel('Magnitude [dB]')
+title('Bode Diagram')
+
+legend('Real Plant', 'Welch Estimate', ...
+       'Location', 'northeast')
+
+% -------------------------------------------------------------------------
+% Phase Plot
+% -------------------------------------------------------------------------
+
+ax(2) = subplot('Position', pos_bode(2,:));
+
+semilogx(f(idx), phase_real, 'LineWidth', 1.5);
+hold on
+semilogx(f(idx), phase_welch, 'LineWidth', 1.5);
+
 grid on
-xlabel('Frequency [Hz]')
+
+ylabel('Phase [deg]')
+
+% -------------------------------------------------------------------------
+% Coherence Plot
+% -------------------------------------------------------------------------
+
+ax(3) = subplot('Position', pos_bode(3,:));
+
+semilogx(f(idx), Coh_welch(idx), 'LineWidth', 1.5);
+
+grid on
+
 ylabel('Coherence [-]')
-xlim([0 600])
+xlabel('Frequency [Hz]')
+
 ylim([0 1.05])
+
+% -------------------------------------------------------------------------
+% Axis Linking
+% -------------------------------------------------------------------------
+
+linkaxes(ax, 'x')
+
+xlim([1 50])
