@@ -138,7 +138,7 @@ We would like to express our sincere gratitude to our supervisors, Michael Peter
 \chapter{Introduction}
 \label{ch:introduction}
 
-First-Person-View (FPV) racing drones require precise and responsive control to achieve stable flight behaviour, suppress disturbances such as propeller wash and maintain agility during rapid maneuvers. The flight performance strongly depends on the tuning of the flight controller’s feedback loops. 
+First-Person-View (FPV) racing drones require precise and responsive control to achieve stable flight behaviour, suppress disturbances such as propwash and maintain agility during rapid maneuvers. The flight performance strongly depends on the tuning of the flight controller’s feedback loops. 
 In particular, the parameters of the angular rate controller determine how quickly and accurately the drone reacts to pilot inputs and external disturbances.
 
 In practice, controller tuning is still often performed manually through iterative trial-and-error procedures. This requires extensive flight testing and considerable piloting experience, making the process time-consuming and difficult to reproduce. Although modern flight controller firmware such as Betaflight provides extensive configuration options and detailed flight data logging, systematic tuning remains a challenge.
@@ -149,7 +149,7 @@ In the approach proposed in this thesis, a chirp excitation signal is injected d
 
 A previous project introduced a proof of concept for the offline tuning approach of angular rate controllers based on recorded flight data, originally proposed by our supervisor Michael Peter. In the subsequent project thesis, this concept was restructured and modularized, forming the foundation for the present work.
 
-The objective of this bachelor thesis is to further refine and extend this approach into an offline tuning framework for multiple control loops used in Betaflight-based flight controllers. In addition to the existing angular rate controller tuner, the framework will be extended with code extensions for tuning the angle controller, the altitude hold controller and the position controller. This extends the tuning framework beyond the inner rate control loop and enables the analysis and tuning of higher-level control layers.
+The objective of this bachelor thesis is to further refine and extend this approach into an offline tuning framework for multiple control loops used in Betaflight-based flight controllers. In addition to the existing angular rate controller tuner, the framework will be extended with code extensions for tuning the angle controller, the altitude controller and the position controller. This extends the tuning framework beyond the inner rate control loop and enables the analysis and tuning of higher-level control layers.
 
 The framework will be implemented primarily in MATLAB and Python and will provide tools for analyzing flight logs, estimating system dynamics and generating controller parameters without requiring repeated flight tests. The software will be developed as an open-source library with accompanying documentation for the FPV community.
 
@@ -163,7 +163,7 @@ By providing a structured, data-driven approach to controller tuning, this proje
 
 Betaflight is currently the most popular open-source flight controller firmware for FPV racing and freestyle drones and is continuously developed by a large community \parencite{betaflight_website}. The quality of the control algorithms is crucial for flight performance, as it determines how quickly and accurately the drone can respond to pilot inputs and external disturbances.
 
-Currently, controller tuning is often performed manually through iterative trial-and-error procedures or with the support of tools such as the PID Toolbox. However, these approaches rely on the natural flight behaviour of the drone and the pilot’s inputs, which may not sufficiently excite all relevant frequency ranges. As a result, this can lead to suboptimal tuning outcomes and requires extensive flight testing as well as significant piloting experience.
+Currently, controller tuning is often performed manually through iterative trial-and-error procedures or with the support of tools such as the PID Toolbox by Brian White. However, these approaches rely on the natural flight behaviour of the drone and the pilot’s inputs, which may not sufficiently excite all relevant frequency ranges. As a result, this can lead to suboptimal tuning outcomes and requires extensive flight testing as well as significant piloting experience.
 
 During our project thesis, a proof-of-concept approach for offline tuning of the angular rate controller based on recorded flight data, originally developed by Michael Peter, was restructured and modularized. This approach serves as the foundation for the present work and is further refined and extended to include additional control loops.
 
@@ -193,7 +193,7 @@ Unmanned Aerial Vehicles (UAVs) can generally be classified into different categ
 
 Among multirotor UAVs, the most common configurations are quadcopters, hexacopters and octocopters, which differ in the number of rotors (see Fig.~\ref{fig:multirotor_types}). Quadcopters use four rotors and represent the simplest fully controllable multirotor configuration. Due to their comparatively low mechanical complexity, good maneuverability and widespread use in research and practical applications, they are particularly relevant for modeling and control tasks.
 
-Hexacopters and octocopters extend this concept by using six and eight rotors, respectively. These configurations offer increased thrust, improved fault tolerance and higher payload capacity, but they also involve greater weight, higher energy consumption and more complex control allocation.
+Hexacopters and octocopters extend this concept by using six or eight rotors. These configurations offer increased thrust, improved fault tolerance and higher payload capacity, but they also involve greater weight, higher energy consumption and more complex control allocation.
 
 Since this work is focused with the analysis and modeling of quadcopters, the quadcopter configuration is used as the reference platform throughout the remainder of this chapter.
 
@@ -210,13 +210,13 @@ A quadcopter relies on a variety of sensors to measure its state and environment
 
 \begin{itemize}
 \item \textbf{Inertial Measurement Unit (IMU):} The IMU consists of accelerometers and gyroscopes that measure linear acceleration and angular velocity. These measurements are used to estimate the drone's orientation and motion.
-\item \textbf{Barometer:} A barometer measures atmospheric pressure, which can be used to estimate altitude. This is important for altitude control.
 \item \textbf{GPS:} GPS provides position and velocity measurements in a global Earth-fixed reference frame, which are mainly used for navigation and position control.
-\item \textbf{Magnetometer:} A magnetometer measures the Earth's magnetic field and is used to estimate the heading of the drone.
 \item \textbf{Electronic Speed Controllers (ESC's):} ESC's control the rotational speed of the motors and provide feedback for motor control.
+\item \textbf{Magnetometer:} A magnetometer measures the Earth's magnetic field and is used to estimate the heading of the drone.
+\item \textbf{Barometer:} A barometer measures atmospheric pressure, which can be used to estimate altitude.
 \end{itemize}
 
-These are the most important sensors for us in this thesis used in a quadcopter. With these sensors we get all the necessary data, which are essential for the offline tuning. However, depending on the application, additional sensors such as cameras or distance sensors can also be used. In practice, the measurements of these sensors are often combined to obtain a more accurate estimate of the drone’s state. These sensor data form the basis for stabilization, navigation and control.
+These sensors provide the measurements needed for offline tuning. Depending on the application, additional sensors such as cameras or distance sensors may be used. In practice, measurements from multiple sensors are often combined through sensor fusion to obtain a more accurate estimate of the drone’s state. Sensor data form the basis for stabilization, navigation and control.
 
 \section{Drone Dynamics and Control Principles}
 
@@ -263,7 +263,7 @@ All this motion is controlled by adjusting the rotatioal speeds of the four moto
 
 As already mentioned, a quadcopter generates all forces and torques through the thrust produced by the propellers. Therefore, the control of the drone is achieved by adjusting the speed of each motor, which in turn changes the thrust and the resulting forces and torques.
 
-To roll the drone is relatively straightforward. This is achieved by increasing the speed of two motors on one side and decreasing the speed of the opposite motors. For example, to roll the drone to the left, the speed of the right motors is increased while the speed of the left motors is decreased. This creates a torque around the \(x\)-axis, causing the drone to tilt to the right, as illustrated in Figure~\ref{fig:roll_pitch}. The same principle also applies to pitch control, where the front and rear motors are adjusted to create a torque around the \(y\)-axis.
+Rolling the drone is achieved by increasing the speed of two motors on one side and decreasing the speed of the opposite motors. For example, to roll the drone to the left, the speeds of the right motors is increased while the speeds of the left motors is decreased. This creates a torque around the \(x\)-axis, causing the drone to tilt to the right, as illustrated in Figure~\ref{fig:roll_pitch}. The same principle also applies to pitch control, where the front and rear motors are adjusted to create a torque around the \(y\)-axis.
 
 
 \begin{figure}[htbp]
@@ -288,7 +288,7 @@ To roll the drone is relatively straightforward. This is achieved by increasing 
 
 To move along the \(x\)- and \(y\)-axes, the drone needs to tilt in the corresponding direction, which is achieved by adjusting the roll and pitch angles. For example, to move forward, the drone pitches forward by increasing the speed of the rear motors and decreasing the speed of the front motors. This creates a horizontal component of the thrust that propels the drone forward. Similarly, to move to the right, the drone rolls to the right by increasing the speed of the left motors and decreasing the speed of the right motors. Therefore, movement in the \(x\)- and \(y\)-directions is indirectly controlled through roll and pitch.
 
-Yaw control is slightly more complex. Since the drone has no direct control surfaces, yaw is achieved by creating a torque around the \(z\)-axis. The propellers of quadcopters do not all rotate in the same direction but instead alternate between clockwise and counterclockwise rotation. As a result, the torque generated by the propellers also alternates in direction. To create a yaw motion, the speed of the motors rotating in one direction is increased, while the speed of the motors rotating in the opposite direction is decreased. This results in a net torque around the \(z\)-axis, causing the drone to rotate in the desired direction, as shown in Figure~\ref{fig:yaw}.
+Yaw control is slightly more complex. Since the drone has no direct control surfaces, yaw is achieved by creating a torque around the \(z\)-axis. The propellers of quadcopters do not all rotate in the same direction but instead alternate between clockwise and counterclockwise. As a result, the torque generated by the propellers also alternates in direction. To create a yaw motion, the speed of the motors rotating in one direction is increased, while the speed of the motors rotating in the opposite direction is decreased. This results in a torque around the \(z\)-axis, causing the drone to rotate in the desired direction, as shown in Figure~\ref{fig:yaw}.
 
 If we combine all these control principles, it becomes clear that the drone can perform all maneuvers by adjusting the speeds of the four motors. For this purpose, the software mixes the desired roll, pitch, yaw and throttle commands into individual motor speed commands. This process is known as motor mixing or control allocation and is a crucial part of the flight controller’s functionality. The simplified motor mixing for a quadcopter can be represented by the following equations:
 
@@ -1413,13 +1413,13 @@ The tuning process involved iteratively adjusting PID gains in MATLAB while moni
 
 \section{Angle Controller Tuning}
 
-The Betaflight software provides three main flight modes: Angle, Horizon, and Acro.
+The Betaflight software provides three main flight modes: Angle, Horizon and Acro.
 
 In Angle mode, the drone’s tilt angle is directly linked to the stick position. The maximum tilt is limited to a predefined value, preventing flips and making this mode particularly suitable for beginners.
 
 In contrast, Acro mode provides full manual control. In this mode, stick inputs define an angular rate rather than a target angle, meaning that the drone continues rotating as long as the stick remains deflected. This allows aggressive maneuvers such as flips and rolls but also requires greater pilot experience.
 
-During this thesis project, an offline tuner for the angular rate controller was further developed to systematically optimize the rate control loop and improveccontroller. As Acro mode performance. The tuner was subsequently extended to also support Angle mode, enabling improved stability and responsiveness while maintaining intuitive handling for beginner pilots.
+During this thesis project, an offline tuner for the angular rate controller was further developed to systematically optimize the rate control loop and improve Acro mode performance. The tuner was subsequently extended to also support Angle mode, enabling improved stability and responsiveness while maintaining intuitive handling for beginner pilots.
 
 This extension allows a consistent tuning methodology across different flight modes, improving overall system performance and usability.
 
@@ -1492,7 +1492,7 @@ This proportional mapping allows the pilot to control the drone orientation dire
 \begingroup
 \emergencystretch=1em
 
-The chirp generator described in the gyro-controller tuning section is reused here. Its public interface (\texttt{chirpInit}, \texttt{chirpUpdate} in \texttt{src/\allowbreak main/\allowbreak common/\allowbreak chirp.c}) and the invocation of \texttt{chirpInit} inside \texttt{pidInit} (\texttt{src/\allowbreak main/\allowbreak flight/\allowbreak pid\_\allowbreak init.c}) are unchanged; the configured frequency range, sweep time, and per-axis amplitudes are reused from the gyro-tuning configuration. Injecting the chirp at the same point as in the gyro case would, however, leave the excitation inside the closed angle loop: the inner-loop rate setpoint would be driven simultaneously by the angle controller's output and by the chirp itself, so the transfer function from the angle target to the measured angle could not be recovered from the resulting logs directly. The relevant existing structure is shown in Figure~\ref{fig:angle_mode_control_loop}.
+The chirp generator described in the gyro-controller tuning section is reused here. Its public interface (\texttt{chirpInit}, \texttt{chirpUpdate} in \texttt{src/\allowbreak main/\allowbreak common/\allowbreak chirp.c}) and the invocation of \texttt{chirpInit} inside \texttt{pidInit} (\texttt{src/\allowbreak main/\allowbreak flight/\allowbreak pid\_\allowbreak init.c}) are unchanged; the configured frequency range, sweep time and per-axis amplitudes are reused from the gyro-tuning configuration. Injecting the chirp at the same point as in the gyro case would, however, leave the excitation inside the closed angle loop: the inner-loop rate setpoint would be driven simultaneously by the angle controller's output and by the chirp itself, so the transfer function from the angle target to the measured angle could not be recovered from the resulting logs directly. The relevant existing structure is shown in Figure~\ref{fig:angle_mode_control_loop}.
 
 To make this transfer function identifiable, a small modification was made to \texttt{pidController} (\texttt{src/\allowbreak main/\allowbreak flight/\allowbreak pid.c}) so that, while \texttt{CHIRP\_\allowbreak MODE} is engaged and the affected axis is in angle mode, the chirp value is injected upstream of \texttt{pidLevel}, before the rate-to-angle transformation, rather than at the inner-loop rate setpoint. \texttt{pidLevel} first applies a linear transformation from the (rate-domain) \texttt{currentPidSetpoint} to a target angle, scaled by the configured tilt-angle limit divided by the maximum commanded rate. Because this transformation is linear, the \texttt{chirp\_\allowbreak amplitude\_\allowbreak *} values calibrated for rate-loop excitation map proportionally onto the angle-target excitation and carry over without re-tuning. The resulting structure is shown in Figure~\ref{fig:angle_loop_modified}.
 
@@ -1507,11 +1507,11 @@ The excitation function is selected per axis from the corresponding \texttt{leve
 
 Some older airframes are flown in acro mode only and do not support angle mode. In that case the same chirp configuration is still used: with the angle controller and the \texttt{currentPidSetpoint}-to-target-angle transformation disabled, the injection collapses onto the gyro-tuning structure and the excitation enters at the rate setpoint as before. The same operator-facing configuration therefore covers both cases without parameter changes.
 
-To support signal-to-noise averaging across repeated sweeps, a \texttt{chirp\_\allowbreak repeat} parameter was added (CLI entry \texttt{chirp\_\allowbreak repeat}, exposed as a field on \texttt{pidProfile\_\allowbreak t}). While \texttt{BOXCHIRP} is held active, the sweep re-runs on the current axis up to \texttt{chirp\_\allowbreak repeat} times, separated by a 750\,ms settle interval, before the sequencer advances to the next configured axis. The parameter is capped at 9 so that the per-repeat counter fits the OSD HUD slot. The sequencer state, repeat counter, and axis index are kept in the \texttt{pidRuntime} chirp-state members; per-repeat completion, per-axis completion, and end-of-series transitions are surfaced to the pilot through the chirp HUD slot in \texttt{src/\allowbreak main/\allowbreak osd/\allowbreak osd\_\allowbreak elements.c} and through transient warnings in \texttt{src/\allowbreak main/\allowbreak osd/\allowbreak osd\_\allowbreak warnings.c}.
+To support signal-to-noise averaging across repeated sweeps, a \texttt{chirp\_\allowbreak repeat} parameter was added (CLI entry \texttt{chirp\_\allowbreak repeat}, exposed as a field on \texttt{pidProfile\_\allowbreak t}). While \texttt{BOXCHIRP} is held active, the sweep re-runs on the current axis up to \texttt{chirp\_\allowbreak repeat} times, separated by a 750\,ms settle interval, before the sequencer advances to the next configured axis. The parameter is capped at 9 so that the per-repeat counter fits the OSD HUD slot. The sequencer state, repeat counter and axis index are kept in the \texttt{pidRuntime} chirp-state members; per-repeat completion, per-axis completion and end-of-series transitions are surfaced to the pilot through the chirp HUD slot in \texttt{src/\allowbreak main/\allowbreak osd/\allowbreak osd\_\allowbreak elements.c} and through transient warnings in \texttt{src/\allowbreak main/\allowbreak osd/\allowbreak osd\_\allowbreak warnings.c}.
 
-A phase-compensation pre-shaping filter is applied to the chirp signal before injection on both paths. The filter itself (\texttt{phaseCompApply} in \texttt{src/\allowbreak main/\allowbreak common/\allowbreak filter.c}, configured through the \texttt{chirp\_\allowbreak lag\_\allowbreak freq\_\allowbreak hz} and \texttt{chirp\_\allowbreak lead\_\allowbreak freq\_\allowbreak hz} parameters as covered in the theory chapter) was already present in the upstream baseline. A \texttt{phaseCompReset} entry point was added to clear the filter's internal state, and it is invoked on \texttt{CHIRP\_\allowbreak MODE} engagement, on each axis advance, and at the start of each repeat. This defensive reset suppresses carry-over transients from the previous run that would otherwise contaminate the first samples of the sweep.
+A phase-compensation pre-shaping filter is applied to the chirp signal before injection on both paths. The filter itself (\texttt{phaseCompApply} in \texttt{src/\allowbreak main/\allowbreak common/\allowbreak filter.c}, configured through the \texttt{chirp\_\allowbreak lag\_\allowbreak freq\_\allowbreak hz} and \texttt{chirp\_\allowbreak lead\_\allowbreak freq\_\allowbreak hz} parameters as covered in the theory chapter) was already present in the upstream baseline. A \texttt{phaseCompReset} entry point was added to clear the filter's internal state and it is invoked on \texttt{CHIRP\_\allowbreak MODE} engagement, on each axis advance and at the start of each repeat. This defensive reset suppresses carry-over transients from the previous run that would otherwise contaminate the first samples of the sweep.
 
-Internal signals are exposed to the offline tooling through the \texttt{DEBUG\_\allowbreak CHIRP} debug channels written from \texttt{pidController} and \texttt{pidLevel} via \texttt{DEBUG\_\allowbreak SET(DEBUG\_\allowbreak CHIRP, \ldots)}. These carry the current phase, the active axis, the instantaneous frequency, and the raw excitation, together with the angle controller's target and measured angle. The channels are recorded by the existing blackbox subsystem when \texttt{debug\_\allowbreak mode} is set to \texttt{CHIRP} via the CLI, and no changes to the blackbox encoding were required.
+Internal signals are exposed to the offline tooling through the \texttt{DEBUG\_\allowbreak CHIRP} debug channels written from \texttt{pidController} and \texttt{pidLevel} via \texttt{DEBUG\_\allowbreak SET(DEBUG\_\allowbreak CHIRP, \ldots)}. These carry the current phase, the active axis, the instantaneous frequency and the raw excitation, together with the angle controller's target and measured angle. The channels are recorded by the existing blackbox subsystem when \texttt{debug\_\allowbreak mode} is set to \texttt{CHIRP} via the CLI and no changes to the blackbox encoding were required.
 
 All firmware-side logic and CLI surface described in this section is wrapped in \texttt{\#ifdef USE\_\allowbreak CHIRP} and requires the firmware to be built with \texttt{EXTRA\_\allowbreak FLAGS="-DUSE\_\allowbreak CHIRP"}. A build without that flag produces a binary functionally equivalent to the upstream baseline on which the fork sits.
 
@@ -1559,7 +1559,7 @@ The estimated plant transfer function can then be used to analyze the influence 
 
 \subsubsection*{Implementation of the Tuning Method}
 
-The calculation of the tuning parameters for the angle control loop follows the same approach as for the angular rate control loop, but uses different control loop components. The relevant components are the gyro control loop \(T_{\text{Gyro}}\) which we get out of the calculations of the gyro control loop, the angle controller and filter which are combined into \(C_{\text{Angle}}\), and the plant \(P_{\text{Angle}}\).
+The calculation of the tuning parameters for the angle control loop follows the same approach as for the angular rate control loop, but uses different control loop components. The relevant components are the gyro control loop \(T_{\text{Gyro}}\) which we get out of the calculations of the gyro control loop, the angle controller and filter which are combined into \(C_{\text{Angle}}\) and the plant \(P_{\text{Angle}}\).
 
 With these components, the transfer functions for the Gang of Four plot can be calculated. First, the closed-loop transfer function of the angle control loop is
 
@@ -1596,7 +1596,7 @@ SP_{\text{Angle}}(\omega) =
 \label{eq:G_c_new}
 \end{equation}
 
-These expressions allow the computation of all relevant performance metrics such as gain margin, phase margin, bandwidth, controller effort, disturbance attenuation, and robustness properties. Based on these metrics, plots can be generated and the suitability of the new controller parameters can be systematically evaluated.
+These expressions allow the computation of all relevant performance metrics such as gain margin, phase margin, bandwidth, controller effort, disturbance attenuation and robustness properties. Based on these metrics, plots can be generated and the suitability of the new controller parameters can be systematically evaluated.
 
 \newpage
 
@@ -1606,9 +1606,15 @@ Based on the calculated transfer functions and tuning plots, the influence of di
 
 \subsubsection*{Evaluation Step Response}
 
-The step response of the angle controller illustrates how the drone reacts to a commanded step change in the desired roll angle and provides insight into the rise time, settling behavior, and overall stability of the system. As shown in Fig.~\ref{fig:angle_step_response_tuning}, three curves are compared: the measured response (yellow), the calculated response based on the plant model (blue), and the predicted response using the newly tuned controller parameters (red).
+The step response of the angle controller illustrates how the drone reacts to a commanded step change in the desired roll angle. It provides insight into the rise time, settling behavior and overall stability of the system.
 
-All three responses exhibit a fast rise time and converge smoothly to the desired angle without significant overshoot, indicating stable system behavior. The predicted response reaches the target angle slightly faster than the calculated and measured responses, suggesting an improved controller tuning. The measured response also closely follows the predicted curve, demonstrating that the model represents the real system with good accuracy. Since the angle controller is implemented as a pure P-controller, it mainly influences the response speed by mapping the angle error directly to a desired angular rate, while the damping and transient characteristics are primarily governed by the inner angular rate controller. Overall, the results confirm that the cascaded control structure achieves a fast, stable, and accurate tracking of the commanded angle.
+As shown in Fig.~\ref{fig:angle_step_response_tuning}, three curves are compared: the measured response (yellow), the calculated response based on the plant model (blue) and the predicted response using the newly tuned controller parameters (red).
+
+All three responses exhibit a fast rise time and converge smoothly to the desired angle without significant overshoot, indicating stable system behavior. The predicted response (red) reaches the target angle slightly faster than the calculated and measured responses, suggesting an improved controller tuning. The measured response closely follows the predicted curve, demonstrating that the model represents the real system with good accuracy.
+
+Since the angle controller is implemented as a pure P-controller, it mainly influences the response speed by mapping the angle error directly to a desired angular rate. The damping and transient characteristics are primarily governed by the inner angular rate controller.
+
+Overall, the results confirm that the cascaded control structure achieves a fast, stable and accurate tracking of the commanded angle.
 
 \begin{figure}[H]
 	\centering
@@ -1672,21 +1678,21 @@ In the feedback path which includes the D-term, a D-Boost is implemented. During
 \begingroup
 \emergencystretch=1em
 
-The Betaflight fork used in this work branches from upstream master at the end of February 2026 baseline (commit \texttt{04e37a122}). All modifications described below are guarded by the compile-time flag \texttt{USE\_\allowbreak ALTHOLD\_\allowbreak CHIRP}, so a build without this flag is functionally identical to the upstream baseline. The changes fall into six areas: a new flight mode, an extension of the chirp signal generator, the injection of the excitation into the altitude setpoint, two conditional bypasses in the altitude PID, the exposure of internal signals via the debug-channel infrastructure, and four new operator-facing parameters.
+The Betaflight fork used in this work branches from upstream master at the end of February 2026 baseline (commit \texttt{04e37a122}). All modifications described below are guarded by the compile-time flag \texttt{USE\_\allowbreak ALTHOLD\_\allowbreak CHIRP}, so a build without this flag is functionally identical to the upstream baseline. The changes fall into six areas: a new flight mode, an extension of the chirp signal generator, the injection of the excitation into the altitude setpoint, two conditional bypasses in the altitude PID, the exposure of internal signals via the debug-channel infrastructure and four new operator-facing parameters.
 
-A dedicated flight mode was introduced so that the chirp excitation can be armed independently of altitude hold itself. A new box identifier \texttt{BOXALTHOLDCHIRP} was added in \texttt{rc\_\allowbreak modes.c}/\texttt{rc\_\allowbreak modes.h} and exposed through MSP in \texttt{msp\_\allowbreak box.c} so that the Betaflight Configurator can bind it to an RC switch. The corresponding flight-mode bit \texttt{ALTHOLD\_\allowbreak CHIRP\_\allowbreak MODE} was added to \texttt{flightModeFlags\_\allowbreak e} in \texttt{runtime\_\allowbreak config.h}, reusing the previously unused bit nine. The translation from switch state to flight-mode flag happens in \texttt{processRxModes} in \texttt{fc/\allowbreak core.c}. We require three conditions to hold simultaneously: the \texttt{BOXALTHOLDCHIRP} switch is active, altitude hold is already engaged, and neither failsafe nor GPS rescue is active. This gating restricts the excitation to a defined hover operating point and ensures that any safety-related override disengages it.
+A dedicated flight mode was introduced so that the chirp excitation can be armed independently of altitude hold itself. A new box identifier \texttt{BOXALTHOLDCHIRP} was added in \texttt{rc\_\allowbreak modes.c}/\texttt{rc\_\allowbreak modes.h} and exposed through MSP in \texttt{msp\_\allowbreak box.c} so that the Betaflight Configurator can bind it to an RC switch. The corresponding flight-mode bit \texttt{ALTHOLD\_\allowbreak CHIRP\_\allowbreak MODE} was added to \texttt{flightModeFlags\_\allowbreak e} in \texttt{runtime\_\allowbreak config.h}, reusing the previously unused bit nine. The translation from switch state to flight-mode flag happens in \texttt{processRxModes} in \texttt{fc/\allowbreak core.c}. We require three conditions to hold simultaneously: the \texttt{BOXALTHOLDCHIRP} switch is active, altitude hold is already engaged and neither failsafe nor GPS rescue is active. This gating restricts the excitation to a defined hover operating point and ensures that any safety-related override disengages it.
 
 The chirp signal itself is produced by an extension of the upstream chirp generator in \texttt{common/\allowbreak chirp.c}. The upstream generator, contributed in pull request 13105, was designed for the gyro loop and emits an integrated waveform --- an angle that, after differentiation by the rate loop, becomes the intended sine excitation. The altitude target is a position setpoint rather than a rate, so we added a sibling entry point \texttt{altChirpUpdate} that reuses the upstream logarithmic frequency sweep but emits the sine directly, without the integration step. The two entry points share the same state struct and the same sweep schedule; only the output stage differs. \texttt{altChirpUpdate} also signals completion of the sweep, which is queried by \texttt{altHold\allowbreak ChirpIsFinished} from the OSD layer.
 
 The injection of the chirp into the altitude-hold target takes place in \texttt{altHoldUpdate} in \texttt{flight/\allowbreak alt\_\allowbreak hold\_\allowbreak multirotor.c}. When the altitude-hold-chirp mode becomes active, the current target altitude is captured as a baseline. On every subsequent task tick the chirp generator output is multiplied by the configured amplitude and added to this baseline, so the excitation oscillates symmetrically around the captured hover setpoint. On mode exit the generator is reset via \texttt{chirpReset} so that a subsequent run starts from a defined state. The generator itself is initialised with the configured frequency range and sweep time in \texttt{altHoldInit}.
 
-Two further modifications were made to the altitude PID in \texttt{altitudeControl} in \texttt{flight/\allowbreak autopilot\_\allowbreak multirotor.c}. When the altitude-hold-chirp mode is active, the I-term-relax scaling that normally attenuates integrator wind-up at large altitude errors is bypassed, and the velocity-dependent D-boost term is also bypassed. Both elements are signal-dependent nonlinearities that would otherwise modulate the loop gain over the course of a sweep. Disabling them during the excitation is intended to keep the PID law linear around the hover operating point, so that the measured frequency response reflects the nominal controller rather than its state-dependent variants.
+Two further modifications were made to the altitude PID in \texttt{altitudeControl} in \texttt{flight/\allowbreak autopilot\_\allowbreak multirotor.c}. When the altitude-hold-chirp mode is active, the I-term-relax scaling that normally attenuates integrator wind-up at large altitude errors is bypassed and the velocity-dependent D-boost term is also bypassed. Both elements are signal-dependent nonlinearities that would otherwise modulate the loop gain over the course of a sweep. Disabling them during the excitation is intended to keep the PID law linear around the hover operating point, so that the measured frequency response reflects the nominal controller rather than its state-dependent variants.
 
-Internal signals are exposed through the existing Betaflight debug infrastructure. A new entry \texttt{DEBUG\_\allowbreak ALTHOLD\_\allowbreak CHIRP} was added to the debug-mode enum and name table in \texttt{build/\allowbreak debug.c}/\texttt{debug.h}. When this mode is selected via the CLI, eight channels are published through \texttt{DEBUG\_\allowbreak SET} calls in \texttt{altHoldUpdate} and \texttt{altitudeControl}: the chirp drive, the measured altitude, the target altitude, the combined P-plus-I term, the D term, the throttle command, the vertical velocity, and the total PID output. These channels are captured by the existing blackbox subsystem and form the input data for the offline frequency-response analysis.
+Internal signals are exposed through the existing Betaflight debug infrastructure. A new entry \texttt{DEBUG\_\allowbreak ALTHOLD\_\allowbreak CHIRP} was added to the debug-mode enum and name table in \texttt{build/\allowbreak debug.c}/\texttt{debug.h}. When this mode is selected via the CLI, eight channels are published through \texttt{DEBUG\_\allowbreak SET} calls in \texttt{altHoldUpdate} and \texttt{altitudeControl}: the chirp drive, the measured altitude, the target altitude, the combined P-plus-I term, the D term, the throttle command, the vertical velocity and the total PID output. These channels are captured by the existing blackbox subsystem and form the input data for the offline frequency-response analysis.
 
-Two small additions to the on-screen display in \texttt{osd/\allowbreak osd\_\allowbreak elements.c} and \texttt{osd/\allowbreak osd\_\allowbreak warnings.c} give the operator direct feedback during a test flight: a four-character flight-mode tag \texttt{ACHR} indicates that the altitude-hold-chirp mode is engaged, and the warning \texttt{ACHRP EXC FINISHED} is shown once \texttt{altHold\allowbreak ChirpIsFinished} reports that the sweep has completed.
+Two small additions to the on-screen display in \texttt{osd/\allowbreak osd\_\allowbreak elements.c} and \texttt{osd/\allowbreak osd\_\allowbreak warnings.c} give the operator direct feedback during a test flight: a four-character flight-mode tag \texttt{ACHR} indicates that the altitude-hold-chirp mode is engaged and the warning \texttt{ACHRP EXC FINISHED} is shown once \texttt{altHold\allowbreak ChirpIsFinished} reports that the sweep has completed.
 
-Four operator-facing parameters were added to the autopilot parameter group in \texttt{pg/\allowbreak autopilot\_\allowbreak multirotor.c} and surfaced as CLI settings in \texttt{cli/\allowbreak settings.c} via the names declared in \texttt{parameter\_\allowbreak names.h}: \texttt{ap\_\allowbreak alt\_\allowbreak chirp\_\allowbreak ampl} for the excitation amplitude, \texttt{ap\_\allowbreak alt\_\allowbreak chirp\_\allowbreak start\_\allowbreak freq\_\allowbreak hz\_\allowbreak centi} and \texttt{ap\_\allowbreak alt\_\allowbreak chirp\_\allowbreak end\_\allowbreak freq\_\allowbreak hz\_\allowbreak deci} for the start and end frequencies of the logarithmic sweep, and \texttt{ap\_\allowbreak alt\_\allowbreak chirp\_\allowbreak sweep\_\allowbreak time\_\allowbreak sec} for the sweep duration. The end frequency is stored in units of deci-Hertz; the start frequency was migrated to centi-Hertz at a later stage so that lower start frequencies could be configured at the resolution needed for the sweep. The conversion to plain Hertz takes place when the values are passed to the chirp initialiser.
+Four operator-facing parameters were added to the autopilot parameter group in \texttt{pg/\allowbreak autopilot\_\allowbreak multirotor.c} and surfaced as CLI settings in \texttt{cli/\allowbreak settings.c} via the names declared in \texttt{parameter\_\allowbreak names.h}: \texttt{ap\_\allowbreak alt\_\allowbreak chirp\_\allowbreak ampl} for the excitation amplitude, \texttt{ap\_\allowbreak alt\_\allowbreak chirp\_\allowbreak start\_\allowbreak freq\_\allowbreak hz\_\allowbreak centi} and \texttt{ap\_\allowbreak alt\_\allowbreak chirp\_\allowbreak end\_\allowbreak freq\_\allowbreak hz\_\allowbreak deci} for the start and end frequencies of the logarithmic sweep and \texttt{ap\_\allowbreak alt\_\allowbreak chirp\_\allowbreak sweep\_\allowbreak time\_\allowbreak sec} for the sweep duration. The end frequency is stored in units of deci-Hertz; the start frequency was migrated to centi-Hertz at a later stage so that lower start frequencies could be configured at the resolution needed for the sweep. The conversion to plain Hertz takes place when the values are passed to the chirp initialiser.
 
 \endgroup
 
@@ -1792,7 +1798,7 @@ These metrics allows us to evaluate the performance of the new controller parame
 
 \subsubsection*{Evaluation Gang of Four}
 
-These metrics allows us to evaluate the performance of the new controller parameters and make informed decisions about further adjustments to optimize the altitude hold control loop for improved stability, responsiveness, and disturbance rejection. More details about that can be found in the next section, where the results of the tuning process are evaluated based on the step response and the Gang of Four plots.
+These metrics allows us to evaluate the performance of the new controller parameters and make informed decisions about further adjustments to optimize the altitude hold control loop for improved stability, responsiveness and disturbance rejection. More details about that can be found in the next section, where the results of the tuning process are evaluated based on the step response and the Gang of Four plots.
 
 \section{Position Hold}
 
@@ -1805,6 +1811,7 @@ Reliable Position Hold operation depends on a functioning GPS module with a stro
 Once Position Hold stabilizes, the system maintains altitude using an automatically-adjusted throttle command, while roll and pitch are regulated to zero out position errors.
 
 \subsection*{Betaflight Firmware}
+\label{Position Hold Betaflight Firmware}
 
 In the Betaflight firmware, Position Hold operates asynchronously, executing once per GPS update rather than at the fixed, high-speed rate of the main control loop. The algorithm processes distance and velocity estimates in Earth-fixed coordinates before rotating the computed PID sum into the aircraft's body frame as roll and pitch angle commands. 
 
@@ -1844,7 +1851,7 @@ Finally, a sanity check continuously monitors the distance from the target again
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=1.0\textwidth]{Position_hold_control_loop_handsketch.png}
+    \includegraphics[width=1.0\textwidth]{Control_Loop_PosHold.png}
     \caption{Control structure of the Betaflight position hold controller.}
     \label{fig:Position_hold_control_loop_handsketch.png}
 \end{figure}
@@ -1857,7 +1864,7 @@ After the P, I, D and A terms are summed and limited, the resulting control vect
 
 To evaluate and tune the Position Hold controller, an exponential chirp signal (as described in Section \ref{sec:System Identification Using Chirp Signals}) is injected directly into the position error during flight. By sweeping through a predefined frequency range, the position controller is forced into a controlled response, allowing its frequency-dependent behaviour to be measured. 
 
-As mentioned in Section \ref{Position Hold bf firmware}, the magnitude of the D+A vector is limited to 35 degrees. For system identification, this limitation introduces nonlinear behavior. To mitigate this, a lead-lag filter is applied to the chirp signal before injection, reducing its amplitudes at higher frequencies. This results in less acceleration of the drone and therefore a smaller combined D+A vector length. Figure \ref{fig:pidDA_limit} illustrates how the D+A magnitude can easily exceed the 35-degree limit during chirp excitation without the lead-lag filter and how the filter affects the magnitude of the vector.
+As mentioned in Section \ref{Position Hold Betaflight Firmware}, the magnitude of the D+A vector is limited to 35 degrees. For system identification, this limitation introduces nonlinear behavior. To mitigate this, a lead-lag filter is applied to the chirp signal before injection, reducing its amplitudes at higher frequencies. This results in less acceleration of the drone and therefore a smaller combined D+A vector length. Figure \ref{fig:pidDA_limit} illustrates how the D+A magnitude can easily exceed the 35-degree limit during chirp excitation without the lead-lag filter and how the filter affects the magnitude of the vector.
 
 \begin{figure}[H]
     \centering
@@ -1877,9 +1884,9 @@ As mentioned in Section \ref{Position Hold bf firmware}, the magnitude of the D+
     \label{fig:pidDA_limit}
 \end{figure}
 
-To enable repeatable measurements, an automated heading alignment sequence precedes each chirp sweep. Upon activation, a proportional yaw controller rotates the drone to face true North (0 degrees heading). Once the heading error falls within tolerance, alignment is locked, controller state is reset, and the first chirp phase begins on the East-West (longitude) axis. At 0-degree heading, this Earth-Fixed axis maps cleanly to the body-frame roll axis. After the first sweep completes, the second chirp excites the North-South (latitude) axis, corresponding to body-frame pitch. This alignment ensures that Earth-Fixed and body-frame dynamics are directly observable.
+To enable repeatable measurements, an automated heading alignment sequence precedes each chirp sweep. Upon activation, a proportional yaw controller rotates the drone to face true North (0 degrees heading). Once the heading error falls within tolerance, alignment is locked, controller state is reset and the first chirp phase begins on the East-West (longitude) axis. At 0-degree heading, this Earth-Fixed axis maps cleanly to the body-frame roll axis. After the first sweep completes, the second chirp excites the North-South (latitude) axis, corresponding to body-frame pitch. This alignment ensures that Earth-Fixed and body-frame dynamics are directly observable.
 
-CLI commands were added to configure all chirp parameters including start and end frequencies, sweep duration, amplitude, yaw alignment gains, and lead-lag filter frequencies via the Betaflight configurator. New Blackbox debug variables log all required signals for analysis.
+CLI commands were added to configure all chirp parameters including start and end frequencies, sweep duration, amplitude, yaw alignment gains and lead-lag filter frequencies via the Betaflight configurator. New Blackbox debug variables log all required signals for analysis.
 
 \subsection*{Control Loop Calculation}
 
@@ -1917,9 +1924,9 @@ Using the Fourier transforms of the position error $E_{\text{pos}}(\omega)$ and 
 G_{\text{pos\_ctrl}}(\omega) = \frac{\Theta_{\text{BF}}(\omega)}{E_{\text{pos}}(\omega)}
 \end{equation}
 
-This measured transfer function encapsulates the position controller path: the P, I, D, A gains, the Earth-frame to body-frame coordinate rotation, the heading-dependent mapping, and the PT3 upsampling filter. It does not include inner angle or rate controller dynamics, since $\Theta_{\text{BF}}$ represents the command sent to those inner loops.
+This measured transfer function encapsulates the position controller path: the P, I, D, A gains, the Earth-frame to body-frame coordinate rotation, the heading-dependent mapping and the PT3 upsampling filter. It does not include inner angle or rate controller dynamics, since $\Theta_{\text{BF}}$ represents the command sent to those inner loops.
 
-The debug output provides the instantaneous chirp frequency (chirp\_inst\_freq), the phase argument of the chirp, and the D+A magnitude (pidDA\_limit). These signals enable precise phase tracking and reveal when the D+A limiting constraint becomes active—crucial for understanding nonlinear behavior at the boundaries of the control authority.
+The debug output provides the instantaneous chirp frequency (chirp\_inst\_freq), the phase argument of the chirp and the D+A magnitude (pidDA\_limit). These signals enable precise phase tracking and reveal when the D+A limiting constraint becomes active—crucial for understanding nonlinear behavior at the boundaries of the control authority.
 
 \subsubsection*{Implementation of the Tuning Method}
 
