@@ -1,3 +1,11 @@
+.env
+backups/
+
+# Matlab
+*.mat
+*.asv
+*.slx
+
 ## Core latex/pdflatex auxiliary files:
 *.aux
 *.lof
