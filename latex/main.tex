@@ -648,6 +648,7 @@ The coherence is shown in Figure~\ref{fig:transfer_estimation_filtered}. Values 
 
 
 \section{Control Loop Calculations}
+\label{sec:Control Loop Calculations}
 
 Although the flight controller consists of several nested control loops, their fundamental
 structure is identical. Each loop follows the same basic feedback control principle and differs
@@ -1894,41 +1895,44 @@ CLI commands were added to configure all chirp parameters including start and en
 
 \subsubsection*{Estimation of the Closed-Loop Components}
 
-In position hold mode, the chirp signal is injected directly into the target location in the Earth-fixed frame. This differs from angle or altitude modes, where the chirp is injected into attitude or throttle commands. The key insight is that the position error drives the controller rather than the absolute position. The measurement approach was designed around this principle. Instead of logging absolute GPS coordinates the position error in centimetres (gps\_error) is logged, as the firmware calculates the control outputs based on this relative distance.
+In position hold mode, the chirp signal is injected directly into the target location in the Earth-fixed frame. This differs from angle or altitude modes, where the chirp is injected into attitude or throttle commands. The key insight is that the position error drives the controller rather than the absolute position. The measurement approach was designed around this principle. Instead of logging absolute GPS coordinates, the position error in centimetres is logged, as the firmware calculates the control outputs based on this relative distance.
 
-The injected chirp signal specifies the offset target position in centimetres. Before the chirp injection begins the drone is assumed to maintain the target position with zero error. This allows us to establish that the target position equals the injected chirp signal:
-
-\begin{equation}
-\text{target\_position} = \text{chirp}.
-\end{equation}
-
-The current physical position is computed from the measured GPS error and target position:
+The injected chirp signal specifies the offset target position in centimetres. Before the chirp injection begins, the drone is assumed to maintain the target position with zero error. This allows us to establish that the target position equals the injected chirp signal:
 
 \begin{equation}
-\text{current\_position} = \text{target\_position} - \text{gps\_error} = \text{chirp} - \text{gps\_error}.
+    x_\text{ref} = u_c,
 \end{equation}
 
-where $W_{\text{pos}}(\omega)$ is the spectrum of the demodulated target position and $Y_{\text{pos}}(\omega)$ is the spectrum of the demodulated current position. This transfer function represents the overall closed-loop tracking behavior of the position hold loop and can be used to evaluate bandwidth and phase characteristics.
-
-The closed-loop transfer function from the target position to the controller output \texttt{pid\_sum\_EF} is estimated analogously:
+where $x_\text{ref}$ denotes the target position, $u_c$ the injected chirp signal and $e$ the GPS position error. The current physical position is then computed as:
 
 \begin{equation}
-E_{\text{pos}}(\omega) = \text{target\_position} - \text{current\_position} = \text{gps\_error}.
+    x = x_\text{ref} - e = u_c - e.
 \end{equation}
 
-\textbf{The position error flows through the position controller, generating a corrective command (pid\_sum\_EF) in the Earth frame. This is then rotated into the body frame (angle\_target) based on the drone's heading. The position controller operates at the GPS update rate, significantly slower than the rate control loop. Velocity and acceleration are numerically differentiated from successive position measurements and heavily filtered using adaptive PT1 low-pass filters to attenuate noise introduced by discrete GPS measurements.}
-
-The chirp is applied alternately to two orthogonal Earth-frame axes. The active\_axis flag indicates which axis receives excitation: 0 for longitude (East-West, corresponding to roll) and 1 for latitude (North-South, corresponding to pitch). This enables separate system identification for each axis.
-
-Using the Fourier transforms of the position error $E_{\text{pos}}(\omega)$ and the resulting body-frame angle command $\Theta_{\text{BF}}(\omega)$, the transfer function of the position controller is obtained as:
+Using the rotating-frame filtering approach described in Section \ref{sec:System Identification Using Chirp Signals}, the closed-loop transfer function from the target position to the current position is estimated as:
 
 \begin{equation}
-G_{\text{pos\_ctrl}}(\omega) = \frac{\Theta_{\text{BF}}(\omega)}{E_{\text{pos}}(\omega)}
+    T_\text{pos}(\omega) = \frac{X(\omega)}{X_\text{ref}(\omega)},
 \end{equation}
 
-This measured transfer function encapsulates the position controller path: the P, I, D, A gains, the Earth-frame to body-frame coordinate rotation, the heading-dependent mapping and the PT3 upsampling filter. It does not include inner angle or rate controller dynamics, since $\Theta_{\text{BF}}$ represents the command sent to those inner loops.
+and the transfer function from the target position to the controller output $u_\text{EF}$ is estimated as:
 
-The debug output provides the instantaneous chirp frequency (chirp\_inst\_freq), the phase argument of the chirp and the D+A magnitude (pidDA\_limit). These signals enable precise phase tracking and reveal when the D+A limiting constraint becomes active—crucial for understanding nonlinear behavior at the boundaries of the control authority.
+\begin{equation}
+    G_{uw}(\omega) = \frac{U_\text{EF}(\omega)}{X_\text{ref}(\omega)}.
+\end{equation}
+
+From these two transfer functions, the plant and controller can be recovered through block diagram algebra, analogous to the approach described in Section \ref{sec:Control Loop Calculations}:
+
+\begin{equation}
+    P_\text{pos}(\omega) = \frac{T_\text{pos}(\omega)}{G_{uw}(\omega)}, \qquad
+    C_\text{PID}(\omega) = \frac{G_{uw}(\omega)}{1 - T_\text{pos}(\omega)}.
+\end{equation}
+
+The position error flows through the position controller, generating a corrective command in the Earth frame. This is then rotated into the body frame based on the drone's heading. The position controller operates at the GPS update rate, significantly slower than the rate control loop. Velocity is numerically differentiated from successive position measurements, then filtered using an adaptive first-order (PT1) low-pass filter. Acceleration is derived by differentiating the filtered velocity and applied with a second adaptive PT1 filter, further attenuating noise introduced by discrete GPS measurements. Both filter cutoff frequencies adapt dynamically based on the current GPS data interval.
+
+The chirp is applied alternately to two orthogonal Earth-frame axes. The \texttt{active\_axis} flag indicates which axis receives excitation: 0 for longitude (East-West, corresponding to roll) and 1 for latitude (North-South, corresponding to pitch). This enables separate system identification for each axis and allows comparison between the more dynamic and the less dynamic axis. Since the same controller with identical PID parameters is applied to both axes, the controller design is based on the less dynamic axis.
+
+The combined D+A vector magnitude is continuously logged during measurements. When tuning new controller parameters, this signal reveals whether the \SI{35}{\degree} saturation limit is approached or exceeded during the chirp excitation. Monitoring this constraint ensures that the controller remains in its linear operating region throughout system identification.
 
 \subsubsection*{Implementation of the Tuning Method}
 
@@ -1979,13 +1983,11 @@ A key aspect of this tuning step is that the position controller does not act di
 
 \subsubsection*{Evaluation of the Step Response}
 
-The step response of the position hold controller illustrates how the drone reacts to a commanded step change in the desired horizontal position. It provides insight into the rise time, damping, settling behaviour and the expected steady-state position error.
-
-Analogous to the previous flight modes evaluation, the measured response can be compared with the calculated response obtained from the identified plant model and with the predicted response using newly tuned controller parameters. A well-tuned position controller should converge smoothly to the desired position without oscillations, while still providing sufficient responsiveness against disturbances such as wind or slow GPS drift.
-
-Since the position hold loop represents an outer control layer, the achievable bandwidth is limited by the inner attitude and angular rate loops as well as by the characteristics of the GPS measurement. Therefore, overly aggressive controller parameters can lead to oscillatory behaviour in the position estimate and can excite the inner loops through rapidly varying angle targets. The step response analysis is used to ensure that the tuned controller remains stable and well damped while improving the tracking performance.
+The step response of the position hold controller is evaluated using the same methodology described in the Theoretical Foundations (Section~\ref{sec:Control Loop Calculations}). The tracking response shows the system's ability to reach target positions in both axes, while the compliance response indicates disturbance rejection capability when external forces act on the drone.
 
 \subsubsection*{Evaluation Gang of Four}
+
+The Gang of Four plots characterize the position controller's stability and performance across frequencies, following the framework established in the Theoretical Foundations (Section~\ref{sec:Control Loop Calculations}). The plots compare actual parameters with the newly tuned parameters, providing insight into tracking accuracy, disturbance sensitivity, controller effort, and compliance across the position control bandwidth.
 
 \newpage
 
@@ -2117,7 +2119,44 @@ An additional flight was conducted with a lower proportional gain ($P = 50$). Th
 \section{Results Altitude Hold Controller Tuning}
 
 \section{Results Position Hold Controller Tuning}
-To be done
+
+The position hold loop operates at the GPS update rate of approximately \SI{10}{\hertz}, fundamentally constraining the achievable control bandwidth compared to the \SI{8}{\kilo\hertz} inner loops. System identification was performed on the pitch axis (North-South/latitude), which exhibits less dynamic behavior than roll.
+
+\subsection*{Chirp Excitation and Frequency Range}
+
+Following the methodology described in Section~\ref{sec:System Identification Using Chirp Signals}, chirp excitation was applied to the position error in the Earth-fixed frame at frequencies from \SI{0.05}{\hertz} to \SI{3}{\hertz}. This range remains below the \SI{5}{\hertz} Nyquist limit imposed by the GPS sampling rate. A lead-lag filter was applied to prevent the combined D+A vector from exceeding the \SI{35}{\degree} saturation limit during measurement, ensuring linear operation throughout the identification process.
+
+\subsection*{Baseline and Proposed Tuning Parameters}
+
+The baseline tuning ($P = 30$, $I = 30$, $D = 30$, $A = 30$, filter cutoff $f_c = \SI{0.8}{\hertz}$) was compared with parameters tuned via Gang of Four analysis ($P = 35$, $I = 36$, $D = 33$, $A = 25$). Both parameter sets were evaluated using the frequency response estimation and closed-loop calculation methods established in the Theoretical Foundations (Chapter~\ref{ch:theory}).
+
+\subsection*{Gang of Four Analysis}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\linewidth]{Result_Gang_of_four_PosHold_small_tune.png}
+    \caption{Gang of Four frequency responses for position hold controller (pitch axis).
+    Blue: baseline tuning. Orange: proposed tuning. Gold (tracking plot): measured complementary sensitivity from flight data.}
+    \label{fig:pos_gang_of_four}
+\end{figure}
+
+The measured complementary sensitivity $T$ shows close agreement with the analytical response for baseline tuning below \SI{1}{\hertz}. Deviations at higher frequencies reflect reduced coherence due to GPS measurement noise. The proportional and integral terms follow classical theory and are well-predicted by the analytical model. However, the derivative term prediction diverges from measured behavior due to the discrete finite-difference implementation in firmware (velocity and acceleration computed from \SI{100}{\milli\second} intervals). At low frequencies where P+I terms dominate, the analytical model remains credible; at higher frequencies where D+A contributions grow, predictions should be interpreted as qualitative guidance.
+
+\subsection*{Step Response Analysis}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\linewidth]{Result_Step_Response_PosHold_small_tune.png}
+    \caption{Normalized step response of position hold controller.
+    Blue: baseline tuning. Red: proposed tuning. Yellow: measured complementary sensitivity step response from flight data.}
+    \label{fig:pos_step_response}
+\end{figure}
+
+The proposed tuning exhibits faster settling time and reduced overshoot compared to baseline. The measured step response (yellow) validates that the analytical model captures the dominant system dynamics. The proposed tuning demonstrates improved transient response while the measured data confirms stable operation within design intent.
+
+\subsection*{D+A Contribution Constraint During Tuning}
+
+When developing new controller parameters, users must verify that the combined D+A contribution remains within the \SI{35}{\degree} limit throughout normal operation (see Section~\ref{Position Hold Betaflight Firmware}). This constraint is shaped by both the lead-lag filter applied to the chirp excitation and the magnitude of the D and A gains. The proposed tuning parameters ($D = 55$, $A = 10$) were selected to satisfy this constraint under realistic flight conditions, as confirmed through flight validation.
 
 
 \chapter{Discussion}
