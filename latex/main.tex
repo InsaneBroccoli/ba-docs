@@ -371,7 +371,7 @@ For the simulation model introduced in this chapter, the following parameter val
 \item \( A \) — amplitude of the chirp signal (simulation: \( 230 \))
 \end{itemize}
 
-These parameters directly influence the quality of the system excitation and therefore the accuracy of the subsequent frequency response estimation.
+With the exception of the final frequency \(f_1\), the simulation parameters are based on the default chirp settings used in Betaflight for the angle and gyro control loops. The final frequency is limited to \(50\,\text{Hz}\) in the simulation to improve the readability of the resulting plots. In practical applications, the final frequency is typically chosen significantly higher (e.g., \(600\,\text{Hz}\)) to cover the full control bandwidth of the system.
 
 \subsubsection*{Exponential chirp (as used in Betaflight):}
 
@@ -418,9 +418,11 @@ are illustrated in Figure~\ref{fig:exponential_chirp}.
  In some control loops, before the chirp signal is injected into the control loop, it is conditioned by a filter to address the differentiating behaviour of the controller effort at low frequencies. This differentiating characteristic causes rising gain at low frequencies, which would lead to excessive motor response at the start of the chirp sweep and potentially cause saturation, compromising the quality of system identification data. The filter reduces low-to-mid frequency components of the chirp signal before injection, such that the combined response produces approximately uniform excitation across the frequency range.
 
 The filter is configured with a pole at 3 Hz and a zero at 30 Hz. This configuration corresponds to the transfer function
+
 \begin{equation}
 	H(s) = \frac{1 + s/\omega_z}{1 + s/\omega_p}
 \end{equation}
+
 where $\omega_z = 2\pi \cdot 30$ rad/s and $\omega_p = 2\pi \cdot 3$ rad/s represent the zero and pole frequencies respectively. The pole introduces the lag component by creating magnitude reduction at frequencies above its cutoff frequency. The zero limits this reduction by introducing magnitude amplification at frequencies above its cutoff frequency. However, since the pole frequency is lower than the zero frequency, the pole's contribution dominates throughout the primary control bandwidth, resulting in a net lag filter. It is important to note that in the Betaflight implementation, the pole frequency ($\omega_p$) must not be set higher than the zero frequency ($\omega_z$), as this would create a lead filter that amplifies high frequencies and could potentially damage the motors.
 
 For the simulation shown in Figure~\ref{fig:chirpleadlag}, the same parameter values introduced in the previous section were used ($f_0 = 1\,\text{Hz}$, $f_1 = 600\,\text{Hz}$, $T = 20\,\text{s}$, $f_s = 2000\,\text{Hz}$). The excitation signal is generated using the exponential chirp formulation described earlier.

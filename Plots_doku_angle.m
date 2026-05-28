@@ -3,16 +3,17 @@ clc;
 clear variables;
 close all;
 
-addpath(genpath('lib'));
-addpath('logs');
+addpath('/home/janick-dort/Dokumente/Studium_ZHAW/BA/bf_controller_tuning/lib/');
+addpath(genpath('/home/janick-dort/Dokumente/Studium_ZHAW/BA/bf_controller_tuning'));
 
 %% File paths
-log_folder    = 'logs';
-flight_folder1 = '20260408';
-flight_folder2 = '20260420';
 
-log_name1 = 'Flipmini_P100.TXT.csv';
-log_name2 = '20260420_flipmini_P80.TXT.csv';
+log_folder    = 'logs';
+flight_folder1 = '20260527';
+flight_folder2 = '20260527';
+
+log_name1 = '20260527_1_overshootexpress.TXT.csv';
+log_name2 = '20260527_2_overshootexpress.TXT.csv';
 
 file_path1 = fullfile(log_folder, flight_folder1, log_name1);
 file_path2 = fullfile(log_folder, flight_folder2, log_name2);
@@ -22,11 +23,11 @@ file_path2 = fullfile(log_folder, flight_folder2, log_name2);
 [para2, Nheader2, ind2, ind_cntr2] = extract_header_information(file_path2);
 
 %% Load data from CSV or cached MAT file
-[folder1, base1, ~] = fileparts(file_path1);
-mat_path1 = fullfile(folder1, [base1 '.mat']);
+[~, base1, ~] = fileparts(file_path1);
+mat_path1 = [base1 '.mat'];  % Speichert direkt im aktuellen Arbeitsverzeichnis
 
-[folder2, base2, ~] = fileparts(file_path2);
-mat_path2 = fullfile(folder2, [base2 '.mat']);
+[~, base2, ~] = fileparts(file_path2);
+mat_path2 = [base2 '.mat'];  % Speichert direkt im aktuellen Arbeitsverzeichnis
 
 try
     S = load(mat_path1);

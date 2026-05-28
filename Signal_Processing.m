@@ -3,7 +3,7 @@ clear; clc; close all;
 
 %% Parameters
 f0 = 1;        % start frequency [Hz]
-f1 = 100;      % end frequency [Hz]
+f1 = 50;      % end frequency [Hz]
 T  = 20;       % duration [s]
 fs = 2000;     % sampling frequency [Hz]
 A = 230;
