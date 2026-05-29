@@ -98,8 +98,7 @@ The results of this work are published in a public GitHub repository and documen
 % --- Table of Contents --------------------------------------------------------
 \tableofcontents
 
-% --- List of Figures ----------------------------------------------------------
-\listoffigures
+
 
 
 % --- Acronyms -----------------------------------------------------------------
@@ -252,7 +251,7 @@ Figure~\ref{fig:body_axes} illustrates the body-fixed coordinate system and the 
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.6\linewidth]{body_axes.png}
+\includegraphics[width=0.5\linewidth]{body_axes.png}
 \caption{Body-fixed coordinate system and rotational axes of a quadcopter.}
 \label{fig:body_axes}
 \end{figure}
@@ -399,15 +398,12 @@ The corresponding phase trajectory is obtained by integrating the frequency \par
 \right].
 \end{equation}
 
-These expressions define the phase trajectory \( \varphi(t) \) used both in the simulations and in the time-dependent frequency shifting approach.
+These expressions define the phase trajectory \( \varphi(t) \) used both in the simulations and in the time-dependent frequency shifting approach. Figure~\ref{fig:exponential_chirp} shows the resulting exponential chirp signal together with its instantaneous frequency and phase trajectory.
 
-The resulting exponential chirp signal, the instantaneous frequency and the phase trajectory
-are illustrated in Figure~\ref{fig:exponential_chirp}.
-
-\begin{figure}[h]
+\begin{figure}[H]
 \centering
 \includegraphics[width=1.0\linewidth]{Figures/exponential_chirp.png}
-\caption{Exponential chirp signal used for the simulation.}
+\caption{Exponential chirp signal used for the simulation. The upper plot shows the generated chirp signal, the middle plot the exponential frequency sweep, and the lower plot the wrapped phase used in the signal generation.}
 \label{fig:exponential_chirp}
 \end{figure}
 
@@ -415,24 +411,29 @@ are illustrated in Figure~\ref{fig:exponential_chirp}.
 
 \subsubsection*{Lag Filter for Chirp Input Shaping}
 
- In some control loops, before the chirp signal is injected into the control loop, it is conditioned by a filter to address the differentiating behaviour of the controller effort at low frequencies. This differentiating characteristic causes rising gain at low frequencies, which would lead to excessive motor response at the start of the chirp sweep and potentially cause saturation, compromising the quality of system identification data. The filter reduces low-to-mid frequency components of the chirp signal before injection, such that the combined response produces approximately uniform excitation across the frequency range.
+In some control loops, the chirp signal is conditioned by a lag filter before being injected into the control loop. The differentiating behaviour of the controller effort causes increasing gain at low frequencies, which can lead to excessive motor response at the beginning of the sweep and potentially compromise the quality of the system identification data. The filter therefore attenuates the low-frequency components of the chirp signal before injection, resulting in a more uniform excitation across the frequency range.
 
-The filter is configured with a pole at 3 Hz and a zero at 30 Hz. This configuration corresponds to the transfer function
+The filter is configured with a pole at 3 Hz and a zero at 30 Hz, corresponding to the transfer function
 
 \begin{equation}
-	H(s) = \frac{1 + s/\omega_z}{1 + s/\omega_p}
+H(s) = \frac{1 + s/\omega_z}{1 + s/\omega_p}
 \end{equation}
 
-where $\omega_z = 2\pi \cdot 30$ rad/s and $\omega_p = 2\pi \cdot 3$ rad/s represent the zero and pole frequencies respectively. The pole introduces the lag component by creating magnitude reduction at frequencies above its cutoff frequency. The zero limits this reduction by introducing magnitude amplification at frequencies above its cutoff frequency. However, since the pole frequency is lower than the zero frequency, the pole's contribution dominates throughout the primary control bandwidth, resulting in a net lag filter. It is important to note that in the Betaflight implementation, the pole frequency ($\omega_p$) must not be set higher than the zero frequency ($\omega_z$), as this would create a lead filter that amplifies high frequencies and could potentially damage the motors.
+where $\omega_z = 2\pi \cdot 30$ rad/s and $\omega_p = 2\pi \cdot 3$ rad/s denote the zero and pole frequencies, respectively. The pole attenuates the signal above its cutoff frequency, while the zero partially compensates this attenuation at higher frequencies. Since the pole frequency is lower than the zero frequency, the filter exhibits an overall lag characteristic within the relevant frequency range.
 
-For the simulation shown in Figure~\ref{fig:chirpleadlag}, the same parameter values introduced in the previous section were used ($f_0 = 1\,\text{Hz}$, $f_1 = 600\,\text{Hz}$, $T = 20\,\text{s}$, $f_s = 2000\,\text{Hz}$). The excitation signal is generated using the exponential chirp formulation described earlier.
+In the Betaflight implementation, the pole frequency ($\omega_p$) must not exceed the zero frequency ($\omega_z$), as this would result in a lead filter that amplifies high-frequency components and could potentially damage the motors.
+
+For newer developments, the exact filter parameters are optimized based on the controller effort, as described later. The objective is to increase the excitation amplitude in frequency ranges where the controller effort is low and reduce it where the controller effort is high, resulting in a more uniform excitation of the system.
+
+For the simulation shown in Figure~\ref{fig:chirpleadlag}, the same parameters as in the previous section were used ($f_0 = 1,\text{Hz}$, $f_1 = 50,\text{Hz}$, $T = 20,\text{s}$, $f_s = 2000,\text{Hz}$). The excitation signal is generated using the exponential chirp formulation introduced earlier.
 
 \begin{figure}[H]
-	\centering
-	\includegraphics[width=1.0\textwidth]{chirp_lag_filtert.png}
-	\caption{Exponential chirp signal after conditioning with the lag filter used for chirp input shaping.}
-	\label{fig:chirpleadlag}
+\centering
+\includegraphics[width=1.0\textwidth]{chirp_lag_filtert.png}
+\caption{Exponential chirp signal after conditioning with the lag filter used for chirp input shaping.}
+\label{fig:chirpleadlag}
 \end{figure}
+
 
 \subsection*{Signal Processing}
 
@@ -471,7 +472,7 @@ To emulate realistic measurement conditions, additive disturbance noise \( d(t) 
 y(t) = \tilde{y}(t) + d(t).
 \end{equation}
 
-In the simulation, the disturbance is modelled as additive white Gaussian noise with a standard deviation of \( \sigma_d = 2\,\text{deg/s} \).
+In the simulation, the disturbance is modelled as additive white Gaussian noise with a standard deviation of \( \sigma_d = 200\,\text{deg/s} \).
 Based on these simulated signals, the following signal-processing steps are applied and evaluated.
 
 \subsubsection*{Baseband Filtering via Frequency Rotation}
@@ -548,39 +549,53 @@ The filtered signal closely follows the underlying system response. A slight amp
 
 \begin{figure}[H]
     \centering
-    \includegraphics[height=9.5cm]{rotfilt_signal.png}
-    \caption{Time-domain signal before (top) and after (bottom) baseband filtering.}
+    \includegraphics[height=9.0cm]{rotfilt_signal.png}
+    \caption{Time-domain signal before (top) and after (bottom) baseband filtering, showing the reduction of measurement noise.}
     \label{fig:time_filtered}
 \end{figure}
+
 \subsubsection*{Frequency Response Estimation}
 
-To estimate the transfer function, the relation between input and output signals is analysed in the frequency domain. For a linear time-invariant (LTI) system, this relation can be written as
+For a linear time-invariant (LTI) system, the input-output relationship in the frequency domain can be expressed as
 
 \begin{equation}
-G(\omega) = \frac{Y(\omega)}{U(\omega)},
+Y(\omega) = G(\omega)U(\omega),
 \end{equation}
 
-where \(U(\omega)\) and \(Y(\omega)\) denote the Fourier transforms of the input signal \(u(t)\) and the output signal \(y(t)\), respectively \parencite{signal_processing}.
+where \(U(\omega)\) and \(Y(\omega)\) denote the Fourier transforms of the input signal \(u(t)\) and the output signal \(y(t)\), respectively, and \(G(\omega)\) represents the frequency response of the system.
 
-In practice, however, the measured output signal is affected by disturbances. Even after applying the baseband filtering, residual noise remains, especially at higher frequencies. The measured output can therefore be written as
+To estimate the frequency response from measured signals, both sides of the equation are multiplied by the complex conjugate \(U^{H}(\omega)\) of the input signal,
 
 \begin{equation}
-Y(\omega) = G(\omega)U(\omega) + D_y(\omega),
+Y(\omega)U^{H}(\omega)
+=
+G(\omega)U(\omega)U^{H}(\omega).
 \end{equation}
 
-where \(D_y(\omega)\) represents an additive disturbance. A direct estimation by dividing \(Y(\omega)\) by \(U(\omega)\) leads to
+Using the estimates
 
 \begin{equation}
-\frac{Y(\omega)}{U(\omega)} = G(\omega) + \frac{D_y(\omega)}{U(\omega)},
+\hat{S}_{yu}(\omega) = Y(\omega)U^{H}(\omega)
 \end{equation}
 
-which shows that the estimate is directly influenced by noise.
+for the cross-power spectral density between the output and input signals, and
 
-To reduce the sensitivity to noise, spectral quantities can be introduced. However, computing these directly from the Fourier transforms leads to the same issues as the direct division \(Y(\omega)/U(\omega)\) \parencite{signal_processing}.
+\begin{equation}
+\hat{S}_{uu}(\omega) = U(\omega)U^{H}(\omega)
+\end{equation}
 
-A more robust approach is to estimate the spectral densities using averaging techniques, which reduce the influence of disturbances. This is typically achieved using methods such as Welch’s method, which is described in the following section.
+for the auto-power spectral density of the input signal, the frequency response can be estimated as
 
-In particular, the estimation becomes unreliable in frequency regions where the input signal is small, since the disturbance term can dominate the ratio.
+\begin{equation}
+\hat{G}(\omega)
+=
+\frac{\hat{S}_{yu}(\omega)}
+     {\hat{S}_{uu}(\omega)}.
+\end{equation}
+
+This equation forms the basis for the frequency response estimation used throughout this work. Compared to directly dividing the Fourier transforms, the use of spectral density estimates leads to more robust results in the presence of measurement noise. Since the excitation signal is known and measurement noise is mainly present in the system output, this approach is well suited for system identification.
+
+In practice, the spectral densities are estimated from finite measurement records. To obtain reliable estimates, averaging techniques are required to reduce the influence of noise and random variations. In this work, the spectral density estimation is performed using Welch's method, which is introduced in the following section.
 
 \newpage
 
@@ -590,7 +605,7 @@ To obtain reliable estimates of the spectral densities, Welch’s method is appl
 
 The spectral densities describe how the signal energy is distributed over frequency and form the basis for estimating the transfer function \parencite{System_Identification}.
 
-Let \(u[n]\) and \(y[n]\) denote the discrete-time input and output signals of length \(N\). In Welch’s method, the signals are divided into \(K\) overlapping segments of length \(L\). Each segment is multiplied by a window function \(w[n]\) to reduce spectral leakage \parencite{System_Identification}. können wir das noch ganz leicht kürzen
+Let \(u[n]\) and \(y[n]\) denote the discrete-time input and output signals of length \(N\). In Welch’s method, the signals are divided into \(K\) overlapping segments of length \(L\). Each segment is multiplied by a window function \(w[n]\) to reduce spectral leakage \parencite{System_Identification}.
 
 The \(k\)-th segment of the input signal is given by
 
@@ -598,7 +613,7 @@ The \(k\)-th segment of the input signal is given by
 u_k[n] = u[n + kD]\, w[n], \qquad n = 0, \dots, L-1,
 \end{equation}
 
-where \(D\) defines the shift between segments and determines the overlap \parencite{System_Identification}. For each segment, the discrete Fourier transform (DFT) is computed as
+where \(D\) defines the shift from one segment to the next. It therefore determines how many samples are shared between neighbouring segments \parencite{System_Identification}. For each segment, the discrete Fourier transform (DFT) is computed as
 
 \begin{equation}
 U_k(\omega) = \sum_{n=0}^{L-1} u_k[n] e^{-j\omega n}, \qquad
@@ -608,35 +623,35 @@ Y_k(\omega) = \sum_{n=0}^{L-1} y_k[n] e^{-j\omega n}.
 To obtain a stable representation in the frequency domain, the squared magnitude of the Fourier transform is used. This corresponds to the signal power and makes the spectral estimate less sensitive to noise \parencite{System_Identification}. The periodogram estimates are defined as
 
 \begin{equation}
-P_{uu,k}(\omega) = \frac{1}{L} |U_k(\omega)|^2, \qquad
-P_{yu,k}(\omega) = \frac{1}{L} Y_k(\omega) U_k^*(\omega)
+P_{uu,k}(\omega) = \frac{1}{L} U_k(\omega) \cdot U_k^{H}(\omega), \qquad
+P_{yu,k}(\omega) = \frac{1}{L} Y_k(\omega) U_k^{H}
 \end{equation}
 
 Welch’s method reduces the variance of the estimates by averaging over all segments. The resulting spectral densities are given by
 
 \begin{equation}
-S_{uu}(\omega) = \frac{1}{K} \sum_{k=1}^{K} P_{uu,k}(\omega), \qquad
-S_{yu}(\omega) = \frac{1}{K} \sum_{k=1}^{K} P_{yu,k}(\omega), 
+\hat{S}_{uu}(\omega) = \frac{1}{K} \sum_{k=1}^{K} P_{uu,k}(\omega), \qquad
+\hat{S}_{yu}(\omega) = \frac{1}{K} \sum_{k=1}^{K} P_{yu,k}(\omega), 
 \end{equation}
 
 Using these quantities, the transfer function estimate is computed as
 
 \begin{equation}
-G(\omega) = \frac{S_{yu}(\omega)}{S_{uu}(\omega)}.
+\hat{G}(\omega) = \frac{\hat{S}_{yu}(\omega)}{\hat{S}_{uu}(\omega)}.
 \end{equation}
 
 In our example, the spectral densities are estimated using Welch’s method with a segment length of \(L = 4096\) samples and an overlap of 90\%. A Hanning window is applied to each segment to minimize spectral leakage.
 
-The estimated transfer function is shown in Fig.~\ref{fig:transfer_estimation_filtered}. Compared to the direct estimation, a significantly better agreement with the true system response can be observed over a wider frequency range.
-
 \begin{figure}[h]
     \centering
     \includegraphics[width=\linewidth]{transferfunction_after_processing.png}
-    \caption{Bode plot of the true and estimated transfer function using Welch’s method. The magnitude response is shown at the top, the phase response in the middle, and the coherence at the bottom.}
+    \caption{Comparison of the true and estimated transfer function obtained using Welch’s method. The magnitude response is shown at the top, the phase response in the middle, and the coherence at the bottom.}
     \label{fig:transfer_estimation_filtered}
 \end{figure}
 
-To further assess the quality of the estimate, the coherence function is evaluated. The coherence is defined as
+The estimated transfer function is shown in Fig.~\ref{fig:transfer_estimation_filtered}. The estimated magnitude and phase closely follow the true system response over a wide frequency range. Compared to the direct estimation approach, the usable frequency range is significantly extended.
+
+The quality of the transfer function estimate can be evaluated using the coherence. As already mentioned, coherence values close to one indicate a reliable transfer function estimate. The coherence is defined as
 
 $$
 \gamma^2(\omega) = \frac{|S_{yu}(\omega)|^2}{S_{uu}(\omega)\, S_{yy}(\omega)},
@@ -644,8 +659,7 @@ $$
 
 and takes values in the range \(0 \leq \gamma^2(\omega) \leq 1\). It provides a frequency-dependent measure of how strongly the output is linearly related to the input \parencite{signal_processing}.
 
-The coherence is shown in Figure~\ref{fig:transfer_estimation_filtered}. Values close to one indicate a reliable estimate, whereas lower values indicate that noise or disturbances dominate the measurement.
-
+As shown in Fig.~\ref{fig:transfer_estimation_filtered}, the coherence remains close to one up to approximately 10 Hz, where only minor deviations between the estimated and true transfer function are visible. At higher frequencies, the coherence decreases and the estimation error gradually increases.
 
 \section{Control Loop Calculations}
 \label{sec:Control Loop Calculations}
@@ -677,10 +691,7 @@ in the flight controller.
 
 \subsection*{Calculation of the Control Loop Components}
 
-After the signal processing steps, the control loop components can be calculated.
-As in the signal processing stage, the goal is to mitigate the influence of disturbances
-and noise on the estimated control loop components. Therefore, only the input signal
-of the control loop is used for the estimation.
+After the signal processing steps, the control loop components can be calculated. As in the signal processing stage, the goal is to mitigate the influence of disturbances and noise on the estimated control loop components. Therefore, only the input signal of the control loop is used for the estimation.
 
 The advantage of this approach is twofold:
 \begin{itemize}
@@ -688,18 +699,13 @@ The advantage of this approach is twofold:
     \item The input signal is not subject to filtering effects, since it is not measured but taken directly from the software. Consequently, it is free from measurement noise and external disturbances.
 \end{itemize}
 
-This approach enables a more precise estimation of the transfer function. However,
-it also implies that the transfer functions of the individual control loop components
-cannot be obtained directly. Instead, they must be derived through mathematical
-manipulations.
+This approach enables a more precise estimation of the transfer function. However, it also implies that the transfer functions of the individual control loop components cannot be obtained directly. Instead, they must be derived through mathematical manipulations.
 
-Consider a simplified control loop consisting of a controller \( C(s) \) and a plant
-\( P(s) \), as illustrated in Figure~\ref{fig:control_loop_easy}. The closed-loop
-transfer function from the reference input \( R(\omega) \) to the output \( Y(\omega) \) is given by \parencite{lutzTaschenbuchRegelungstechnik}
+Consider a simplified control loop consisting of a controller \( C(s) \) and a plant \( P(s) \), as illustrated in Figure~\ref{fig:control_loop_easy}. The closed-loop transfer function from the reference input \( R(\omega) \) to the output \( Y(\omega) \) is given by \parencite{lutzTaschenbuchRegelungstechnik}
 
 \begin{equation}
 G_{yr}(\omega) = \frac{Y(\omega)}{R(\omega)} =
-\frac{C(\omega)P(\omega)}{1 + C(\omega)P(\omega)}.
+\frac{C(\omega)P(\omega)}{1 + C(\omega)P(\omega)}= T(\omega).
 \label{eq:Gyr}
 \end{equation}
 
@@ -708,33 +714,32 @@ is
 
 \begin{equation}
 G_{ur}(\omega) = \frac{U(\omega)}{R(\omega)} =
-\frac{C(\omega)}{1 + C(\omega)P(\omega)}.
+\frac{C(\omega)}{1 + C(\omega)P(\omega)} = SC(\omega).
 \label{eq:Gur}
 \end{equation}
 
-By taking the ratio of these two transfer functions, the plant transfer function
-can be determined:
+By taking the ratio of these two transfer functions, the plant transfer function can be determined:
 
 \begin{equation}
-P(\omega) = \frac{G_{yr}(\omega)}{G_{ur}(\omega)} =
+ \frac{G_{yr}(\omega)}{G_{ur}(\omega)} =
 \frac{\dfrac{C(\omega)P(\omega)}{1 + C(\omega)P(\omega)}}
      {\dfrac{C(\omega)}{1 + C(\omega)P(\omega)}} = P(\omega).
 \label{eq:Plant}
 \end{equation}
 
-To determine the controller, the same principle is applied. The controller transfer
-function can be calculated as
+To determine the controller, the same principle is applied. The controller transfer function can be calculated as
 
 \begin{equation}
-C(\omega) = \frac{G_{ur}(\omega)}{1-G_{yr}(\omega)} =
+\frac{G_{ur}(\omega)}{1-G_{yr}(\omega)} =
 \frac{\dfrac{C(\omega)}{1 + C(\omega)P(\omega)}}
-     {1 - \dfrac{C(\omega)P(\omega)}{1 + C(\omega)P(\omega)}}
+     {1 - \dfrac{C(\omega)P(\omega)}{1 + C(\omega)P(\omega)}} = C(\omega).
 \end{equation}
 
 These relationships enable the identification of both the plant and the
 controller from measurable closed-loop signals. They provide the theoretical
 foundation for the analysis of the individual control loops.
 
+\newpage
 
 \subsection*{Closed-Loop Performance Metrics}
 
@@ -747,13 +752,11 @@ valuable insights into the stability, robustness and performance of the controll
 The closed-loop transfer function from the reference input to the output is given by \parencite{lutzTaschenbuchRegelungstechnik}
 
 \begin{equation}
-G_{yr}(\omega) =
-\frac{C(\omega)P(\omega)}
+T(\omega) = \frac{C(\omega)P(\omega)}
 {1 + C(\omega)P(\omega)}.
 \end{equation}
 
-The sensitivity function, which describes how sensitive the system output is to
-disturbances and model uncertainties, is defined as \parencite{lutzTaschenbuchRegelungstechnik}
+The sensitivity function, which describes how sensitive the system output is to input disturbances and model uncertainties, is defined as \parencite{lutzTaschenbuchRegelungstechnik}
 
 \begin{equation}
 S(\omega) =
@@ -778,33 +781,29 @@ C(\omega)\,S(\omega).
 
 \subsection*{Compensation of the I-Term}
 
-The integral term of a PI and PID controller is used to compensate for steady-state errors by integrating the control error over time. In flight control systems, this helps to counteract constant disturbances such as motor imbalances or aerodynamic effects. During fast stick movements or aggressive maneuvers, however, the integral term can accumulate too much error \parencite{RT1_Skript}.
+The integral term of a PI or PID controller is used to compensate for steady-state errors by integrating the control error over time. In flight control systems, this helps to counteract constant disturbances such as motor imbalances or aerodynamic effects. During fast stick movements or aggressive maneuvers, however, the integral term can accumulate excessive error. As a result, the accumulated I-term no longer represents a disturbance but instead opposes the intended motion, which can lead to overshoot, bounce-back effects, or slow settling after the maneuver \parencite{RT1_Skript}.
 
-In these situations, the accumulated I-term no longer represents a disturbance but instead opposes the intended motion. When the maneuver ends, this can lead to overshoot, bounce-back effects, or slow settling of the system \parencite{RT1_Skript}.
-
-To reduce these effects, Betaflight uses a feature called I-Term Relax \parencite{I_Term}. This mechanism temporarily limits the integration of the I-term when rapid changes are detected. Depending on the configuration, these changes are identified either from the control setpoint or from the measured gyroscope signal. When the detected change exceeds a defined threshold, the I-term integration is reduced or paused.
-
-This allows the controller to respond quickly to fast pilot inputs while preventing excessive buildup of the integral term. During slower movements and steady operation, normal integration is restored. As a result, I-Term Relax improves flight behaviour by reducing overshoot and bounce-back while maintaining good disturbance rejection.
+To reduce these effects, Betaflight uses a feature called I-Term Relax \parencite{I_Term}. This mechanism temporarily reduces the integral action when rapid changes are detected. Depending on the configuration, these changes are identified either from the control setpoint or from the measured gyroscope signal. When a defined threshold is exceeded, the I-term integration is reduced or paused. This helps to prevent excessive buildup of the integral term during aggressive maneuvers, reducing overshoot and bounce-back while maintaining good disturbance rejection.
 
 For analysis and controller tuning, the effect of I-Term Relax must be considered, as it modifies the controller behaviour depending on the current flight conditions.
 \begin{figure}[h]
 	\centering
 	\includegraphics[width=0.8\textwidth]{Control_Loop_Iterm.png}
-	\caption{Simplified closed loop system with I-term Relax}
+	\caption{Simplified closed-loop control system including the I-Term Relax mechanism, where \(r\) is the reference signal, \(e\) the control error, \(u\) the controller output, and \(y\) the system output.}
 	\label{fig:I_term}
 \end{figure}
 
-The measured controller transfer function is compared with an analytically derived controller transfer function. The effect of the I-Term Relax algorithm is therefore included implicitly in the measurement-based result.
+The I-Term Relax algorithm is inherently nonlinear because the integral action is modified depending on the current flight condition. As a result, the effective controller behaviour changes over time and cannot be fully represented by a fixed linear transfer function. To account for this effect, the measured controller transfer function is compared with an analytically derived controller transfer function. A compensation factor is then defined as the ratio between the measured PI controller transfer function and its analytical counterpart:
 
-To this end, a compensation factor is defined as the ratio between the measured PI controller transfer function and its analytical counterpart:
 \begin{equation}
 	C_{\mathrm{PI,com}}(\omega) = \frac{C_{\mathrm{PI}}(\omega)}{C_{\mathrm{PI,ana}}(\omega)}
 \end{equation}
 
-This frequency-dependent compensation factor represents the combined influence of effects that are not explicitly modeled, including the impact of I-Term Relax. The factor is further applied to both the original analytical PI controller and the newly designed PI controller:
+This frequency-dependent compensation factor represents the combined influence of effects that are not explicitly modeled, including the impact of I-Term Relax. Applying this factor scales the controller transfer function at each frequency such that the measured controller behaviour is reproduced. In this way, the effect of I-Term Relax can be approximated without explicitly modeling the nonlinear algorithm. The factor is further applied to both the original analytical PI controller and the newly designed PI controller:
+
 \begin{align}
-	C_{\mathrm{PI,ana,new}}(\omega) & = C_{\mathrm{PI,ana}}(\omega) \cdot C_{\mathrm{PI,com}}(\omega) \\
-	C_{\mathrm{PI,new,new}}(\omega) & = C_{\mathrm{PI,new}}(\omega) \cdot C_{\mathrm{PI,com}}(\omega)
+	C_{\mathrm{PI,ana,com}}(\omega) & = C_{\mathrm{PI,ana}}(\omega) \cdot C_{\mathrm{PI,com}}(\omega) \\
+	C_{\mathrm{PI,new,com}}(\omega) & = C_{\mathrm{PI,new}}(\omega) \cdot C_{\mathrm{PI,com}}(\omega)
 \end{align}
 
 The resulting compensated controller transfer functions are then reinserted into the closed-loop system for further analysis and evaluation.
@@ -2263,6 +2262,9 @@ All in all, the interesst in this project and the tuning tool is high,
 \clearpage
 
 % List AI tools as in your PA.
+
+% --- List of Figures ----------------------------------------------------------
+\listoffigures
 
 % --- Appendix -----------------------------------------------------------------
 \appendix
