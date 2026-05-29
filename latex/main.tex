@@ -2115,27 +2115,29 @@ An additional flight was conducted with a lower proportional gain ($P = 50$). Th
 
 \section{Position Hold Controller}
 
-The position hold loop operates at the GPS update rate of approximately \SI{10}{\hertz}, fundamentally constraining the achievable control bandwidth compared to the \SI{8}{\kilo\hertz} inner loops. System identification was performed on the pitch axis (North-South/latitude), which exhibits less dynamic behavior than roll.
+The position hold loop operates at the GPS update rate of approximately \SI{10}{\hertz}, fundamentally constraining the achievable control bandwidth compared to the \SI{8}{\kilo\hertz} inner loops. System identification is performed on both the roll (East-West/longitude) and pitch (North-South/latitude) axes. Since the same PIDA controller parameters are applied to both axes, the tuning must represent a compromise between the two measured responses, prioritizing the less dynamic axis.
 
 \subsection*{Chirp Excitation and Frequency Range}
 
-Following the methodology described in Section~\ref{sec:System Identification Using Chirp Signals}, chirp excitation was applied to the position error in the Earth-fixed frame at frequencies from \SI{0.05}{\hertz} to \SI{3}{\hertz}. This range remains below the \SI{5}{\hertz} Nyquist limit imposed by the GPS sampling rate. A lead-lag filter was applied to prevent the combined D+A vector from exceeding the \SI{35}{\degree} saturation limit during measurement, ensuring linear operation throughout the identification process.
+Following the methodology described in Section~\ref{sec:System Identification Using Chirp Signals}, chirp excitation was applied to the position error in the Earth-fixed frame at frequencies from \SI{0.05}{\hertz} to \SI{3}{\hertz}. This range remains below the \SI{5}{\hertz} Nyquist limit imposed by the GPS sampling rate. 
 
-\subsection*{Baseline and Proposed Tuning Parameters}
-
-The baseline tuning ($P = 30$, $I = 30$, $D = 30$, $A = 30$, filter cutoff $f_c = \SI{0.8}{\hertz}$) was compared with parameters tuned via Gang of Four analysis ($P = 35$, $I = 36$, $D = 33$, $A = 25$). Both parameter sets were evaluated using the frequency response estimation and closed-loop calculation methods established in the Theoretical Foundations (Chapter~\ref{ch:theory}).
+The firmware enforces a \SI{35}{\degree} constraint on the combined D+A vector magnitude to prevent overly aggressive corrections. To operate within this constraint during chirp excitation, a lead-lag filter was applied to the injected chirp signal, reducing amplitudes at higher frequencies. Filter parameters were determined by simulating the expected D+A contribution from the filtered chirp and comparing against reference flight data. Parameters were adjusted until the simulated contributions remained below the measured constraint across the full frequency range. 
 
 \subsection*{Gang of Four Analysis}
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=1.0\linewidth]{Result_Gang_of_four_PosHold_small_tune.png}
-    \caption{Gang of Four frequency responses for position hold controller (pitch axis).
-    Blue: baseline tuning. Orange: proposed tuning. Gold (tracking plot): measured complementary sensitivity from flight data.}
+    \caption{Gang of Four frequency responses for the position hold controller.
+    Red: measured response with baseline tuning (Flight~1). 
+    Blue: analytically predicted response with proposed tuning. 
+    Yellow: measured response with proposed tuning (Flight~2).}
     \label{fig:pos_gang_of_four}
 \end{figure}
 
-The measured complementary sensitivity $T$ shows close agreement with the analytical response for baseline tuning below \SI{1}{\hertz}. Deviations at higher frequencies reflect reduced coherence due to GPS measurement noise. The proportional and integral terms follow classical theory and are well-predicted by the analytical model. However, the derivative term prediction diverges from measured behavior due to the discrete finite-difference implementation in firmware (velocity and acceleration computed from \SI{100}{\milli\second} intervals). At low frequencies where P+I terms dominate, the analytical model remains credible; at higher frequencies where D+A contributions grow, predictions should be interpreted as qualitative guidance.
+The Gang of Four plots compare the baseline tuning ($P = 35$, $I = 36$, $D = 33$, $A = 25$) with the analytically proposed tuning ($P = 42$, $I = 50$, $D = 42$, $A = 19$). The Tracking $T$ shows reasonable agreement between the analytically predicted response (blue) and the measured response with the proposed tuning (yellow), particularly above \SI{0.2}{\hertz}. Deviations at lower frequencies are attributed to wind disturbances and GPS measurement inaccuracies, which dominate the position error signal in this range and reduce the coherence of the frequency response estimate.
+
+The Sensitivity $S$ is noticeably smoother with the proposed tuning, indicating more consistent disturbance rejection behavior across the control bandwidth. The Controller Effort $SC$ remains comparable between parameter sets, confirming that increased gains do not lead to excessive actuation demands on the inner angle loop. The Compliance $SP$ shows improved disturbance attenuation at low frequencies with the proposed tuning, particularly below \SI{0.5}{\hertz} where wind gusts typically affect position holding.
 
 \subsection*{Step Response Analysis}
 
@@ -2143,16 +2145,15 @@ The measured complementary sensitivity $T$ shows close agreement with the analyt
     \centering
     \includegraphics[width=1.0\linewidth]{Result_Step_Response_PosHold_small_tune.png}
     \caption{Normalized step response of position hold controller.
-    Blue: baseline tuning. Red: proposed tuning. Yellow: measured complementary sensitivity step response from flight data.}
+    Yellow: measured response with baseline tuning (Flight~1). 
+    Red: analytically predicted step response with proposed tuning (calculated from Flight~1 identification). 
+    Blue: measured response with proposed tuning (Flight~2).}
     \label{fig:pos_step_response}
 \end{figure}
 
-The proposed tuning exhibits faster settling time and reduced overshoot compared to baseline. The measured step response (yellow) validates that the analytical model captures the dominant system dynamics. The proposed tuning demonstrates improved transient response while the measured data confirms stable operation within design intent.
+Step response analysis is limited by the \SI{10}{\hertz} GPS update rate, which fundamentally constrains the temporal resolution of the measurement. Consequently, the step response exhibits significant quantization noise that masks fine transient details. Despite this limitation, the measured response (blue) with proposed tuning remains stable and demonstrates comparable settling behavior to the baseline (yellow), with both reaching steady state around \SI{5}{\second}s.
 
-\subsection*{D+A Contribution Constraint During Tuning}
-
-When developing new controller parameters, users must verify that the combined D+A contribution remains within the \SI{35}{\degree} limit throughout normal operation (see Section~\ref{Position Hold Betaflight Firmware}). This constraint is shaped by both the lead-lag filter applied to the chirp excitation and the magnitude of the D and A gains. The proposed tuning parameters ($D = 55$, $A = 10$) were selected to satisfy this constraint under realistic flight conditions, as confirmed through flight validation.
-
+The analytically predicted response (red) diverges more noticeably from the measured response (blue) compared to the Gang of Four agreement, suggesting that the step response is more sensitive to unmodeled dynamics and GPS measurement artifacts. \textbf{The proposed tuning parameters result in slightly increased overshoot relative to baseline, which is an acceptable trade-off for the improved frequency-domain characteristics and disturbance rejection demonstrated in the Gang of Four analysis. The practical flight behavior confirms that the proposed tuning maintains stable position holding without adverse transient effects.}
 
 \chapter{Discussion}
 
