@@ -3,8 +3,11 @@ clc;
 clear variables;
 close all;
 
-addpath('/home/janick-dort/Dokumente/Studium_ZHAW/BA/bf_controller_tuning/lib/');
-addpath(genpath('/home/janick-dort/Dokumente/Studium_ZHAW/BA/bf_controller_tuning'));
+% addpath('/home/janick-dort/Dokumente/Studium_ZHAW/BA/bf_controller_tuning/lib/');
+% addpath(genpath('/home/janick-dort/Dokumente/Studium_ZHAW/BA/bf_controller_tuning'));
+
+addpath('../bf_controller_tuning/lib/');
+
 
 %% Plotsettings
 
@@ -20,15 +23,65 @@ opt.PhaseWrapping = 'on';
 
 %% File paths
 
-log_folder    = 'logs';
-flight_folder1 = '20260528';
-flight_folder2 = '20260528';
+% log_folder    = 'logs';
+% flight_folder1 = '20260528';
+% flight_folder2 = '20260528';
+%
+% log_name1 = 'althold-default.csv';
+% log_name2 = 'althold-tuned.csv';
 
-log_name1 = 'althold-default.csv';
-log_name2 = 'althold-tuned.csv';
+log_folder = '../bf_controller_tuning/logs/';
+flight_folder = '20260528';
 
-file_path1 = fullfile(log_folder, flight_folder1, log_name1);
-file_path2 = fullfile(log_folder, flight_folder2, log_name2);
+log_name1 = 'althold-default.csv'; % 1
+log_name2 = 'althold-tuned.csv';   % 2
+log_name3 = 'althold-medium.csv';  % 3
+log_name4 = 'althold-bad.csv';     % 4
+
+base    = 1; % base flight
+compare = 4; % flight to compare base against
+
+switch base
+  case 1
+    file_path1 = fullfile(log_folder, flight_folder, log_name1);
+  case 2
+    file_path1 = fullfile(log_folder, flight_folder, log_name2);
+  case 3
+    file_path1 = fullfile(log_folder, flight_folder, log_name3);
+  case 4
+    file_path1 = fullfile(log_folder, flight_folder, log_name4);
+  otherwise
+    disp("invalid base")
+end
+
+switch compare
+  case 1
+    file_path2 = fullfile(log_folder, flight_folder, log_name1);
+    % Analytical PI + D (current tune)
+    P_f1 = 15;
+    I_f1 = 15;
+    D_f1 = 15;
+  case 2
+    file_path2 = fullfile(log_folder, flight_folder, log_name2);
+    % Analytical PI + D (current tune)
+    P_f1 = 18;
+    I_f1 = 16;
+    D_f1 = 16;
+  case 3
+    file_path2 = fullfile(log_folder, flight_folder, log_name3);
+    % Analytical PI + D (current tune)
+    P_f1 = 13;
+    I_f1 = 13;
+    D_f1 = 13;
+  case 4
+    file_path2 = fullfile(log_folder, flight_folder, log_name4);
+    % Analytical PI + D (current tune)
+    P_f1 = 10;
+    I_f1 = 10;
+    D_f1 = 10;
+  otherwise
+    disp("invalid compare")
+end
 
 %% Load and process header information
 [para1, Nheader1, ind1, ind_cntr1] = extract_header_information(file_path1);
@@ -165,10 +218,6 @@ Plant_f2 = T_f2 / Guw_f2;
 
 %% Controller Settings Flight 1
 
-% Analytical PI + D (current tune)
-P_f1 = 18;
-I_f1 = 16;
-D_f1 = 16;
 fc_pt2_f1 = 1;
 [Cpi_f1, Cd_f1] = calculate_althold_controllers( ...
   P_f1,...
@@ -181,11 +230,11 @@ fc_pt2_f1 = 1;
 
 %% Controller Settings Flight 2
 
-% Analytical PI + D (current tune)
-P_f2 = 18;
-I_f2 = 16;
-D_f2 = 16;
+P_f2 = P_f1;
+I_f2 = I_f1;
+D_f2 = D_f1;
 fc_pt2_f2 = 1;
+
 [Cpi_f2, Cd_f2] = calculate_althold_controllers( ...
   P_f2,...
   I_f2,...
