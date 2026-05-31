@@ -2112,6 +2112,167 @@ Compared to the baseline tuning, the updated tuning exhibits a faster response w
 An additional flight was conducted with a lower proportional gain ($P = 50$). The comparison shown in \autoref{fig:step_response_large_gain_difference} indicates that the agreement between the estimated and measured responses is reduced compared to the case of smaller gain changes. The general response trend is still captured, but deviations are more pronounced.
 
 \section{Altitude Hold Controller}
+\label{sec:results_althold}
+
+The altitude-hold loop was identified by injecting an exponential chirp into the altitude setpoint around a hover baseline. Four controller-gain settings were flown on the same airframe and firmware build: a default tune, a tune one increment away (tuned), and two further increments (medium, bad). The four cases are summarised in \autoref{tab:althold_cases}.
+
+\subsection*{Setup}
+
+\begin{table}[H]
+    \centering
+    \caption{Althold controller gains for the four flown cases. All cases use the same first-order pre-filter with cutoff \(f_{c} = \SI{1}{\hertz}\).}
+    \label{tab:althold_cases}
+    \begin{tabular}{lccc}
+        \toprule
+        Case    & \(P\) & \(I\) & \(D\) \\
+        \midrule
+        default & 15    & 15    & 15    \\
+        tuned   & 18    & 16    & 16    \\
+        medium  & 13    & 13    & 13    \\
+        bad     & 10    & 10    & 10    \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+The althold loop runs at \SI{100}{\hertz}, decimated from the \SI{8}{\kilo\hertz} inner loops. Frequency-domain estimates use Welch's method with a Hann window of \SI{15}{\second} length and \SI{90}{\percent} overlap, giving a frequency resolution of \(\Delta f \approx \SI{0.067}{\hertz}\). The chirp evaluation window has a length of approximately \SI{230}{\second} per flight. % TODO: confirm chirp start/stop frequencies and sweep shape
+
+\subsection*{Identified Plant Response}
+
+The plant from throttle offset to measured altitude was estimated for the default flight. The associated Bode magnitude, phase, and joint coherence are reported in the plant identification figure of \autoref{sec:System Identification Using Chirp Signals}. Plant magnitude, phase, and joint coherence at four reference frequencies are listed in \autoref{tab:althold_plant}. The plant magnitude slope between \SI{0.1}{\hertz} and \SI{1}{\hertz} is \(-39\,\text{dB/decade}\). The joint coherence crosses 0.79 at \SI{0.27}{\hertz}, reaches 0.89 at \SI{1}{\hertz}, and falls to 0.27 by \SI{3}{\hertz}; the lowest Welch bin (\SI{0.067}{\hertz}) has a coherence below 0.05. % TODO: replace the methodology figure cross-reference with the actual \label{} used at main.tex:1104 once verified
+
+\begin{table}[H]
+    \centering
+    \caption{Identified althold plant magnitude, phase, and joint coherence at four reference frequencies (default flight).}
+    \label{tab:althold_plant}
+    \begin{tabular}{rrrr}
+        \toprule
+        \(f\) [\si{\hertz}] & \(|P|\) [\si{\decibel}] & \(\angle P\) [\si{\degree}] & coherence \\
+        \midrule
+        0.13 & \(+20.51\) & \(-160.9\) & 0.65 \\
+        0.27 &  \(+9.18\) & \(+175.6\) & 0.79 \\
+        1.00 & \(-13.63\) & \(+106.1\) & 0.89 \\
+        3.00 & \(-24.00\) & \(+159.1\) & 0.27 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection*{Closed-Loop Frequency Response}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\linewidth]{althold/althold_gang_of_four.png}
+    \caption{Gang of Four magnitude responses for the althold loop, default versus tuned. Tracking \(T\), Sensitivity \(S\), Controller Effort \(SC\), and Compliance \(SP\) are shown. The analytical curves use the tuned controller applied to the default-flight plant.}
+    \label{fig:althold_gof}
+\end{figure}
+
+Peak magnitudes were extracted within the displayed band \(f \leq \SI{10}{\hertz}\). Of the four Gang-of-Four transfer functions, only the closed-loop tracking \(T\) is directly identifiable from the chirp input/output pair; \(S\), \(SC\), and \(SP\) are computed from the identified plant combined with the controller model and are therefore reported as analytical only. The tracking peaks (analytical and measured) are listed in \autoref{tab:althold_gof_T}; the analytical \(S\), \(SC\), \(SP\) peaks are listed in \autoref{tab:althold_gof_SSCSP}. The analytical responses use the named controller applied to the default-flight plant.
+
+\begin{table}[H]
+    \centering
+    \caption{Closed-loop tracking peak magnitudes \(|T|\) for the althold loop and the frequencies at which they occur, restricted to \(f \leq \SI{10}{\hertz}\). Analytical: named-case controller applied to the default-flight plant. Measured: directly identified from the chirp input/output pair of the named flight.}
+    \label{tab:althold_gof_T}
+    \begin{tabular}{lrrrr}
+        \toprule
+                & \multicolumn{2}{c}{Analytical} & \multicolumn{2}{c}{Measured} \\
+        \cmidrule(lr){2-3}\cmidrule(lr){4-5}
+        Case    & peak [\si{\decibel}] & \(f\) [\si{\hertz}] & peak [\si{\decibel}] & \(f\) [\si{\hertz}] \\
+        \midrule
+        default & ---       & ---   & \(+2.91\) & 0.067 \\
+        tuned   & \(+3.35\) & 0.067 & \(+2.27\) & 0.067 \\
+        medium  & \(+4.68\) & 0.067 & \(+3.23\) & 0.067 \\
+        bad     & \(+6.09\) & 0.067 & \(+4.16\) & 0.067 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\begin{table}[H]
+    \centering
+    \caption{Analytical Gang-of-Four peak magnitudes for sensitivity \(S\), controller effort \(SC\), and compliance \(SP\), restricted to \(f \leq \SI{10}{\hertz}\). All values use the named-case controller applied to the default-flight plant.}
+    \label{tab:althold_gof_SSCSP}
+    \begin{tabular}{llrr}
+        \toprule
+        Metric & Case   & peak [\si{\decibel}] & \(f\) [\si{\hertz}] \\
+        \midrule
+        \(S\)  & tuned  & \(+6.43\) & 0.400 \\
+               & medium & \(+4.82\) & 0.333 \\
+               & bad    & \(+3.99\) & 0.267 \\
+        \(SC\) & tuned  & \(+0.27\) & 0.467 \\
+               & medium & \(-2.63\) & 0.867 \\
+               & bad    & \(-4.99\) & 1.133 \\
+        \(SP\) & tuned  & \(+16.76\) & 0.067 \\
+               & medium & \(+20.60\) & 0.067 \\
+               & bad    & \(+24.28\) & 0.067 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+The analytical tracking peak grows monotonically with the gain step from default: \SI{+3.35}{\decibel} (tuned), \SI{+4.68}{\decibel} (medium), \SI{+6.09}{\decibel} (bad). The measured peak follows the same ordering and ranges from \SI{+2.27}{\decibel} (tuned) to \SI{+4.16}{\decibel} (bad). The analytical-versus-measured \(|T|\)-peak difference is \SI{1.08}{\decibel} for tuned, \SI{1.45}{\decibel} for medium, and \SI{1.93}{\decibel} for bad. For all entries except the \(SC\) row, the peak falls at the lowest Welch bin (\SI{0.067}{\hertz}), where the joint coherence is below 0.05; the corresponding values therefore reflect the low-frequency end of the response within the available frequency resolution.
+
+\subsection*{Step Response}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\linewidth]{althold/althold_step_response.png}
+    \caption{Step response of the althold closed loop, normalised to unity steady state. The analytical prediction uses the tuned controller applied to the default-flight plant.}
+    \label{fig:althold_step}
+\end{figure}
+
+Per-case step-response metrics are listed in \autoref{tab:althold_step}. Rise time \(t_r\) is measured between \SI{10}{\percent} and \SI{90}{\percent} of the steady-state value.
+
+\begin{table}[H]
+    \centering
+    \caption{Althold step-response metrics. Analytical responses use the controller of the named case applied to the default-flight plant; measured responses are taken from the chirp-window step of the named flight.}
+    \label{tab:althold_step}
+    \begin{tabular}{llrr}
+        \toprule
+        Case    & Source     & \(t_r\) [\si{\second}] & overshoot [\si{\percent}] \\
+        \midrule
+        default & measured   & 1.46 &  5.0 \\
+        tuned   & measured   & 1.21 &  7.9 \\
+        tuned   & analytical & 1.14 & 16.2 \\
+        medium  & measured   & 1.57 &  7.4 \\
+        medium  & analytical & 1.41 & 22.4 \\
+        bad     & measured   & 1.69 & 13.8 \\
+        bad     & analytical & 1.64 & 28.1 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+The absolute difference between analytical and measured overshoot is \SI{8.3}{} percentage points for tuned, \SI{15.0}{} percentage points for medium, and \SI{14.3}{} percentage points for bad. Rise-time differences between analytical and measured remain below \SI{0.07}{\second} for all three cases.
+
+\subsection*{Time-Domain Flight Tracking}
+
+Altitude tracking over the chirp window is shown in \autoref{fig:althold_tracking}, the corresponding throttle offset in \autoref{fig:althold_throttle}. \autoref{tab:althold_time} lists root-mean-square tracking error, peak tracking error, and peak throttle excursion over each chirp window. RMS error remains within \SIrange{126}{132}{\centi\meter} for the default, tuned, and medium cases, and rises to \SI{145.69}{\centi\meter} for the bad case. Peak tracking error ranges from \SI{283}{\centi\meter} (default) to \SI{395}{\centi\meter} (bad). Peak throttle excursion lies between \(80\) and \(113\) PWM units.
+
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[width=0.95\linewidth]{althold/althold_tracking.png}
+    \caption{Altitude setpoint and measured altitude over the chirp window. Top: default flight. Bottom: tuned flight.}
+    \label{fig:althold_tracking}
+\end{figure}
+
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[width=0.95\linewidth]{althold/althold_throttle.png}
+    \caption{Throttle offset over the chirp window for the default and tuned flights, overlaid.}
+    \label{fig:althold_throttle}
+\end{figure}
+
+\begin{table}[H]
+    \centering
+    \caption{Time-domain tracking error and control effort over the chirp window.}
+    \label{tab:althold_time}
+    \begin{tabular}{lrrr}
+        \toprule
+        Case    & RMS error [\si{\centi\meter}] & peak \(|e|\) [\si{\centi\meter}] & peak \(|\Delta u|\) [PWM] \\
+        \midrule
+        default & 128.30 & 283.0 & 87  \\
+        tuned   & 126.35 & 309.0 & 113 \\
+        medium  & 131.98 & 318.0 & 81  \\
+        bad     & 145.69 & 395.0 & 80  \\
+        \bottomrule
+    \end{tabular}
+\end{table}
 
 \section{Position Hold Controller}
 
