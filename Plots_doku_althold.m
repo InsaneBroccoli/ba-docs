@@ -39,7 +39,7 @@ log_name3 = 'althold-medium.csv';  % 3
 log_name4 = 'althold-bad.csv';     % 4
 
 base    = 1; % base flight
-compare = 4; % flight to compare base against
+compare = 2; % flight to compare base against
 
 switch base
   case 1
@@ -160,7 +160,7 @@ throttle_offset2 = flight2(:,ind2.debug(8));         % PWM units
 %% Estimate Transfer Functions
 
 % Welch parameters
-frame    = 12.5;
+frame    = 15;
 Nest     = round(frame / (Ts_log));
 Noverlap = floor(0.9 * Nest);
 window   = hann(Nest, 'periodic');
@@ -301,3 +301,88 @@ plot(step_time, step_resp), grid on, ylabel('Altitude (cm)')
 title('Step Response Altitude Hold')
 legend('Measured Flight2', 'Calculated Flight1', 'Measured Flight1', 'location', 'best')
 ylim([-0.1 1.4]); xlim([0 frame/2]);
+
+
+%% Plant identification (Bode magnitude / phase / coherence) - base flight
+
+f_plant     = squeeze(Plant_f1.Frequency);
+P           = squeeze(Plant_f1.ResponseData);
+% Joint coherence (matches the convention in altitude_hold_tuning.m):
+% reliability of P = T / Guw depends on both factor coherences.
+C_P         = squeeze(C_uw_f1.ResponseData) .* squeeze(C_T_f1.ResponseData);
+mag_plant   = 20 * log10(abs(P));
+phase_plant = angle(P) * 180/pi;
+
+label_base = erase(base1, 'althold-');
+
+pos_bode = [0.13, 0.58, 0.78, 0.32; ...
+            0.13, 0.32, 0.78, 0.22; ...
+            0.13, 0.10, 0.78, 0.16];
+
+figure(3)
+
+axp(1) = subplot('Position', pos_bode(1, :));
+semilogx(f_plant, mag_plant, 'LineWidth', 1.5);
+grid on
+ylabel('Magnitude [dB]')
+title(['Altitude-Hold Plant Identification (' label_base ')'])
+
+axp(2) = subplot('Position', pos_bode(2, :));
+semilogx(f_plant, phase_plant, 'LineWidth', 1.5);
+grid on
+ylabel('Phase [deg]')
+
+axp(3) = subplot('Position', pos_bode(3, :));
+semilogx(f_plant, C_P, 'LineWidth', 1.5);
+grid on
+ylabel('Coherence [-]')
+xlabel('Frequency [Hz]')
+ylim([0 1])
+
+linkaxes(axp, 'x')
+xlim(axp(1), [min(f_bode) 10])
+
+
+%% Time-domain altitude trace (base on top, compare on bottom)
+
+label_compare = erase(base2, 'althold-');
+
+t0_1 = time1(find(idx1, 1, 'first'));
+t_m1 = time1(idx1) - t0_1;
+
+t0_2 = time2(find(idx2, 1, 'first'));
+t_m2 = time2(idx2) - t0_2;
+
+figure(4)
+
+axa(1) = subplot(2, 1, 1);
+plot(t_m1, set_alt1(idx1),  'LineWidth', 1.2); hold on
+plot(t_m1, meas_alt1(idx1), 'LineWidth', 1.2); hold off
+grid on
+ylabel('Altitude [cm]')
+title(label_base)
+legend('Setpoint', 'Measured', 'Location', 'best')
+
+axa(2) = subplot(2, 1, 2);
+plot(t_m2, set_alt2(idx2),  'LineWidth', 1.2); hold on
+plot(t_m2, meas_alt2(idx2), 'LineWidth', 1.2); hold off
+grid on
+ylabel('Altitude [cm]')
+xlabel('Time [s]')
+title(label_compare)
+legend('Setpoint', 'Measured', 'Location', 'best')
+
+linkaxes(axa, 'x')
+sgtitle('Altitude tracking over chirp window')
+
+
+%% Control-effort trace (base + compare overlaid)
+
+figure(5)
+plot(t_m1, throttle_offset1(idx1), 'LineWidth', 1.2); hold on
+plot(t_m2, throttle_offset2(idx2), 'LineWidth', 1.2); hold off
+grid on
+xlabel('Time [s]')
+ylabel('Throttle offset [PWM]')
+title('Control effort over chirp window')
+legend(label_base, label_compare, 'Location', 'best')
