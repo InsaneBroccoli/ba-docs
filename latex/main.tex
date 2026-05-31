@@ -2119,7 +2119,7 @@ The position hold loop operates at the GPS update rate of approximately \SI{10}{
 
 \subsection*{Chirp Excitation and Frequency Range}
 
-Following the methodology described in Section~\ref{sec:System Identification Using Chirp Signals}, chirp excitation was applied to the position error in the Earth-fixed frame at frequencies from \SI{0.05}{\hertz} to \SI{3}{\hertz}. This range remains below the \SI{5}{\hertz} Nyquist limit imposed by the GPS sampling rate. 
+Following the methodology described in \autoref{sec:System Identification Using Chirp Signals}, chirp excitation was applied to the position error in the Earth-fixed frame at frequencies from \SI{0.05}{\hertz} to \SI{3}{\hertz}. This range remains below the \SI{5}{\hertz} Nyquist limit imposed by the GPS sampling rate. 
 
 The firmware enforces a \SI{35}{\degree} constraint on the combined D+A vector magnitude to prevent overly aggressive corrections. To operate within this constraint during chirp excitation, a lead-lag filter was applied to the injected chirp signal, reducing amplitudes at higher frequencies. Filter parameters were determined by simulating the expected D+A contribution from the filtered chirp and comparing against reference flight data. Parameters were adjusted until the simulated contributions remained below the measured constraint across the full frequency range. 
 
@@ -2186,7 +2186,11 @@ Overall, the results highlight that the reliability of the proposed tuning appro
 \section{Altitude Hold Controller}
 
 \section{Position Hold Controller}
-To be done
+The frequency response measurement of the position hold controller shows significant noise contamination above ~0.8 Hz, primarily attributable to the 10 Hz GPS update rate being insufficient for proper system identification via chirp excitation. Unlike the rate and angle controllers which operate at 8 kHz, the position controller is constrained by GPS data availability, creating a discrete-time system with approximately 100 ms latency. The cascading delays through position error measurement, PID computation, and the inner rate loop introduce unmeasured phase lag that complicates frequency response estimation.
+
+The step response demonstrates overshoot consistent with a system exhibiting phase lag in the 0.2-0.5 Hz range. Inconsistency between flights suggests environmental factors (GPS multipath, wind) or varying tuning parameters between test conditions.
+
+These results indicate that the position hold controller is fundamentally limited by GPS-based feedback rather than computational constraints and further tuning refinement would require either higher-rate position estimates (via optical flow, rangefinder, or RTK-GPS) or relaxation of the chirp frequency range to <0.5 Hz.
 
 \chapter{Conclusion}
 
