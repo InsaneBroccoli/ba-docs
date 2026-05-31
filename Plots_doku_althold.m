@@ -39,7 +39,7 @@ log_name3 = 'althold-medium.csv';  % 3
 log_name4 = 'althold-bad.csv';     % 4
 
 base    = 1; % base flight
-compare = 2; % flight to compare base against
+compare = 4; % flight to compare base against
 
 switch base
   case 1
@@ -386,3 +386,133 @@ xlabel('Time [s]')
 ylabel('Throttle offset [PWM]')
 title('Control effort over chirp window')
 legend(label_base, label_compare, 'Location', 'best')
+
+
+%% Numerical metrics for thesis Results section
+% Run this script with compare = 2, then 3, then 4 (base stays = 1).
+% Copy the console blocks into the LaTeX draft so the Results section
+% reports measured numbers rather than eyeballed plot readings.
+
+fprintf('\n========================================\n');
+fprintf('METRICS  base=%s  compare=%s\n', label_base, label_compare);
+fprintf('  (compare-flight controller gains: P=%d, I=%d, D=%d)\n', P_f1, I_f1, D_f1);
+fprintf('========================================\n');
+
+% --- Chirp window duration (reported once) ---
+fprintf('  Chirp window (base):    %.2f s (%d samples @ Ts=%.4f s)\n', ...
+    t_m1(end), numel(t_m1), Ts_log);
+fprintf('  Chirp window (compare): %.2f s (%d samples @ Ts=%.4f s)\n', ...
+    t_m2(end), numel(t_m2), Ts_log);
+
+% --- Step response metrics (rise / settle / overshoot) ---
+% step_resp columns (line 291-294): [Measured F2, Calculated F1, Measured F1]
+labels_step = {'MeasuredF2', 'CalculatedF1', 'MeasuredF1'};
+fprintf('  -- Step response (normalised to steady state = 1.0) --\n');
+for k = 1:size(step_resp, 2)
+    y = step_resp(:, k);
+    t = step_time(:);
+    y_final = 1.0;
+    idx_10 = find(y >= 0.10 * y_final, 1, 'first');
+    idx_90 = find(y >= 0.90 * y_final, 1, 'first');
+    if ~isempty(idx_10) && ~isempty(idx_90) && idx_90 > idx_10
+        t_rise = t(idx_90) - t(idx_10);
+    else
+        t_rise = NaN;
+    end
+    outside = abs(y - y_final) > 0.05;
+    last_out = find(outside, 1, 'last');
+    if isempty(last_out)
+        t_settle = 0;
+    elseif last_out >= length(t)
+        t_settle = NaN;
+    else
+        t_settle = t(last_out + 1);
+    end
+    overshoot_pct = 100 * (max(y) - y_final) / y_final;
+    fprintf('     %-13s  t_rise=%.3f s  t_settle=%.3f s  overshoot=%.1f %%\n', ...
+        labels_step{k}, t_rise, t_settle, overshoot_pct);
+end
+
+% --- Time-domain tracking error and control effort ---
+err1 = set_alt1(idx1) - meas_alt1(idx1);
+err2 = set_alt2(idx2) - meas_alt2(idx2);
+fprintf('  -- Time-domain tracking (chirp window only) --\n');
+fprintf('     RMS tracking error      %-12s: %.2f cm\n', label_base,    sqrt(mean(err1.^2)));
+fprintf('     RMS tracking error      %-12s: %.2f cm\n', label_compare, sqrt(mean(err2.^2)));
+fprintf('     Peak |setpt - meas|     %-12s: %.1f cm\n', label_base,    max(abs(err1)));
+fprintf('     Peak |setpt - meas|     %-12s: %.1f cm\n', label_compare, max(abs(err2)));
+fprintf('     Peak throttle offset    %-12s: %.0f PWM\n', label_base,    max(abs(throttle_offset1(idx1))));
+fprintf('     Peak throttle offset    %-12s: %.0f PWM\n', label_compare, max(abs(throttle_offset2(idx2))));
+
+% --- Gang of Four peaks (linear magnitude evaluated at omega_bode) ---
+% Restrict the peak search to the displayed band so we don't catch
+% numerical-artifact peaks above the plot xlim (the Welch estimate runs
+% out to Nyquist ~ 50 Hz, but the figure only shows up to 10 Hz).
+f_peak_max = 10;
+mask       = f_bode <= f_peak_max;
+fb         = f_bode(mask);
+
+ev      = @(sys) abs(squeeze(freqresp(sys, omega_bode(mask))));
+peak_db = @(mag) 20*log10(max(mag));
+peak_f  = @(mag) fb(find(mag == max(mag), 1));
+
+mag_T_calc1 = ev(CL_f1.T);   mag_T_calc2 = ev(CL_f2.T);
+mag_S_calc1 = ev(CL_f1.S);   mag_S_calc2 = ev(CL_f2.S);
+mag_SC_c1   = ev(CL_f1.SC);  mag_SC_c2   = ev(CL_f2.SC);
+mag_SP_c1   = ev(CL_f1.SP);  mag_SP_c2   = ev(CL_f2.SP);
+
+T_meas1_full = abs(squeeze(T_f1.ResponseData));
+T_meas2_full = abs(squeeze(T_f2.ResponseData));
+mag_T_meas1  = T_meas1_full(mask);
+mag_T_meas2  = T_meas2_full(mask);
+
+fprintf('  -- Gang of Four peak magnitudes (peak search restricted to f <= %.1f Hz) --\n', f_peak_max);
+fprintf('     T  calc %-8s peak %+5.2f dB @ %.3f Hz\n', label_base,    peak_db(mag_T_calc1), peak_f(mag_T_calc1));
+fprintf('     T  calc %-8s peak %+5.2f dB @ %.3f Hz\n', label_compare, peak_db(mag_T_calc2), peak_f(mag_T_calc2));
+fprintf('     T  meas %-8s peak %+5.2f dB @ %.3f Hz\n', label_base,    peak_db(mag_T_meas1), peak_f(mag_T_meas1));
+fprintf('     T  meas %-8s peak %+5.2f dB @ %.3f Hz\n', label_compare, peak_db(mag_T_meas2), peak_f(mag_T_meas2));
+fprintf('     S  calc %-8s peak %+5.2f dB @ %.3f Hz\n', label_base,    peak_db(mag_S_calc1), peak_f(mag_S_calc1));
+fprintf('     S  calc %-8s peak %+5.2f dB @ %.3f Hz\n', label_compare, peak_db(mag_S_calc2), peak_f(mag_S_calc2));
+fprintf('     SC calc %-8s peak %+5.2f dB @ %.3f Hz\n', label_base,    peak_db(mag_SC_c1),   peak_f(mag_SC_c1));
+fprintf('     SC calc %-8s peak %+5.2f dB @ %.3f Hz\n', label_compare, peak_db(mag_SC_c2),   peak_f(mag_SC_c2));
+fprintf('     SP calc %-8s peak %+5.2f dB @ %.3f Hz\n', label_base,    peak_db(mag_SP_c1),   peak_f(mag_SP_c1));
+fprintf('     SP calc %-8s peak %+5.2f dB @ %.3f Hz\n', label_compare, peak_db(mag_SP_c2),   peak_f(mag_SP_c2));
+
+% --- Plant identification (base flight only; no compare-flight plant figure) ---
+f_p   = squeeze(Plant_f1.Frequency);
+P_lin = abs(squeeze(Plant_f1.ResponseData));
+P_dB  = 20*log10(P_lin);
+P_ph  = angle(squeeze(Plant_f1.ResponseData)) * 180/pi;
+coh_p = squeeze(C_uw_f1.ResponseData) .* squeeze(C_T_f1.ResponseData);
+
+ref_freqs = [0.1, 0.3, 1.0, 3.0];
+fprintf('  -- Plant magnitude / phase / coherence at reference frequencies --\n');
+for fr = ref_freqs
+    [~, ii] = min(abs(f_p - fr));
+    fprintf('     |P| @ %.2f Hz: %+6.2f dB   phase %+6.1f deg   coherence %.3f\n', ...
+        f_p(ii), P_dB(ii), P_ph(ii), coh_p(ii));
+end
+
+% Slope estimate between 0.1 and 1.0 Hz (descriptive only)
+[~, i1] = min(abs(f_p - 0.1));
+[~, i2] = min(abs(f_p - 1.0));
+slope = (P_dB(i2) - P_dB(i1)) / log10(f_p(i2) / f_p(i1));
+fprintf('     Plant slope between 0.1 and 1.0 Hz: %.1f dB/decade\n', slope);
+
+% Coherence band: contiguous low-frequency band where coherence > 0.8
+coh_thresh = 0.8;
+above = coh_p > coh_thresh;
+if above(1)
+    drop = find(~above, 1, 'first');
+    if isempty(drop)
+        f_coh_hi = f_p(end);
+    else
+        f_coh_hi = f_p(drop - 1);
+    end
+    fprintf('     Coherence > %.2f from %.3f Hz up to %.3f Hz\n', coh_thresh, f_p(1), f_coh_hi);
+else
+    fprintf('     Coherence does not start above %.2f at lowest bin (%.3f Hz, coh=%.3f)\n', ...
+        coh_thresh, f_p(1), coh_p(1));
+end
+
+fprintf('========================================\n\n');
