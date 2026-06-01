@@ -2288,7 +2288,7 @@ The firmware enforces a \SI{35}{\degree} constraint on the combined D+A vector m
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=1.0\linewidth]{Result_Gang_of_four_PosHold_small_tune.png}
+    \includegraphics[width=1.0\linewidth]{Result_Gang_of_four_PosHold_big_tune.png}
     \caption{Gang of Four frequency responses for the position hold controller.
     Red: measured response with baseline tuning (Flight~1). 
     Blue: analytically predicted response with proposed tuning. 
@@ -2296,7 +2296,7 @@ The firmware enforces a \SI{35}{\degree} constraint on the combined D+A vector m
     \label{fig:pos_gang_of_four}
 \end{figure}
 
-The Gang of Four plots compare the baseline tuning ($P = 35$, $I = 36$, $D = 33$, $A = 25$) with the analytically proposed tuning ($P = 42$, $I = 50$, $D = 42$, $A = 19$). The Tracking $T$ shows reasonable agreement between the analytically predicted response (blue) and the measured response with the proposed tuning (yellow), particularly above \SI{0.2}{\hertz}. Deviations at lower frequencies are attributed to wind disturbances and GPS measurement inaccuracies, which dominate the position error signal in this range and reduce the coherence of the frequency response estimate.
+The Gang of Four plots compare the baseline tuning ($P = 30$, $I = 30$, $D = 30$, $A = 30$) with the analytically proposed tuning ($P = 42$, $I = 50$, $D = 42$, $A = 19$). The Tracking $T$ shows reasonable agreement between the analytically predicted response (blue) and the measured response with the proposed tuning (yellow), particularly above \SI{0.2}{\hertz}. Deviations at lower frequencies are attributed to wind disturbances and GPS measurement inaccuracies, which dominate the position error signal in this range and reduce the coherence of the frequency response estimate.
 
 The Sensitivity $S$ is noticeably smoother with the proposed tuning, indicating more consistent disturbance rejection behavior across the control bandwidth. The Controller Effort $SC$ remains comparable between parameter sets, confirming that increased gains do not lead to excessive actuation demands on the inner angle loop. The Compliance $SP$ shows improved disturbance attenuation at low frequencies with the proposed tuning, particularly below \SI{0.5}{\hertz} where wind gusts typically affect position holding.
 
@@ -2304,7 +2304,7 @@ The Sensitivity $S$ is noticeably smoother with the proposed tuning, indicating 
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=1.0\linewidth]{Result_Step_Response_PosHold_small_tune.png}
+    \includegraphics[width=1.0\linewidth]{Result_Step_Response_PosHold_big_tune.png}
     \caption{Normalized step response of position hold controller.
     Yellow: measured response with baseline tuning (Flight~1). 
     Red: analytically predicted step response with proposed tuning (calculated from Flight~1 identification). 
@@ -2314,7 +2314,7 @@ The Sensitivity $S$ is noticeably smoother with the proposed tuning, indicating 
 
 Step response analysis is limited by the \SI{10}{\hertz} GPS update rate, which fundamentally constrains the temporal resolution of the measurement. Consequently, the step response exhibits significant quantization noise that masks fine transient details. Despite this limitation, the measured response (blue) with proposed tuning remains stable and demonstrates comparable settling behavior to the baseline (yellow), with both reaching steady state around \SI{5}{\second}s.
 
-The analytically predicted response (red) diverges more noticeably from the measured response (blue) compared to the Gang of Four agreement, suggesting that the step response is more sensitive to unmodeled dynamics and GPS measurement artifacts. \textbf{The proposed tuning parameters result in slightly increased overshoot relative to baseline, which is an acceptable trade-off for the improved frequency-domain characteristics and disturbance rejection demonstrated in the Gang of Four analysis. The practical flight behavior confirms that the proposed tuning maintains stable position holding without adverse transient effects.}
+The analytically predicted response (red) diverges more noticeably from the measured response (blue) compared to the Gang of Four agreement, suggesting that the step response is more sensitive to unmodeled dynamics and GPS measurement artifacts. The proposed tuning parameters result in slightly increased overshoot relative to baseline, which is an acceptable trade-off for the improved frequency-domain characteristics and disturbance rejection demonstrated in the Gang of Four analysis.
 
 \chapter{Discussion}
 
@@ -2384,11 +2384,13 @@ Identify the plant from a flight at the \emph{current} tune, and do not reuse a 
 Two methodological notes follow from the same analysis. The chirp amplitude must be chosen so that the actuator does not saturate within the identification window: D-Boost and I-Term-Relax are disabled during the chirp specifically to keep the closed loop linear, and throttle saturation would violate the same assumption; if saturation is observed in the throttle-offset trace, the chirp signal must be re-designed before the resulting identification is trusted. Finally, the configurations under which the tool was validated in this work---firmware build \href{https://github.com/InsaneBroccoli/betaflight/commit/898435640}{\texttt{InsaneBroccoli/betaflight @ 898435640}} (branching from upstream baseline \texttt{04e37a122}) with \texttt{USE\_ALTHOLD\_CHIRP} enabled, the airframe and propulsion configuration of the experimental drone, and a hover-baseline operating point---bound the range over which the claims above should be transferred to other setups.
 
 \section{Position Hold Controller}
-The frequency response measurement of the position hold controller shows significant noise contamination above ~0.8 Hz, primarily attributable to the 10 Hz GPS update rate being insufficient for proper system identification via chirp excitation. Unlike the rate and angle controllers which operate at 8 kHz, the position controller is constrained by GPS data availability, creating a discrete-time system with approximately 100 ms latency. The cascading delays through position error measurement, PID computation, and the inner rate loop introduce unmeasured phase lag that complicates frequency response estimation.
+The frequency response measurement of the position hold controller shows significant noise contamination above ~0.8 Hz, primarily attributable to the 10 Hz GPS update rate being insufficient for proper system identification via chirp excitation. Unlike the rate and angle controllers which operate at 8 kHz, the position controller is constrained by GPS data availability, creating a discrete-time system with approximately 100 ms latency. The cascading delays through position error measurement, PIDA computation and the inner rate loop introduce unmeasured, relative high phase lag that complicates frequency response estimation.
 
-The step response demonstrates overshoot consistent with a system exhibiting phase lag in the 0.2-0.5 Hz range. Inconsistency between flights suggests environmental factors (GPS multipath, wind) or varying tuning parameters between test conditions.
+The calculated step response (red, \autoref{fig:pos_step_response}) predicts slightly improved performance with proposed tuning. However, the measured Flight~2 response (blue) exhibits noticeably different transient characteristics: increased overshoot and significant divergence between analytical prediction and measured data. This discrepancy is not merely measurement noise, but rather reveals that the chirp-based system identification does not fully capture the discrete-time dynamics and quantization effects at 10 Hz GPS update rates.
 
-These results indicate that the position hold controller is fundamentally limited by GPS-based feedback rather than computational constraints and further tuning refinement would require either higher-rate position estimates (via optical flow, rangefinder, or RTK-GPS) or relaxation of the chirp frequency range to <0.5 Hz.
+Despite the poorer step response prediction accuracy, the proposed tuning is justified because measured Flight~2 remains stable with no instability and the Gang of Four agreement between predicted (blue) and measured (yellow) is acceptable in the Tracking plot. The step response mismatch is an expected artifact of chirp-based system identification in discrete, GPS-limited systems where frequency-domain metrics are a more trustworthy indicator of closed-loop performance than transient step response accuracy.
+
+These results indicate that the position hold controller is fundamentally limited by GPS-based feedback rather than computational constraints and further tuning refinement would require either higher-rate position estimates (via sensor fusion, optical flow or higher GPS update rates) or relaxation of the chirp frequency range to <0.5 Hz.
 
 \chapter{Conclusion}
 
