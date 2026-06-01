@@ -190,7 +190,7 @@ This chapter provides the theoretical background for the methods used in this th
 
 Unmanned Aerial Vehicles (UAVs) can generally be classified into different categories, such as fixed-wing, rotary-wing and hybrid systems. This work focuses on multirotor Drones, a subgroup of rotary-wing platforms, which generate lift through multiple rotors.
 
-Among multirotor UAVs, the most common configurations are quadcopters, hexacopters and octocopters, which differ in the number of rotors (see Fig.~\ref{fig:multirotor_types}). Quadcopters use four rotors and represent the simplest fully controllable multirotor configuration. Due to their comparatively low mechanical complexity, good maneuverability and widespread use in research and practical applications, they are particularly relevant for modeling and control tasks.
+Among multirotor UAVs, the most common configurations are quadcopters, hexacopters and octocopters, which differ in the number of rotors (see \autoref{fig:multirotor_types}). Quadcopters use four rotors and represent the simplest fully controllable multirotor configuration. Due to their comparatively low mechanical complexity, good maneuverability and widespread use in research and practical applications, they are particularly relevant for modeling and control tasks.
 
 Hexacopters and octocopters extend this concept by using six or eight rotors. These configurations offer increased thrust, improved fault tolerance and higher payload capacity, but they also involve greater weight, higher energy consumption and more complex control allocation.
 
@@ -229,25 +229,13 @@ The following sections introduce the coordinate system, the propeller configurat
 
 \subsection*{Coordinate System and Rotational Axes}
 
-The dynamics of a quadcopter are typically described using a body-fixed coordinate system, where the axes are defined as follows:
+The quadcopter's orientation is described using a body-fixed coordinate system with three rotational degrees of freedom (see \autoref{fig:body_axes}), following the right-hand rule:
 
 \begin{itemize}
-\item The \(x\)-axis points forward, in the direction the drone is facing.
-\item The \(y\)-axis points to the left, perpendicular to the \(x\)-axis.
-\item The \(z\)-axis points upward, perpendicular to both the \(x\)- and \(y\)-axes.
+    \item \textbf{Roll} (\(\phi\)): rotation around the forward-pointing \(x\)-axis
+    \item \textbf{Pitch} (\(\theta\)): rotation around the leftward-pointing \(y\)-axis
+    \item \textbf{Yaw} (\(\psi\)): rotation around the upward-pointing \(z\)-axis
 \end{itemize}
-
-This coordinate system moves together with the drone. All rotational motions are defined with respect to these axes.
-
-The orientation of the quadcopter is described by the three rotational degrees of freedom roll, pitch, and yaw. The sign conventions for these rotations follow the right-hand rule.
-
-\begin{itemize}
-\item \textbf{Roll} (\(\phi\)) describes a rotation around the \(x\)-axis.
-\item \textbf{Pitch} (\(\theta\)) describes a rotation around the \(y\)-axis.
-\item \textbf{Yaw} (\(\psi\)) describes a rotation around the \(z\)-axis.
-\end{itemize}
-
-Figure~\ref{fig:body_axes} illustrates the body-fixed coordinate system and the associated rotational axes.
 
 \begin{figure}[h]
 \centering
@@ -256,18 +244,16 @@ Figure~\ref{fig:body_axes} illustrates the body-fixed coordinate system and the 
 \label{fig:body_axes}
 \end{figure}
 
-All this motion is controlled by adjusting the rotatioal speeds of the four motors, which generate the necessary forces and torques to achieve the desired orientation and movement. The specific configuration of the motors and the resulting control strategy are described in the following sections.
+All motion is controlled by adjusting the rotational speeds of the four motors, which generate the necessary forces and torques. The motor configuration and control strategy are described in the following sections.
 
 \subsection*{Force and Torque Generation}
 
 As already mentioned, a quadcopter generates all forces and torques through the thrust produced by the propellers. Therefore, the control of the drone is achieved by adjusting the speed of each motor, which in turn changes the thrust and the resulting forces and torques.
 
-Rolling the drone is achieved by increasing the speed of two motors on one side and decreasing the speed of the opposite motors. For example, to roll the drone to the left, the speeds of the right motors is increased while the speeds of the left motors is decreased. This creates a torque around the \(x\)-axis, causing the drone to tilt to the right, as illustrated in Figure~\ref{fig:roll_pitch}. The same principle also applies to pitch control, where the front and rear motors are adjusted to create a torque around the \(y\)-axis.
+Rolling the drone is achieved by increasing the speed of two motors on one side and decreasing the speed of the opposite motors. For example, to roll the drone to the left, the speeds of the right motors is increased while the speeds of the left motors is decreased. This creates a torque around the \(x\)-axis, causing the drone to tilt, as illustrated in \autoref{fig:roll_pitch}. The same principle also applies to pitch control, where the front and rear motors are adjusted to create a torque around the \(y\)-axis.
 
-
-\begin{figure}[htbp]
+\begin{figure}[H]
     \centering
-
     \begin{minipage}{0.48\textwidth}
         \centering
         \includegraphics[height=6cm]{Drone_Roll.png}
@@ -281,15 +267,13 @@ Rolling the drone is achieved by increasing the speed of two motors on one side 
         \caption{Yaw control through differential motor speeds.}
         \label{fig:yaw}
     \end{minipage}
-
 \end{figure}
 
+Translational motion along the \(x\)- and \(y\)-axes is achieved by tilting the airframe, thereby redirecting a component of the total thrust vector horizontally. Forward motion requires a positive pitch angle \(\theta > 0\), generated by increasing the rear motor speeds and reducing the front motor speeds. Lateral motion works the same way, using a roll angle (\(\phi \neq 0\)) created by a speed difference between the left and right motor pairs. As a result, motion in the \(x\)- and \(y\)-directions is coupled to the roll and pitch angles \(\phi\) and \(\theta\).
 
-To move along the \(x\)- and \(y\)-axes, the drone needs to tilt in the corresponding direction, which is achieved by adjusting the roll and pitch angles. For example, to move forward, the drone pitches forward by increasing the speed of the rear motors and decreasing the speed of the front motors. This creates a horizontal component of the thrust that propels the drone forward. Similarly, to move to the right, the drone rolls to the right by increasing the speed of the left motors and decreasing the speed of the right motors. Therefore, movement in the \(x\)- and \(y\)-directions is indirectly controlled through roll and pitch.
+Yaw control relies on the reaction torques produced by the propellers. Since adjacent motors spin in opposite directions, their drag torques cancel out under symmetric operation. By speeding up the motors rotating in one direction and slowing down those rotating in the other, a net torque about the \(z\)-axis is generated, which causes the drone to rotate in the desired direction, as shown in \autoref{fig:yaw}.
 
-Yaw control is slightly more complex. Since the drone has no direct control surfaces, yaw is achieved by creating a torque around the \(z\)-axis. The propellers of quadcopters do not all rotate in the same direction but instead alternate between clockwise and counterclockwise. As a result, the torque generated by the propellers also alternates in direction. To create a yaw motion, the speed of the motors rotating in one direction is increased, while the speed of the motors rotating in the opposite direction is decreased. This results in a torque around the \(z\)-axis, causing the drone to rotate in the desired direction, as shown in Figure~\ref{fig:yaw}.
-
-If we combine all these control principles, it becomes clear that the drone can perform all maneuvers by adjusting the speeds of the four motors. For this purpose, the software mixes the desired roll, pitch, yaw and throttle commands into individual motor speed commands. This process is known as motor mixing or control allocation and is a crucial part of the flight controller’s functionality. The simplified motor mixing for a quadcopter can be represented by the following equations:
+Combining these principles, all motions are controlled through the four motor speeds \(\Omega_1, \Omega_2, \Omega_3, \Omega_4\). The process of mapping the desired roll, pitch, yaw and throttle commands to individual motor speed setpoints is called \textit{control allocation} or \textit{motor mixing}, and is a core part of the flight controller. For a standard quadcopter, this mapping is given by the following equations:
 
 \begin{align}
 M_1 &= T + \phi + \theta - \psi, \\
@@ -304,7 +288,7 @@ where \(M_i\) represents the speed command for the \(i\)-th motor, \(T\) is the 
 
 With the principles of force and torque generation in mind, the flight control system can now be introduced. Up to this point, the fundamental concepts required to understand the behaviour of a quadcopter have been described. The following section marks the transition to the main focus of this thesis.
 
-The general structure of the flight control system is illustrated in Figure~\ref{fig:control_loop}. It shows how the desired maneuver (setpoint) is processed by the controller, which computes motor commands to influence the drone. The resulting motion is measured by sensors and fed back into the system, forming a closed control loop.
+The general structure of the flight control system is illustrated in \autoref{fig:control_loop}. It shows how the desired maneuver (setpoint) is processed by the controller, which computes motor commands to influence the drone. The resulting motion is measured by sensors and fed back into the system, forming a closed control loop.
 
 The flight control system consists of multiple control loops that regulate the drone's behaviour. These control loops are the primary subject of this work and will be analysed and tuned in the following sections \parencite{Drone_Control}.
 
@@ -332,52 +316,46 @@ A chirp signal is a signal in which the frequency increases or decreases over ti
 
 The main advantage of a chirp signal is that it allows a wide frequency range to be excited within a single experiment. Instead of testing individual frequencies one by one, the system is continuously stimulated with increasing frequency. This makes the approach both efficient and well suited for practical applications. \parencite{Matlab_Chirp}
 
-By observing how the system responds to this input, it becomes possible to analyse its frequency-dependent behaviour. In particular, the measured input and output signals can be used to estimate the frequency response and, consequently, the transfer function of the system. This provides valuable insight into the system dynamics and forms the basis for the methods described in the following sections. \parencite{Matlab_Chirp}
+By observing how the system responds to this input, it becomes possible to analyse its frequency-dependent behaviour. In particular, the measured input and output signals can be used to estimate the frequency response of the system. From this frequency response, the transfer function can then be identified. This provides valuable insight into the system dynamics and forms the basis for the methods described in the following sections. \parencite{Matlab_Chirp}
 
 \newpage
 
 \subsubsection*{Mathematical Definition}
 
-The instantaneous value of the chirp signal is defined as \parencite{Matlab_Chirp}
+The instantaneous value of the chirp signal is defined as
 
 \begin{equation}
-x(t) = A \cdot \sin(\varphi(t)),
+    x(t) = A \cdot \sin(\varphi(t)),
 \end{equation}
 
-where \( A \) is the amplitude. The amplitude determines the excitation strength of the signal and therefore influences the signal-to-noise ratio of the measurement.
+where \( A \) is the amplitude, which determines the excitation strength and therefore 
+influences the signal-to-noise ratio of the measurement. \parencite{Matlab_Chirp}
 
-The phase is defined as \parencite{Matlab_Chirp}
+The phase \( \varphi(t) \) represents the accumulated instantaneous frequency over time  and is defined as
 
 \begin{equation}
-\varphi(t) = 2\pi \int_0^t f(\tau)\, d\tau,
+    \varphi(t) = 2\pi \int_0^t f(\tau)\, d\tau,
 \end{equation}
 
-and represents the accumulated instantaneous frequency over time, where \( f(\tau) \) denotes the instantaneous frequency at time \( \tau \). The specific evolution of the frequency over time will be introduced in the following sections.
+where \( f(\tau) \) denotes the instantaneous frequency at time \( \tau \). The specific evolution of \( f(\tau) \) over time is discussed in the following sections. \parencite{Matlab_Chirp}
 
-In practical implementations such as \textbf{Betaflight}, the phase is wrapped once it reaches \( 2\pi \). This keeps the numerical values bounded and results in a sawtooth-shaped wrapped phase signal, which serves as the argument of the sinusoidal excitation.
+In practical implementations such as \textbf{Betaflight}, the phase is wrapped once it reaches \( 2\pi \), keeping the numerical values bounded and producing a sawtooth-shaped phase signal that serves as the argument of the sinusoidal excitation.
 
-The behaviour of the chirp signal is determined by several parameters defining the frequency sweep.
-
-The behaviour and quality of the chirp excitation depend strongly on the selected sweep parameters. Parameters such as the frequency range, sweep duration, sampling frequency, and amplitude influence the excitation quality and the resulting frequency response estimation. Therefore, the parameter values used for the simulation model are defined in the following.
-
-For the simulation model introduced in this chapter, the following parameter values are used:
+The quality of the chirp excitation depends strongly on the chosen sweep parameters, including the frequency range, sweep duration, sampling frequency and amplitude. The following parameter values are used in the simulation model of this work:
 
 \begin{itemize}
-\item \( f_0 \) — starting frequency of the chirp signal (simulation: \( 1\,\text{Hz} \))
-\item \( f_1 \) — final frequency of the chirp signal (simulation: \( 50\,\text{Hz} \))
-\item \( T \) — total duration of the frequency sweep (simulation: \( 20\,\text{s} \))
-\item \( f_s \) — sampling frequency used in the discrete-time simulation (simulation: \( 2000\,\text{Hz} \))
-\item \( A \) — amplitude of the chirp signal (simulation: \( 230 \))
+    \item \( f_0 \) Starting frequency of the chirp signal: \( 1\,\text{Hz} \)
+    \item \( f_1 \) Final frequency of the chirp signal: \( 50\,\text{Hz} \)
+    \item \( T \) Total duration of the frequency sweep: \( 20\,\text{s} \)
+    \item \( f_s \) Sampling frequency: \( 2000\,\text{Hz} \)
+    \item \( A \) Amplitude of the chirp signal: \( 230 \)
 \end{itemize}
 
-With the exception of the final frequency \(f_1\), the simulation parameters are based on the default chirp settings used in Betaflight for the angle and gyro control loops. The final frequency is limited to \(50\,\text{Hz}\) in the simulation to improve the readability of the resulting plots. In practical applications, the final frequency is typically chosen significantly higher (e.g., \(600\,\text{Hz}\)) to cover the full control bandwidth of the system.
+With the exception of \( f_1 \), these values are taken from the default chirp settings used in Betaflight for the angle and gyro control loops. The final frequency in the simulation is limited to \( 50\,\text{Hz} \) to improve plot readability, whereas in practice \( f_1 \) is typically set much higher (e.g., \( 600\,\text{Hz} \)) to cover the full control bandwidth of the system.
 
 \subsubsection*{Exponential chirp (as used in Betaflight):}
 
-For an exponential chirp, the instantaneous frequency increases exponentially
-from the starting frequency \( f_0 \) to the final frequency \( f_1 \) over the time
-interval \( T \). This means that lower frequencies are covered more slowly,
-while higher frequencies are reached more rapidly. \parencite{Matlab_Chirp}
+For an exponential chirp, the instantaneous frequency increases exponentially from the starting frequency \( f_0 \) to the final frequency \( f_1 \) over the time interval \( T \). This means that lower frequencies are covered more slowly, while higher frequencies are reached more rapidly. \parencite{Matlab_Chirp}
 
 The instantaneous frequency is defined as
 
@@ -416,22 +394,31 @@ In some control loops, the chirp signal is conditioned by a lag filter before be
 The filter is configured with a pole at 3 Hz and a zero at 30 Hz, corresponding to the transfer function
 
 \begin{equation}
-H(s) = \frac{1 + s/\omega_z}{1 + s/\omega_p}
+    H(s) = \frac{1 + s/\omega_z}{1 + s/\omega_p}
 \end{equation}
 
-where $\omega_z = 2\pi \cdot 30$ rad/s and $\omega_p = 2\pi \cdot 3$ rad/s denote the zero and pole frequencies, respectively. The pole attenuates the signal above its cutoff frequency, while the zero partially compensates this attenuation at higher frequencies. Since the pole frequency is lower than the zero frequency, the filter exhibits an overall lag characteristic within the relevant frequency range.
+where $f_z = 30 Hz$ and $f_p = 3 Hz$ denote the zero and pole frequencies, respectively. The pole attenuates the signal above its cutoff frequency, while the zero partially compensates this attenuation at higher frequencies. Since \( f_p < f_z \), the filter exhibits an overall lag characteristic within the relevant frequency range.
 
-In the Betaflight implementation, the pole frequency ($\omega_p$) must not exceed the zero frequency ($\omega_z$), as this would result in a lead filter that amplifies high-frequency components and could potentially damage the motors.
+\autoref{fig:Lag_Result} illustrates how the lag filter compensates the rising magnitude of the controller effort. The product of both responses is approximately flat, confirming that the chosen parameters achieve a more uniform excitation across the sweep range.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{SC_LAG_Result.png}
+    \caption{Magnitude response of the controller effort (black), the lag filter (red) and their combined result (blue) for the simulation parameters \( f_p = 3\,\text{Hz} \), \( f_z = 30\,\text{Hz} \). The combined response is approximately flat across the relevant frequency range.}
+    \label{fig:Lag_Result}
+\end{figure}
+
+In the Betaflight implementation, the pole frequency \( f_p \) must not exceed the zero frequency \( f_z \), as this would result in a lead filter that amplifies high-frequency components and could potentially damage the motors.
 
 For newer developments, the exact filter parameters are optimized based on the controller effort, as described later. The objective is to increase the excitation amplitude in frequency ranges where the controller effort is low and reduce it where the controller effort is high, resulting in a more uniform excitation of the system.
 
-For the simulation shown in Figure~\ref{fig:chirpleadlag}, the same parameters as in the previous section were used ($f_0 = 1,\text{Hz}$, $f_1 = 50,\text{Hz}$, $T = 20,\text{s}$, $f_s = 2000,\text{Hz}$). The excitation signal is generated using the exponential chirp formulation introduced earlier.
+For the simulation shown in \autoref{fig:chirpleadlag}, the same parameters as in the previous section were used ($f_0 = 1,\text{Hz}$, $f_1 = 50,\text{Hz}$, $T = 20,\text{s}$, $f_s = 2000,\text{Hz}$). The excitation signal is generated using the exponential chirp formulation introduced earlier.
 
 \begin{figure}[H]
-\centering
-\includegraphics[width=1.0\textwidth]{chirp_lag_filtert.png}
-\caption{Exponential chirp signal after conditioning with the lag filter used for chirp input shaping.}
-\label{fig:chirpleadlag}
+    \centering
+    \includegraphics[width=1.0\textwidth]{chirp_lag_filtert.png}
+    \caption{Exponential chirp signal after conditioning with the lag filter used for chirp input shaping.}
+    \label{fig:chirpleadlag}
 \end{figure}
 
 
@@ -442,7 +429,7 @@ To illustrate the influence of the applied signal-processing steps, a simulation
 The overall transfer function of the system is given by
 
 \begin{equation}
-G(s) = \frac{\omega_1}{s} \cdot \frac{1}{1 + s/\omega_2} \cdot e^{-s/\omega_t}.
+    G(s) = \frac{\omega_1}{s} \cdot \frac{1}{1 + s/\omega_2} \cdot e^{-\frac{s}{\omega_t}}.
 \end{equation}
 
 The integrator describes how differences in rotor thrust affect the angular rate over time. The first-order term represents the low-pass behaviour introduced by the electronics and actuator dynamics. The dead-time component accounts for delays in the control loop.
@@ -450,12 +437,12 @@ The integrator describes how differences in rotor thrust affect the angular rate
 For the simulation, the parameters are chosen as
 
 \begin{equation}
-\omega_1 = 16 \cdot 2\pi, \qquad
-\omega_2 = 13 \cdot 2\pi, \qquad
-\omega_t = 60 \cdot 2\pi.
+    \omega_1 = 16 \cdot 2\pi, \qquad
+    \omega_2 = 13 \cdot 2\pi, \qquad
+    \omega_t = 60 \cdot 2\pi.
 \end{equation}
 
-The structure of the simulation model is illustrated in Figure~\ref{fig:signal_processing_model}.
+A block diagram of the simulation model is shown in \autoref{fig:signal_processing_model}.
 
 \begin{figure}[H]
     \centering
@@ -464,88 +451,61 @@ The structure of the simulation model is illustrated in Figure~\ref{fig:signal_p
     \label{fig:signal_processing_model}
 \end{figure}
 
-The chirp signal \( u(t) \) is applied to the system, resulting in the ideal output \( \tilde{y}(t) \).
-
-To emulate realistic measurement conditions, additive disturbance noise \( d(t) \) is superimposed on the output, such that
+The chirp signal \( u(t) \) is applied to the system, resulting in the ideal output \( \tilde{y}(t) \). To emulate realistic measurement conditions, additive disturbance noise \( d(t) \) is superimposed on the output, such that
 
 \begin{equation}
-y(t) = \tilde{y}(t) + d(t).
+    y(t) = \tilde{y}(t) + d(t).
 \end{equation}
 
-In the simulation, the disturbance is modelled as additive white Gaussian noise with a standard deviation of \( \sigma_d = 200\,\text{deg/s} \).
-Based on these simulated signals, the following signal-processing steps are applied and evaluated.
+In the simulation, the disturbance is modelled as additive white Gaussian noise with a standard deviation of \( \sigma_d = 200\,\text{deg/s} \). Based on these simulated signals, the following signal-processing steps are applied and evaluated.
 
 \subsubsection*{Baseband Filtering via Frequency Rotation}
 
 Measured signals are often affected by noise and unwanted high-frequency components, which can obscure relevant information. This is also the case in the simulated signals considered here, where additive noise is present. To reduce these disturbances while preserving the phase characteristics, a frequency-shifting filtering approach is used \parencite{signal_processing}.
 
-The method shifts the signal to baseband, applies a low-pass filter and then shifts it back to its original frequency range, enabling focused filtering around the frequency of interest \parencite{signal_processing}.
+The method shifts the signal to baseband, applies a low-pass filter and then shifts it back to its original frequency range, enabling focused filtering around the frequency of interest.
 
-The underlying principle can be understood using the Fourier shift theorem. Multiplication of a signal $f(t)$ with a complex exponential results in a shift of its spectrum \parencite{signal_processing}
-
-\begin{equation}
-e^{i2\pi\xi_0 t} f(t)
-\;\Longleftrightarrow\;
-\hat{f}(\xi-\xi_0),
-\end{equation}
-
-which shifts the spectrum by the frequency $\xi_0$ \parencite{signal_processing}.
-
-In this case, the signal of interest is a chirp signal with a continuously changing instantaneous frequency. Therefore, the frequency shift has to be time-dependent. This is achieved using a complex phasor \parencite{signal_processing}
+The underlying principle can be understood using the Fourier shift theorem. Multiplication of a signal $f(t)$ with a complex exponential results in a shift of its spectrum
 
 \begin{equation}
-p(t)=e^{i\varphi(t)},
+    e^{i2\pi\xi_0 t} f(t)
+    \;\Longleftrightarrow\;
+    \hat{f}(\xi-\xi_0),
 \end{equation}
 
-where \( \varphi(t) \) describes the instantaneous phase of the chirp \parencite{signal_processing}.
+which shifts the spectrum by the frequency $\xi_0$.
 
-Multiplying the measured signal $x(t)$ with this phasor or its complex conjugate results in a rotation of the signal spectrum toward baseband \parencite{signal_processing}
+In this case, the signal of interest is a chirp signal with a continuously changing instantaneous frequency. Therefore, the frequency shift has to be time-dependent. This is achieved using a complex phasor
 
 \begin{equation}
-y_R(t)=x(t)p(t), \qquad
-y_Q(t)=x(t)p^*(t).
+    p(t)=e^{i\varphi(t)},
 \end{equation}
 
-After this rotation, the dominant signal component is centered around $0\,\text{Hz}$, enabling efficient filtering using a low-pass filter \parencite{signal_processing}.
-
-Once the signal has been shifted to baseband, a low-pass filter is applied to remove high-frequency noise components. Since the useful signal is concentrated near zero frequency, the filter can effectively suppress unwanted spectral components outside this region \parencite{signal_processing}.
-
-To avoid phase distortion, forward-backward filtering is employed. This approach applies the filter in both forward and reverse directions, resulting in zero-phase filtering \parencite{signal_processing}.
-
-The filtering operation yields the filtered baseband signals
+where \( \varphi(t) \) describes the instantaneous phase of the chirp. Multiplying the measured signal $x(t)$ with this phasor or its complex conjugate results in a rotation of the signal spectrum toward baseband
 
 \begin{equation}
-y_R(t) \rightarrow \tilde{y}_R(t), \qquad
-y_Q(t) \rightarrow \tilde{y}_Q(t),
+    y_R(t)=x(t)p(t), \qquad
+    y_Q(t)=x(t)p^*(t).
 \end{equation}
 
-which contain the desired signal components with reduced noise \parencite{signal_processing}.
+After this rotation, the dominant signal component is centered around $0\,\text{Hz}$, enabling efficient filtering using a low-pass filter.
+
+Once the signal has been shifted to baseband, a low-pass filter is applied to remove high-frequency noise components. Since the useful signal is concentrated near zero frequency, the filter can effectively suppress unwanted spectral components outside this region. To avoid phase distortion, forward-backward filtering is employed. This approach applies the filter in both forward and reverse directions, resulting in zero-phase filtering. The filtering operation yields the filtered baseband signals
+
+\begin{equation}
+    y_R(t) \rightarrow \tilde{y}_R(t), \qquad
+    y_Q(t) \rightarrow \tilde{y}_Q(t).
+\end{equation}
 
 After filtering, the signal is shifted back to its original frequency range. This is achieved by multiplying the filtered signals with the corresponding inverse phasors and combining the results to obtain a real-valued signal \parencite{signal_processing}
 
 \begin{equation}
-x_f(t)
-=
-\mathrm{Re}
-\left(
-\frac{1}{2}
-\left(
-\tilde{y}_R(t)p^*(t)
-+
-\tilde{y}_Q(t)p(t)
-\right)
-\right).
+    x_f(t) = \mathrm{Re}\left(\frac{1}{2}\left(\tilde{y}_R(t)p^*(t)+\tilde{y}_Q(t)p(t)\right)\right).
 \end{equation}
 
-This step reverses the initial frequency rotation and reconstructs a filtered version of the original signal \parencite{signal_processing}.
+This step reverses the initial frequency rotation and reconstructs a filtered version of the original signal. By reducing the noise before the spectral estimation, the signal-to-noise ratio is improved, leading to more reliable results \parencite{signal_processing}.
 
-The filtered signal is then used for further analysis. By reducing the noise before the spectral estimation, the signal-to-noise ratio is improved, leading to more reliable results \parencite{signal_processing}.
-
-The effect of the filtering approach is illustrated in Fig.~\ref{fig:time_filtered}. The upper plot shows the unfiltered signal, where noise becomes dominant at later time instances corresponding to higher chirp frequencies, while the lower plot shows the filtered signal \parencite{signal_processing}.
-
-The method is based on shifting the signal to baseband, applying a low-pass filter and shifting it back to its original frequency range. A second-order Butterworth low-pass filter with a cutoff frequency of 10 Hz is used. It reduces noise especially at higher frequencies while preserving the main signal characteristics \parencite{signal_processing}.
-
-The filtered signal closely follows the underlying system response. A slight amplitude reduction at higher frequencies can be observed, which is consistent with the low-pass behaviour \parencite{signal_processing}.
+A second-order Butterworth low-pass filter with a cutoff frequency of $10\,\text{Hz}$ is used. The effect of the filtering approach is illustrated in \autoref{fig:time_filtered}. At higher chirp frequencies, noise dominates the unfiltered signal, while the filtered signal closely follows the nderlying system response. A slight amplitude reduction at higher frequencies can be observed, consistent with the low-pass behaviour.
 
 \begin{figure}[H]
     \centering
@@ -559,38 +519,33 @@ The filtered signal closely follows the underlying system response. A slight amp
 For a linear time-invariant (LTI) system, the input-output relationship in the frequency domain can be expressed as
 
 \begin{equation}
-Y(\omega) = G(\omega)U(\omega),
+    Y(\omega) = G(\omega)U(\omega),
 \end{equation}
 
-where \(U(\omega)\) and \(Y(\omega)\) denote the Fourier transforms of the input signal \(u(t)\) and the output signal \(y(t)\), respectively, and \(G(\omega)\) represents the frequency response of the system.
+where \(U(\omega)\) and \(Y(\omega)\) denote the Fourier transforms of the input signal \(u(t)\) and the output signal \(y(t)\), respectively and \(G(\omega)\) represents the frequency response of the system.
 
 To estimate the frequency response from measured signals, both sides of the equation are multiplied by the complex conjugate \(U^{H}(\omega)\) of the input signal,
 
 \begin{equation}
-Y(\omega)U^{H}(\omega)
-=
-G(\omega)U(\omega)U^{H}(\omega).
+    Y(\omega)U^{H}(\omega) = G(\omega)U(\omega)U^{H}(\omega).
 \end{equation}
 
 Using the estimates
 
 \begin{equation}
-\hat{S}_{yu}(\omega) = Y(\omega)U^{H}(\omega)
+    \hat{S}_{yu}(\omega) = Y(\omega)U^{H}(\omega)
 \end{equation}
 
-for the cross-power spectral density between the output and input signals, and
+for the cross-power spectral density between the output and input signals and
 
 \begin{equation}
-\hat{S}_{uu}(\omega) = U(\omega)U^{H}(\omega)
+    \hat{S}_{uu}(\omega) = U(\omega)U^{H}(\omega)
 \end{equation}
 
 for the auto-power spectral density of the input signal, the frequency response can be estimated as
 
 \begin{equation}
-\hat{G}(\omega)
-=
-\frac{\hat{S}_{yu}(\omega)}
-     {\hat{S}_{uu}(\omega)}.
+    \hat{G}(\omega) = \frac{\hat{S}_{yu}(\omega)}{\hat{S}_{uu}(\omega)}.
 \end{equation}
 
 This equation forms the basis for the frequency response estimation used throughout this work. Compared to directly dividing the Fourier transforms, the use of spectral density estimates leads to more robust results in the presence of measurement noise. Since the excitation signal is known and measurement noise is mainly present in the system output, this approach is well suited for system identification.
@@ -610,34 +565,34 @@ Let \(u[n]\) and \(y[n]\) denote the discrete-time input and output signals of l
 The \(k\)-th segment of the input signal is given by
 
 \begin{equation}
-u_k[n] = u[n + kD]\, w[n], \qquad n = 0, \dots, L-1,
+    u_k[n] = u[n + kD]\, w[n], \qquad n = 0, \dots, L-1,
 \end{equation}
 
 where \(D\) defines the shift from one segment to the next. It therefore determines how many samples are shared between neighbouring segments \parencite{System_Identification}. For each segment, the discrete Fourier transform (DFT) is computed as
 
 \begin{equation}
-U_k(\omega) = \sum_{n=0}^{L-1} u_k[n] e^{-j\omega n}, \qquad
-Y_k(\omega) = \sum_{n=0}^{L-1} y_k[n] e^{-j\omega n}.
+    U_k(\omega) = \sum_{n=0}^{L-1} u_k[n] e^{-j\omega n}, \qquad
+    Y_k(\omega) = \sum_{n=0}^{L-1} y_k[n] e^{-j\omega n}.
 \end{equation}
 
 To obtain a stable representation in the frequency domain, the squared magnitude of the Fourier transform is used. This corresponds to the signal power and makes the spectral estimate less sensitive to noise \parencite{System_Identification}. The periodogram estimates are defined as
 
 \begin{equation}
-P_{uu,k}(\omega) = \frac{1}{L} U_k(\omega) \cdot U_k^{H}(\omega), \qquad
-P_{yu,k}(\omega) = \frac{1}{L} Y_k(\omega) U_k^{H}
+    P_{uu,k}(\omega) = \frac{1}{L} U_k(\omega) \cdot U_k^{H}(\omega), \qquad
+    P_{yu,k}(\omega) = \frac{1}{L} Y_k(\omega) U_k^{H}
 \end{equation}
 
 Welch’s method reduces the variance of the estimates by averaging over all segments. The resulting spectral densities are given by
 
 \begin{equation}
-\hat{S}_{uu}(\omega) = \frac{1}{K} \sum_{k=1}^{K} P_{uu,k}(\omega), \qquad
-\hat{S}_{yu}(\omega) = \frac{1}{K} \sum_{k=1}^{K} P_{yu,k}(\omega), 
+    \hat{S}_{uu}(\omega) = \frac{1}{K} \sum_{k=1}^{K} P_{uu,k}(\omega), \qquad
+    \hat{S}_{yu}(\omega) = \frac{1}{K} \sum_{k=1}^{K} P_{yu,k}(\omega), 
 \end{equation}
 
 Using these quantities, the transfer function estimate is computed as
 
 \begin{equation}
-\hat{G}(\omega) = \frac{\hat{S}_{yu}(\omega)}{\hat{S}_{uu}(\omega)}.
+    \hat{G}(\omega) = \frac{\hat{S}_{yu}(\omega)}{\hat{S}_{uu}(\omega)}.
 \end{equation}
 
 In our example, the spectral densities are estimated using Welch’s method with a segment length of \(L = 4096\) samples and an overlap of 90\%. A Hanning window is applied to each segment to minimize spectral leakage.
@@ -649,7 +604,7 @@ In our example, the spectral densities are estimated using Welch’s method with
     \label{fig:transfer_estimation_filtered}
 \end{figure}
 
-The estimated transfer function is shown in Fig.~\ref{fig:transfer_estimation_filtered}. The estimated magnitude and phase closely follow the true system response over a wide frequency range. Compared to the direct estimation approach, the usable frequency range is significantly extended.
+The estimated transfer function is shown in \autoref{fig:transfer_estimation_filtered}. The estimated magnitude and phase closely follow the true system response over a wide frequency range. Compared to the direct estimation approach, the usable frequency range is significantly extended.
 
 The quality of the transfer function estimate can be evaluated using the coherence. As already mentioned, coherence values close to one indicate a reliable transfer function estimate. The coherence is defined as
 
@@ -659,33 +614,22 @@ $$
 
 and takes values in the range \(0 \leq \gamma^2(\omega) \leq 1\). It provides a frequency-dependent measure of how strongly the output is linearly related to the input \parencite{signal_processing}.
 
-As shown in Fig.~\ref{fig:transfer_estimation_filtered}, the coherence remains close to one up to approximately 10 Hz, where only minor deviations between the estimated and true transfer function are visible. At higher frequencies, the coherence decreases and the estimation error gradually increases.
+As shown in \autoref{fig:transfer_estimation_filtered}, the coherence remains close to one up to approximately 10 Hz, where only minor deviations between the estimated and true transfer function are visible. At higher frequencies, the coherence decreases and the estimation error gradually increases.
 
 \section{Control Loop Calculations}
 \label{sec:Control Loop Calculations}
 
-Although the flight controller consists of several nested control loops, their fundamental
-structure is identical. Each loop follows the same basic feedback control principle and differs
-mainly in the controlled variable and the chosen controller parameters. Therefore, instead of
-analysing every loop individually from the beginning, a simplified model is used to explain the
-underlying calculations and controller behaviour.
+Although the flight controller consists of several nested control loops, their fundamental structure is identical. Each loop follows the same basic feedback control principle and differs mainly in the controlled variable and the chosen controller parameters. Therefore, instead of analysing every loop individually from the beginning, a simplified model is used to explain the underlying calculations and controller behaviour.
 
-The simplified control structure used for the analysis consists of a controller \(C\) and a plant \(P\),
-which describes the dynamic behaviour of the system being controlled. The reference input \(r\)
-is compared with the system output \(y\) to form the control error \(e\). Based on this error, the
-controller generates the control signal \(u\), which drives the plant. In addition, the model
-considers both input and output disturbances, allowing a more realistic representation of the
-system behaviour, as illustrated in Figure~\ref{fig:control_loop_easy}.
+The simplified control structure used for the analysis consists of a controller \(C\) and a plant \(P\), which describes the dynamic behaviour of the system being controlled. The reference input \(r\) is compared with the system output \(y\) to form the control error \(e\). Based on this error, the
+controller generates the control signal \(u\), which drives the plant. In addition, the model considers both input and output disturbances, allowing a more realistic representation of the system behaviour, as illustrated in \autoref{fig:control_loop_easy}.
 
-Using this simplified model allows the general behaviour of the control loop and the
-calculation of the controller terms to be explained in a clear and structured way.
-The same principles are later applied to the individual control loops implemented
-in the flight controller.
+Using this simplified model allows the general behaviour of the control loop and the calculation of the controller terms to be explained in a clear and structured way. The same principles are later applied to the individual control loops implemented in the flight controller.
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.75\textwidth]{Control_Loop_easy.png}
-   \caption{Simplified feedback control loop with controller \(C\) and plant \(P\), including reference \(r\), error \(e\), control signal \(u\) and input/output disturbances.}
+    \caption{Simplified feedback control loop with controller \(C\) and plant \(P\), including reference \(r\), error \(e\), control signal \(u\) and input/output disturbances.}
     \label{fig:control_loop_easy}
 \end{figure}
 
@@ -699,84 +643,71 @@ The advantage of this approach is twofold:
     \item The input signal is not subject to filtering effects, since it is not measured but taken directly from the software. Consequently, it is free from measurement noise and external disturbances.
 \end{itemize}
 
-This approach enables a more precise estimation of the transfer function. However, it also implies that the transfer functions of the individual control loop components cannot be obtained directly. Instead, they must be derived through mathematical manipulations.
+This approach enables a consistent estimation of the transfer function. However, it also implies that the transfer functions of the individual control loop components cannot be obtained directly. Instead, they must be derived through mathematical manipulations.
 
 Consider a simplified control loop consisting of a controller \( C(s) \) and a plant \( P(s) \), as illustrated in Figure~\ref{fig:control_loop_easy}. The closed-loop transfer function from the reference input \( R(\omega) \) to the output \( Y(\omega) \) is given by \parencite{lutzTaschenbuchRegelungstechnik}
 
 \begin{equation}
-G_{yr}(\omega) = \frac{Y(\omega)}{R(\omega)} =
-\frac{C(\omega)P(\omega)}{1 + C(\omega)P(\omega)}= T(\omega).
-\label{eq:Gyr}
+    G_{yr}(\omega) = \frac{Y(\omega)}{R(\omega)} =
+    \frac{C(\omega)P(\omega)}{1 + C(\omega)P(\omega)}= T(\omega).
+    \label{eq:Gyr}
 \end{equation}
 
-The transfer function from the reference input to the controller output \( U(\omega) \)
-is
+The transfer function from the reference input to the controller output \( U(\omega) \) is
 
 \begin{equation}
-G_{ur}(\omega) = \frac{U(\omega)}{R(\omega)} =
-\frac{C(\omega)}{1 + C(\omega)P(\omega)} = SC(\omega).
-\label{eq:Gur}
+    G_{ur}(\omega) = \frac{U(\omega)}{R(\omega)} =
+    \frac{C(\omega)}{1 + C(\omega)P(\omega)} = SC(\omega).
+    \label{eq:Gur}
 \end{equation}
 
 By taking the ratio of these two transfer functions, the plant transfer function can be determined:
 
 \begin{equation}
- \frac{G_{yr}(\omega)}{G_{ur}(\omega)} =
-\frac{\dfrac{C(\omega)P(\omega)}{1 + C(\omega)P(\omega)}}
-     {\dfrac{C(\omega)}{1 + C(\omega)P(\omega)}} = P(\omega).
-\label{eq:Plant}
+    \frac{G_{yr}(\omega)}{G_{ur}(\omega)} = \frac{\dfrac{C(\omega)P(\omega)}{1 + C(\omega)P(\omega)}}
+        {\dfrac{C(\omega)}{1 + C(\omega)P(\omega)}} = P(\omega).
+    \label{eq:Plant}
 \end{equation}
 
 To determine the controller, the same principle is applied. The controller transfer function can be calculated as
 
 \begin{equation}
-\frac{G_{ur}(\omega)}{1-G_{yr}(\omega)} =
-\frac{\dfrac{C(\omega)}{1 + C(\omega)P(\omega)}}
+    \frac{G_{ur}(\omega)}{1-G_{yr}(\omega)} = \frac{\dfrac{C(\omega)}{1 + C(\omega)P(\omega)}}
      {1 - \dfrac{C(\omega)P(\omega)}{1 + C(\omega)P(\omega)}} = C(\omega).
 \end{equation}
 
-These relationships enable the identification of both the plant and the
-controller from measurable closed-loop signals. They provide the theoretical
+These relationships enable the identification of both the plant and the controller from measurable closed-loop signals. They provide the theoretical
 foundation for the analysis of the individual control loops.
 
 \newpage
 
 \subsection*{Closed-Loop Performance Metrics}
 
-After determining the plant transfer function, the next step is to analyze the behaviour
-of the overall system when a controller is applied. This is achieved by evaluating the
-closed-loop transfer functions, which describe the system response, disturbance sensitivity,
-disturbance rejection capability and the required controller effort. These measures provide
-valuable insights into the stability, robustness and performance of the controlled system. \parencite{lutzTaschenbuchRegelungstechnik}
+After determining the plant transfer function, the next step is to analyze the behaviour of the overall system when a controller is applied. This is achieved by evaluating the closed-loop transfer functions, which describe the system response, disturbance sensitivity, disturbance rejection capability and the required controller effort. These measures provide valuable insights into the stability, robustness and performance of the controlled system. \parencite{lutzTaschenbuchRegelungstechnik}
 
 The closed-loop transfer function from the reference input to the output is given by \parencite{lutzTaschenbuchRegelungstechnik}
 
 \begin{equation}
-T(\omega) = \frac{C(\omega)P(\omega)}
-{1 + C(\omega)P(\omega)}.
+    T(\omega) = \frac{C(\omega)P(\omega)}{1 + C(\omega)P(\omega)}.
 \end{equation}
 
 The sensitivity function, which describes how sensitive the system output is to input disturbances and model uncertainties, is defined as \parencite{lutzTaschenbuchRegelungstechnik}
 
 \begin{equation}
-S(\omega) =
-\frac{1}{1 + C(\omega)P(\omega)}.
+    S(\omega) = \frac{1}{1 + C(\omega)P(\omega)}.
 \end{equation}
 
-The compliance function, representing the system response to disturbances acting
-on the plant, is given by \parencite{lutzTaschenbuchRegelungstechnik}
+The compliance function, representing the system response to input disturbances acting on the plant, is given by \parencite{lutzTaschenbuchRegelungstechnik}
 
 \begin{equation}
-SP(\omega) =
-P(\omega)\,S(\omega).
+    SP(\omega) = P(\omega)\,S(\omega).
 \end{equation}
 
 Finally, the controller effort describes the influence of the reference input on the
 controller output and is defined as \parencite{lutzTaschenbuchRegelungstechnik}
 
 \begin{equation}
-SC(\omega) =
-C(\omega)\,S(\omega).
+    SC(\omega) = C(\omega)\,S(\omega).
 \end{equation}
 
 \subsection*{Compensation of the I-Term}
@@ -799,7 +730,7 @@ The I-Term Relax algorithm is inherently nonlinear because the integral action i
 	C_{\mathrm{PI,com}}(\omega) = \frac{C_{\mathrm{PI}}(\omega)}{C_{\mathrm{PI,ana}}(\omega)}
 \end{equation}
 
-This frequency-dependent compensation factor represents the combined influence of effects that are not explicitly modeled, including the impact of I-Term Relax. Applying this factor scales the controller transfer function at each frequency such that the measured controller behaviour is reproduced. In this way, the effect of I-Term Relax can be approximated without explicitly modeling the nonlinear algorithm. The factor is further applied to both the original analytical PI controller and the newly designed PI controller:
+This frequency-dependent compensation factor represents the combined influence of effects that are not explicitly modeled, including the impact of I-Term Relax. Applying this factor scales the controller transfer function at each frequency such that the measured controller behaviour is reproduced. In this way, the effect of I-Term Relax can be approximated without explicitly modeling the nonlinear algorithm. The factor is further applied to both the original analytical PI controller \( C_{\mathrm{PI,ana}} \) and the newly designed PI controller \( C_{\mathrm{PI,new}} \):
 
 \begin{align}
 	C_{\mathrm{PI,ana,com}}(\omega) & = C_{\mathrm{PI,ana}}(\omega) \cdot C_{\mathrm{PI,com}}(\omega) \\
@@ -812,16 +743,20 @@ The resulting compensated controller transfer functions are then reinserted into
 
 The step response provides a direct and intuitive way to evaluate the performance of a control system. By applying a step input to the reference signal, the resulting output response can be analysed to assess key performance metrics such as rise time, overshoot, settling time and steady-state error. These metrics provide insights into the speed, stability and accuracy of the control system.
 
-Starting from the closed-loop transfer function as seen in Figure~\ref{fig:control_loop_easy}, the system output in the time domain can be obtained by transforming the frequency-domain representation back into the time domain. This relationship is expressed as
+Starting from the closed-loop transfer function as seen in \autoref{fig:control_loop_easy}, the system output in the time domain can be obtained by transforming the frequency-domain representation back into the time domain. This relationship is expressed as
+
 \begin{equation}
-y(t) = \mathcal{F}^{-1}\left\{ G_{yr}(\omega) \cdot R(\omega) \right\},
-\end{equation} 
+    y(t) = \mathcal{F}^{-1}\left\{ G_{yr}(\omega) \cdot R(\omega) \right\},
+\end{equation}
+
 where \( \mathcal{F}^{-1} \) denotes the inverse Fourier transform, \( G_{yr}(\omega) \) is the closed-loop transfer function from the reference input to the output and \( R(\omega) \) is the Fourier transform of the step input \parencite{lutzTaschenbuchRegelungstechnik}.
 
 According to the convolution theorem, the system output results from the convolution of the impulse response \( g_{yr}(t) \) with the input signal \( r(t) \). For a step input, the output can be expressed as
+
 \begin{equation}
-y(t) = g_{yr}(t) * r(t) = \int_{0}^{t} g_{yr}(\tau) \cdot r(t-\tau) \, d\tau,
+    y(t) = g_{yr}(t) * r(t) = \int_{0}^{t} g_{yr}(\tau) \cdot r(t-\tau) \, d\tau,
 \end{equation}
+
 where \( g_{yr}(t) \) is the impulse response of the system, which can be obtained by taking the inverse Fourier transform of the closed-loop transfer function \( G_{yr}(\omega) \) \parencite{lutzTaschenbuchRegelungstechnik}.
 
 Similar to the step response of the system, the step response of the compliance function can be calculated by applying the same procedure to the compliance function \( SP(\omega) \). This allows for a direct comparison of the system response to disturbances with the response to reference inputs.
@@ -835,7 +770,7 @@ In this work, the step response is therefore calculated based on the available f
 By applying the inverse fast Fourier transformation to this spectrum, an approximation of the system's impulse response \( g_{yr}(t) \) is obtained. Since the step response represents the accumulated effect of the impulse response, it is calculated in discrete time as the cumulative sum of the impulse response samples:
 
 \begin{equation}
-y[k] = \sum_{i=0}^{k} g[i].
+    y[k] = \sum_{i=0}^{k} g[i].
 \end{equation}
 
 This approach provides a simple and effective way to estimate the time-domain step response directly from frequency response data \parencite{lutzTaschenbuchRegelungstechnik}.
