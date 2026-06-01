@@ -3,20 +3,51 @@ clc;
 clear variables;
 close all;
 
-addpath('/home/janick-dort/Dokumente/Studium_ZHAW/BA/bf_controller_tuning/lib/');
-addpath(genpath('/home/janick-dort/Dokumente/Studium_ZHAW/BA/bf_controller_tuning'));
+% addpath('/home/janick-dort/Dokumente/Studium_ZHAW/BA/bf_controller_tuning/lib/');
+% addpath(genpath('/home/janick-dort/Dokumente/Studium_ZHAW/BA/bf_controller_tuning'));
+
+addpath('../bf_controller_tuning/lib/');
 
 %% File paths
 
-log_folder    = 'logs';
-flight_folder1 = '20260527';
-flight_folder2 = '20260527';
+log_folder    = '../bf_controller_tuning/logs';
+flight_folder = 'angle';
 
-log_name1 = '20260527_1_overshootexpress.TXT.csv';
-log_name2 = '20260527_2_overshootexpress.TXT.csv';
+log_name1 = 'P_50_flipmini.csv'; % default
+log_name2 = 'P_80_flipmini.csv'; % tuned
+log_name3 = 'P_100_flipmini.csv'; % more tuned
 
-file_path1 = fullfile(log_folder, flight_folder1, log_name1);
-file_path2 = fullfile(log_folder, flight_folder2, log_name2);
+base = 2;
+compare = 3;
+switch base
+  case 1
+    file_path1 = fullfile(log_folder, flight_folder, log_name1);
+  case 2
+    file_path1 = fullfile(log_folder, flight_folder, log_name2);
+  case 3
+    file_path1 = fullfile(log_folder, flight_folder, log_name3);
+  otherwise
+    disp("invalid base")
+end
+
+switch compare
+  case 1
+    file_path2 = fullfile(log_folder, flight_folder, log_name1);
+    C_P_Angle = 50;                                % Betaflight gain, scaled by 0.1
+  case 2
+    file_path2 = fullfile(log_folder, flight_folder, log_name2);
+    C_P_Angle = 80;                                % Betaflight gain, scaled by 0.1
+  case 3
+    file_path2 = fullfile(log_folder, flight_folder, log_name3);
+    C_P_Angle = 100;                                % Betaflight gain, scaled by 0.1
+  otherwise
+    disp("invalid compare")
+end
+
+%% Gain labels (for plot legends / metrics)
+gains_all    = [50, 80, 100];   % maps log_name1/2/3 -> Betaflight angle P gain
+gain_base    = gains_all(base);
+gain_compare = C_P_Angle;       % gain of the compare flight
 
 %% Load and process header information
 [para1, Nheader1, ind1, ind_cntr1] = extract_header_information(file_path1);
@@ -71,20 +102,17 @@ axis = 1;   % roll = 1, pitch = 2
 
 %% Debug indices
 sinarg1       = ind1.debug(1);
-currentAngle1 = [ind1.debug(2), ind1.debug(5)];
-angleTarget1  = [ind1.debug(3), ind1.debug(6)];
-angleRate1    = [ind1.debug(4), ind1.debug(7)];
+currentAngle1 = [ind1.debug(5), ind1.debug(7)];
+angleTarget1  = [ind1.debug(6), ind1.debug(8)];
 
 sinarg2       = ind2.debug(1);
-currentAngle2 = [ind2.debug(2), ind2.debug(5)];
-angleTarget2  = [ind2.debug(3), ind2.debug(6)];
-angleRate2    = [ind2.debug(4), ind2.debug(7)];
+currentAngle2 = [ind2.debug(5), ind2.debug(7)];
+angleTarget2  = [ind2.debug(6), ind2.debug(8)];
 
 %% Scale flight 1 data
 flight1(:, sinarg1)              = flight1(:, sinarg1) / 5e3;
 flight1(:, currentAngle1(axis))  = flight1(:, currentAngle1(axis)) * 0.1;
 flight1(:, ind1.setpoint(axis))  = flight1(:, ind1.setpoint(axis)) * 0.1;
-flight1(:, angleRate1(axis))     = flight1(:, angleRate1(axis)) * 0.1;
 flight1(:, angleTarget1(axis))   = flight1(:, angleTarget1(axis)) * 0.1;
 flight1(:, ind1.heading(axis))   = flight1(:, ind1.heading(axis)) * 100;
 flight1(:, ind1.gyroADC(axis))   = flight1(:, ind1.gyroADC(axis)) * 0.1;
@@ -93,7 +121,6 @@ flight1(:, ind1.gyroADC(axis))   = flight1(:, ind1.gyroADC(axis)) * 0.1;
 flight2(:, sinarg2)              = flight2(:, sinarg2) / 5e3;
 flight2(:, currentAngle2(axis))  = flight2(:, currentAngle2(axis)) * 0.1;
 flight2(:, ind2.setpoint(axis))  = flight2(:, ind2.setpoint(axis)) * 0.1;
-flight2(:, angleRate2(axis))     = flight2(:, angleRate2(axis)) * 0.1;
 flight2(:, angleTarget2(axis))   = flight2(:, angleTarget2(axis)) * 0.1;
 flight2(:, ind2.heading(axis))   = flight2(:, ind2.heading(axis)) * 100;
 flight2(:, ind2.gyroADC(axis))   = flight2(:, ind2.gyroADC(axis)) * 0.1;
@@ -196,7 +223,6 @@ Cp_ax2 = G_wc2 / (1 - T_ax2);
 T_gy2 = G_wv2 / G_wc2;
 
 %% Analytical transfer function
-C_P_Angle = 100;                                % Betaflight gain, scaled by 0.1
 f = T_ax1.Frequency * 2 * pi;                  % Angular frequency [rad/s]
 
 C_P_Angle_frd = frd(C_P_Angle * 0.1 * ones(size(f)), f, Ts_cntr);
@@ -212,7 +238,7 @@ T_ana1 = (C_Angle_ana * T_gy1 * P_angle1) / (1 + C_Angle_ana * T_gy1 * P_angle1)
 T_ana2 = (C_Angle_ana * T_gy2 * P_angle2) / (1 + C_Angle_ana * T_gy2 * P_angle2);
 
 %% Tuning
-P_new = 100;               % New gain
+P_new = C_P_Angle;               % New gain
 angle_lpf_hz = 50;         % New cutoff frequency
 
 C_P_Angle_new_frd = frd(P_new * 0.1 * ones(size(f)), f, Ts_cntr);
@@ -231,9 +257,9 @@ step_time = (0:Nest-1) .* Ts_log;
 T_mean = 0.1 * [-1, 1] + (Nest * Ts_log) / 2;
 
 step_resp = [ ...
-    calculate_step_response_from_frd(T_ax2,  fmax), ...
-    calculate_step_response_from_frd(T_new2, fmax), ...
-    calculate_step_response_from_frd(T_ax1, fmax)];
+    calculate_step_response_from_frd(T_ax1,  fmax), ...   % measured base
+    calculate_step_response_from_frd(T_ana1, fmax), ...   % predicted compare (base plant, compare gain)
+    calculate_step_response_from_frd(T_ax2,  fmax)];      % measured compare
 
 step_resp_mean = mean(step_resp(step_time > T_mean(1) & step_time < T_mean(2), :), 1);
 step_resp_meas = step_resp ./ step_resp_mean;
@@ -242,12 +268,100 @@ step_resp_meas = step_resp ./ step_resp_mean;
 figure(1);
 plot(step_time, step_resp_meas, 'LineWidth', 1.2);
 grid on;
-title('Measured Step Response');
+title('Angle step response');
 xlim([0 1])
 xlabel('Time [s]');
 ylabel('Angle [deg]');
-legend('Measured P=80', 'Calculated P=100', 'Measured P=100', ...
+legend(sprintf('Measured P=%d', gain_base), ...
+       sprintf('Calculated P=%d', gain_compare), ...
+       sprintf('Measured P=%d', gain_compare), ...
     'Location', 'best');
 
 figure(2)
 bode(Cp_ax1,C_Angle_ana, C_Angle_new);
+
+%% Plant identification (Bode magnitude / phase / coherence) - base flight
+% Mirrors the althold plant-ID figure. The identified angle plant
+% P_angle1 = T_ax1 / G_wv1, so the reliability of the estimate depends on the
+% coherence of both factor estimates -> joint coherence = C_T_ax1 .* C_G_wv1.
+f_plant     = squeeze(P_angle1.Frequency);
+P_id        = squeeze(P_angle1.ResponseData);
+C_P         = squeeze(C_T_ax1.ResponseData) .* squeeze(C_G_wv1.ResponseData);
+mag_plant   = 20 * log10(abs(P_id));
+phase_plant = angle(P_id) * 180/pi;
+
+pos_bode = [0.13, 0.58, 0.78, 0.32; ...
+            0.13, 0.32, 0.78, 0.22; ...
+            0.13, 0.10, 0.78, 0.16];
+
+figure(3)
+
+axp(1) = subplot('Position', pos_bode(1, :));
+semilogx(f_plant, mag_plant, 'LineWidth', 1.5);
+grid on
+ylabel('Magnitude [dB]')
+title(sprintf('Angle plant identification (base P=%d)', gain_base))
+
+axp(2) = subplot('Position', pos_bode(2, :));
+semilogx(f_plant, phase_plant, 'LineWidth', 1.5);
+grid on
+ylabel('Phase [deg]')
+
+axp(3) = subplot('Position', pos_bode(3, :));
+semilogx(f_plant, C_P, 'LineWidth', 1.5);
+grid on
+ylabel('Coherence [-]')
+xlabel('Frequency [Hz]')
+ylim([0 1])
+
+linkaxes(axp, 'x')
+xlim(axp(1), [1 100])   % adjust to the angle chirp band if needed
+
+
+%% Numerical metrics for thesis Results section (Angle)
+% Set base/compare at the top of the script and re-run once per case to fill
+% the angle step-response table (tab:angle_step):
+%   - moderate change: base=2 (P=80), compare=3 (P=100)
+%   - larger change:   base=2 (P=80), compare=1 (P=50)
+% Copy each console block into the LaTeX draft so the Results section reports
+% measured numbers rather than eyeballed plot readings.
+%
+% step_resp_meas columns (see step-response section above):
+%   col1 = T_ax1  -> Measured base    (base flight, gain_base)
+%   col2 = T_ana1 -> Calculated       (predicted at gain_compare from the base plant)
+%   col3 = T_ax2  -> Measured compare (compare flight, gain_compare)
+
+fprintf('\n========================================\n');
+fprintf('ANGLE METRICS  axis=%d (1=roll, 2=pitch)\n', axis);
+fprintf('  base P=%d   compare P=%d   angle LPF=%d Hz\n', gain_base, gain_compare, angle_lpf_hz);
+fprintf('  eval window  base: %.2f s (%d samples)   compare: %.2f s (%d samples)   Ts=%.4f s\n', ...
+    nnz(ind_eval1)*Ts_log, nnz(ind_eval1), nnz(ind_eval2)*Ts_log, nnz(ind_eval2), Ts_log);
+fprintf('========================================\n');
+
+labels_step = {'MeasuredBase', 'Calculated', 'MeasuredCompare'};
+fprintf('  -- Step response (normalised to steady state = 1.0) --\n');
+for k = 1:size(step_resp_meas, 2)
+    y = step_resp_meas(:, k);
+    t = step_time(:);
+    y_final = 1.0;
+    idx_10 = find(y >= 0.10 * y_final, 1, 'first');
+    idx_90 = find(y >= 0.90 * y_final, 1, 'first');
+    if ~isempty(idx_10) && ~isempty(idx_90) && idx_90 > idx_10
+        t_rise = t(idx_90) - t(idx_10);
+    else
+        t_rise = NaN;
+    end
+    outside  = abs(y - y_final) > 0.05;
+    last_out = find(outside, 1, 'last');
+    if isempty(last_out)
+        t_settle = 0;
+    elseif last_out >= length(t)
+        t_settle = NaN;
+    else
+        t_settle = t(last_out + 1);
+    end
+    overshoot_pct = 100 * (max(y) - y_final) / y_final;
+    fprintf('     %-16s  t_rise=%.3f s  t_settle=%.3f s  overshoot=%.1f %%\n', ...
+        labels_step{k}, t_rise, t_settle, overshoot_pct);
+end
+fprintf('========================================\n\n');
