@@ -3,21 +3,51 @@ clc;
 clear variables;
 close all;
 
-addpath(genpath('lib'));
-addpath('logs');
+addpath('../bf_controller_tuning/lib/');
 
 do_compensate_iterm = true;
 
 %% File paths
-log_folder     = 'logs';
-flight_folder1 = '20260424';
-flight_folder2 = '20250908';
+log_folder = '../bf_controller_tuning/logs/gyro/';
 
-log_name1 = '20260424_flipmini_1.TXT.csv';
-log_name2 = '20250908_flipmini_00.bbl.csv';
+% Each gyro log (path relative to log_folder) with the gains it was flown at:
+log_name1 = 'Tuned_flipmini.csv';                       % tuned     P=46, I=74, D=30
+log_name2 = 'Moderate_flipmini.csv';   % moderate  P=46, I=66, D=32
+log_name3 = 'Bad_flipmini.csv';  % bad       P=30, I=60, D=30
 
-file_path1 = fullfile(log_folder, flight_folder1, log_name1);
-file_path2 = fullfile(log_folder, flight_folder2, log_name2);
+base    = 2;   % flight whose plant is identified (the baseline)
+compare = 1;   % measured target flight to predict and compare against
+%   case 1 = tuned, 2 = moderate, 3 = bad
+
+switch base
+  case 1
+    file_path1 = fullfile(log_folder, log_name1);
+  case 2
+    file_path1 = fullfile(log_folder, log_name2);
+  case 3
+    file_path1 = fullfile(log_folder, log_name3);
+  otherwise
+    disp("invalid base")
+end
+
+switch compare
+  case 1
+    file_path2 = fullfile(log_folder, log_name1);
+    P_new =46 ; I_new = 74; D_new = 30;
+  case 2
+    file_path2 = fullfile(log_folder, log_name2);
+    P_new = 46; I_new = 66; D_new = 32;
+  case 3
+    file_path2 = fullfile(log_folder, log_name3);
+    P_new = 30; I_new = 60; D_new = 30;
+  otherwise
+    disp("invalid compare")
+end
+
+%% Case labels (for plot legends / metrics)
+case_names   = {'Tuned', 'Moderate', 'Bad'};
+name_base    = case_names{base};
+name_compare = case_names{compare};
 
 %% Load and process header information
 [para1, Nheader1, ind1, ind_cntr1] = extract_header_information(file_path1);
@@ -186,9 +216,7 @@ end
 
 pid_axis = {'rollPID', 'pitchPID', 'yawPID'};
 
-P_new = 46;
-I_new = 74;
-D_new = 30;
+% P_new / I_new / D_new are set per `compare` case in the File paths section.
 
 pid_scale = [get_pid_scale(ind_ax), 1];
 
@@ -269,6 +297,63 @@ grid on
 ylabel('Gyro (deg/sec)')
 xlabel('Time (sec)')
 title('Tracking T')
-legend('Measured 1',  'Calculated new', 'Measured 2', 'Location', 'best')
+legend(sprintf('Measured %s', name_base), ...
+       sprintf('Calculated %s', name_compare), ...
+       sprintf('Measured %s', name_compare), ...
+       'Location', 'best')
 xlim([0 0.5])
 ylim([0 1.3])
+
+
+%% Numerical metrics for thesis Results section (Gyro)
+% Set base/compare at the top and re-run once per baseline to fill the gyro
+% step-response table (tab:gyro_step) in the thesis:
+%   - moderate change: base=2 (P=46, I=66, D=32), compare=3 (target)
+%   - large change:    base=1 (P=30, I=60, D=30), compare=3 (target)
+% The target flight (compare) and its gains stay fixed across both runs. Copy
+% each console block into the LaTeX draft so the Results section reports
+% measured numbers rather than eyeballed plot readings.
+
+pid1 = para1.(pid_axis{ind_ax});
+pid2 = para2.(pid_axis{ind_ax});
+
+fprintf('\n========================================\n');
+fprintf('GYRO METRICS  axis=%d (1=roll, 2=pitch, 3=yaw)\n', ind_ax);
+fprintf('  baseline Flight 1 gains:  P=%d  I=%d  D=%d\n', pid1(1), pid1(2), pid1(3));
+fprintf('  target (calculated new):  P=%d  I=%d  D=%d\n', P_new, I_new, D_new);
+fprintf('  measured Flight 2 gains:  P=%d  I=%d  D=%d\n', pid2(1), pid2(2), pid2(3));
+fprintf('  eval window  F1: %.2f s (%d samples)   F2: %.2f s (%d samples)   Ts=%.4f s\n', ...
+    nnz(ind_eval1)*Ts_log, nnz(ind_eval1), nnz(ind_eval2)*Ts_log, nnz(ind_eval2), Ts_log);
+fprintf('========================================\n');
+
+% step_resp columns (see step-response section above):
+%   [Measured 1 (baseline), Calculated new (predicted target), Measured 2 (target)]
+labels_step = {sprintf('Measured %s', name_base), ...
+               sprintf('Calculated %s', name_compare), ...
+               sprintf('Measured %s', name_compare)};
+fprintf('  -- Step response (normalised to steady state = 1.0) --\n');
+for k = 1:size(step_resp, 2)
+    y = step_resp(:, k);
+    t = step_time(:);
+    y_final = 1.0;
+    idx_10 = find(y >= 0.10 * y_final, 1, 'first');
+    idx_90 = find(y >= 0.90 * y_final, 1, 'first');
+    if ~isempty(idx_10) && ~isempty(idx_90) && idx_90 > idx_10
+        t_rise = t(idx_90) - t(idx_10);
+    else
+        t_rise = NaN;
+    end
+    outside  = abs(y - y_final) > 0.05;
+    last_out = find(outside, 1, 'last');
+    if isempty(last_out)
+        t_settle = 0;
+    elseif last_out >= length(t)
+        t_settle = NaN;
+    else
+        t_settle = t(last_out + 1);
+    end
+    overshoot_pct = 100 * (max(y) - y_final) / y_final;
+    fprintf('     %-20s  t_rise=%.3f s  t_settle=%.3f s  overshoot=%.1f %%\n', ...
+        labels_step{k}, t_rise, t_settle, overshoot_pct);
+end
+fprintf('========================================\n\n');

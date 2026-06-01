@@ -1948,31 +1948,65 @@ This chapter presents the results obtained from the application of the proposed 
 
 \section{Gyro Controller}
 
-To evaluate the gyro control loop, the step response of a target tuning (Flight 2) is predicted based on data from a different flight (Flight 1). The system behaviour identified from Flight 1 is used to calculate an estimated step response for the new controller parameters, which is then compared to the measured response of Flight 2.
+The rate (gyro) loop was identified by injecting an exponential chirp into the rate setpoint, following the procedure of \autoref{sec:System Identification Using Chirp Signals}. The loop runs at \SI{8}{\kilo\hertz}. Three flights were flown on the same airframe and firmware build, differing only in the rate-controller PID gains; the three tunings are summarised in \autoref{tab:gyro_cases}.
 
-While the measured response of Flight 2 remains the same reference in all comparisons, the baseline flight (Flight 1) varies. This allows the influence of the parameter difference on the prediction accuracy to be analysed.
+\subsection*{Setup}
 
-For the first case, Flight 1 was conducted with controller gains \(P = 46\), \(I = 66\) and \(D = 32\). Based on this configuration, a moderate parameter change to \(P = 46\), \(I = 74\) and \(D = 30\) was applied and the corresponding step response was calculated and compared to the measured response of Flight 2.
+\begin{table}[H]
+    \centering
+    \caption{Rate-controller PID gains for the three flown tunings.}
+    \label{tab:gyro_cases}
+    \begin{tabular}{lccc}
+        \toprule
+        Case     & \(P\) & \(I\) & \(D\) \\
+        \midrule
+        bad      & 30 & 60 & 30 \\
+        moderate & 46 & 66 & 32 \\
+        tuned    & 46 & 74 & 30 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+The chirp was swept exponentially from \SI{0.2}{\hertz} to \SI{600}{\hertz} over a \SI{30}{\second} sweep, repeated three times per flight (about \SI{90}{\second} in total) and averaged. The frequency response was estimated with Welch's method using a Hann window of \SI{2.5}{\second} length and \SI{90}{\percent} overlap, giving a frequency resolution of \(\Delta f \approx \SI{0.4}{\hertz}\).
+
+\subsection*{Step Response}
+
+For each step, the closed-loop step response at the higher tuning was predicted from the identified plant of the lower (base) tuning, and compared with the response measured at the higher tuning. Two single-increment steps were evaluated, bad \(\rightarrow\) moderate and moderate \(\rightarrow\) tuned, shown in \autoref{fig:gyro_step_big} and \autoref{fig:gyro_step_small}. The per-step rise time \(t_r\) (between \SI{10}{\percent} and \SI{90}{\percent} of the steady-state value) and overshoot are listed in \autoref{tab:gyro_step}.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.95\linewidth]{Result_Gyro_Small.png}
-    \caption{Comparison of calculated and measured step responses for a moderate change in gyro PID gains.}
-    \label{fig:gyro_small_change}
+    \includegraphics[width=0.95\linewidth]{gyro/gyro_step_response_big.png}
+    \caption{Rate-loop step response for the bad \(\rightarrow\) moderate step, normalised to unity steady state. Shown are the measured baseline (bad), the analytical prediction for the moderate tuning, and the measured response at the moderate tuning.}
+    \label{fig:gyro_step_big}
 \end{figure}
-
-The results shown in \autoref{fig:gyro_small_change} show a close agreement between the calculated and measured step responses. Both the transient behaviour and the steady-state value are similar, with only minor deviations.
-
-In the second case, Flight 1 was performed using controller gains \(P = 30\), \(I = 60\) and \(D = 30\). The step response for the same target tuning was again calculated and compared to the measured response of Flight 2.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.95\linewidth]{Result_Gyro_Large.png}
-    \caption{Comparison of calculated and measured step responses for a large change in gyro PID gains.}
-    \label{fig:gyro_large_change}
+    \includegraphics[width=0.95\linewidth]{gyro/gyro_step_response_small.png}
+    \caption{Rate-loop step response for the moderate \(\rightarrow\) tuned step, normalised to unity steady state. Shown are the measured baseline (moderate), the analytical prediction for the tuned setting, and the measured response at the tuned setting.}
+    \label{fig:gyro_step_small}
 \end{figure}
 
-As shown in \autoref{fig:gyro_large_change}, the agreement between the calculated and measured step responses decreases for larger parameter differences. While the general trend of the response is still captured, deviations in rise time, overshoot and damping are visible.
+\begin{table}[H]
+    \centering
+    \caption{Rate-loop step-response rise time \(t_r\) and overshoot for the two evaluated tuning steps. The analytical prediction applies the higher tuning's controller to the identified plant of the lower (base) tuning; the measured value is taken from the flight at the higher tuning.}
+    \label{tab:gyro_step}
+    \begin{tabular}{llrr}
+        \toprule
+        Step & Source & \(t_r\) [\si{\second}] & overshoot [\si{\percent}] \\
+        \midrule
+        bad \(\rightarrow\) moderate   & base (bad)      & 0.034 & 5.2 \\
+                                       & predicted       & 0.015 & 4.0 \\
+                                       & measured        & 0.016 & 4.9 \\
+        \midrule
+        moderate \(\rightarrow\) tuned & base (moderate) & 0.016 & 4.9 \\
+                                       & predicted       & 0.014 & 4.8 \\
+                                       & measured        & 0.015 & 4.6 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+The analytical prediction reproduces both the rise time and the overshoot of the measured response for each step. The predicted and measured rise times agree to within \SI{0.001}{\second} for both steps, and the predicted overshoot lies within about \SI{0.9}{} percentage points of the measured value. The larger bad \(\rightarrow\) moderate step shows the slightly larger overshoot gap, consistent with the agreement loosening as the gain change grows.
 
 \newpage
 
@@ -2049,7 +2083,7 @@ The altitude-hold loop was identified by injecting an exponential chirp into the
     \end{tabular}
 \end{table}
 
-The althold loop runs at \SI{100}{\hertz}, decimated from the \SI{8}{\kilo\hertz} inner loops. Frequency-domain estimates use Welch's method with a Hann window of \SI{15}{\second} length and \SI{90}{\percent} overlap, giving a frequency resolution of \(\Delta f \approx \SI{0.067}{\hertz}\). The chirp evaluation window has a length of approximately \SI{230}{\second} per flight. % TODO: confirm chirp start/stop frequencies and sweep shape
+The althold loop runs at \SI{100}{\hertz}, decimated from the \SI{8}{\kilo\hertz} inner loops. The chirp was swept exponentially from \SI{0.05}{\hertz} to \SI{3}{\hertz} over a \SI{75}{\second} sweep, repeated three times per flight (about \SI{230}{\second} in total). Frequency-domain estimates use Welch's method with a Hann window of \SI{15}{\second} length and \SI{90}{\percent} overlap, giving a frequency resolution of \(\Delta f \approx \SI{0.067}{\hertz}\).
 
 \subsection*{Identified Plant Response}
 
@@ -2191,59 +2225,113 @@ Altitude tracking over the chirp window is shown in \autoref{fig:althold_trackin
 
 \section{Position Hold Controller}
 
-The position hold loop operates at the GPS update rate of approximately \SI{10}{\hertz}, fundamentally constraining the achievable control bandwidth compared to the \SI{8}{\kilo\hertz} inner loops. System identification is performed on both the roll (East-West/longitude) and pitch (North-South/latitude) axes. Since the same PIDA controller parameters are applied to both axes, the tuning must represent a compromise between the two measured responses, prioritizing the less dynamic axis.
+The position-hold loop operates at the GPS update rate of approximately \SI{10}{\hertz}, which constrains the achievable bandwidth relative to the \SI{8}{\kilo\hertz} inner loops. The loop was identified by injecting an exponential chirp into the Earth-frame position error, following the procedure of \autoref{sec:System Identification Using Chirp Signals}. The same PIDA gains are applied to both horizontal axes, so the tuning represents a compromise between them. The baseline and proposed tunings are summarised in \autoref{tab:poshold_cases}.
 
-\subsection*{Chirp Excitation and Frequency Range}
+\subsection*{Setup}
 
-Following the methodology described in \autoref{sec:System Identification Using Chirp Signals}, chirp excitation was applied to the position error in the Earth-fixed frame at frequencies from \SI{0.05}{\hertz} to \SI{3}{\hertz}. This range remains below the \SI{5}{\hertz} Nyquist limit imposed by the GPS sampling rate. 
+\begin{table}[H]
+    \centering
+    \caption{Position-hold PIDA gains for the baseline and proposed tunings.}
+    \label{tab:poshold_cases}
+    \begin{tabular}{lcccc}
+        \toprule
+        Case     & \(P\) & \(I\) & \(D\) & \(A\) \\
+        \midrule
+        baseline & 30 & 30 & 30 & 30 \\
+        proposed & 42 & 50 & 42 & 19 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
 
-The firmware enforces a \SI{35}{\degree} constraint on the combined D+A vector magnitude to prevent overly aggressive corrections. To operate within this constraint during chirp excitation, a lead-lag filter was applied to the injected chirp signal, reducing amplitudes at higher frequencies. Filter parameters were determined by simulating the expected D+A contribution from the filtered chirp and comparing against reference flight data. Parameters were adjusted until the simulated contributions remained below the measured constraint across the full frequency range. 
+The chirp was swept exponentially from \SI{0.05}{\hertz} to \SI{3}{\hertz} over a \SI{75}{\second} sweep (amplitude \SI{70}{\centi\meter}), remaining below the \SI{5}{\hertz} Nyquist limit of the GPS rate. A lead-lag pre-filter was applied to the injected signal to keep the combined D+A vector within the firmware's \SI{35}{\degree} limit; its parameters were set so that the simulated D+A contribution stayed below that limit across the band. Frequency-domain estimates use Welch's method with a Hann window of \SI{15}{\second} length and \SI{90}{\percent} overlap, giving a frequency resolution of \(\Delta f \approx \SI{0.067}{\hertz}\).
 
-\subsection*{Gang of Four Analysis}
+\subsection*{Identified Plant Response}
+
+The plant from the position setpoint to the measured position was estimated for the baseline flight. Its magnitude, phase, and joint coherence at four reference frequencies are listed in \autoref{tab:poshold_plant}. The plant magnitude slope between \SI{0.1}{\hertz} and \SI{1}{\hertz} is about \(-32\,\text{dB/decade}\). The joint coherence rises above 0.8 near \SI{0.27}{\hertz} and stays high up to \SI{3}{\hertz} (0.97 at \SI{1}{\hertz}), while below \SI{0.27}{\hertz} it drops sharply, which is consistent with wind disturbance and GPS noise dominating the low-frequency position error.
+
+\begin{table}[H]
+    \centering
+    \caption{Identified position-hold plant magnitude, phase, and joint coherence at four reference frequencies (baseline flight).}
+    \label{tab:poshold_plant}
+    \begin{tabular}{rrrr}
+        \toprule
+        \(f\) [\si{\hertz}] & \(|P|\) [\si{\decibel}] & \(\angle P\) [\si{\degree}] & coherence \\
+        \midrule
+        0.13 & \(+28.24\) & \(+175.0\) & 0.33 \\
+        0.27 & \(+13.67\) & \(+147.4\) & 0.83 \\
+        1.00 &  \(+0.24\) &  \(+39.1\) & 0.97 \\
+        3.00 &  \(+6.86\) &  \(+27.1\) & 0.91 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection*{Closed-Loop Frequency Response}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=1.0\linewidth]{Result_Gang_of_four_PosHold_big_tune.png}
-    \caption{Gang of Four frequency responses for the position hold controller.
-    Red: measured response with baseline tuning (Flight~1). 
-    Blue: analytically predicted response with proposed tuning. 
-    Yellow: measured response with proposed tuning (Flight~2).}
-    \label{fig:pos_gang_of_four}
+    \includegraphics[width=1.0\linewidth]{poshold/poshold_gang_of_four.png}
+    \caption{Gang of Four magnitude responses for the position-hold loop. Tracking \(T\): the calculated response (proposed controller applied to the baseline-flight plant), the measured baseline, and the measured proposed tuning. Sensitivity \(S\), controller effort \(SC\), and compliance \(SP\): calculated responses (proposed controller) for the baseline-flight and proposed-flight plants.}
+    \label{fig:poshold_gof}
 \end{figure}
 
-The Gang of Four plots compare the baseline tuning ($P = 30$, $I = 30$, $D = 30$, $A = 30$) with the analytically proposed tuning ($P = 42$, $I = 50$, $D = 42$, $A = 19$). The Tracking $T$ shows reasonable agreement between the analytically predicted response (blue) and the measured response with the proposed tuning (yellow), particularly above \SI{0.2}{\hertz}. Deviations at lower frequencies are attributed to wind disturbances and GPS measurement inaccuracies, which dominate the position error signal in this range and reduce the coherence of the frequency response estimate.
+The tracking peaks, restricted to the excited band \(f \leq \SI{3}{\hertz}\), are listed in \autoref{tab:poshold_gof}. The analytical prediction for the proposed tuning peaks at \SI{+4.79}{\decibel} near \SI{0.20}{\hertz}, within about \SI{0.7}{\decibel} of the measured proposed peak (\SI{+4.05}{\decibel} at the same frequency); the measured baseline peaks lower, at \SI{+2.71}{\decibel}. Below the coherent band (roughly \SIrange{0.27}{3}{\hertz}) the comparison is dominated by wind and GPS noise.
 
-The Sensitivity $S$ is noticeably smoother with the proposed tuning, indicating more consistent disturbance rejection behavior across the control bandwidth. The Controller Effort $SC$ remains comparable between parameter sets, confirming that increased gains do not lead to excessive actuation demands on the inner angle loop. The Compliance $SP$ shows improved disturbance attenuation at low frequencies with the proposed tuning, particularly below \SI{0.5}{\hertz} where wind gusts typically affect position holding.
+\begin{table}[H]
+    \centering
+    \caption{Closed-loop tracking peak magnitudes \(|T|\) for the position-hold loop, restricted to the excited band \(f \leq \SI{3}{\hertz}\). Analytical: proposed controller applied to the baseline-flight plant. Measured: identified directly from the chirp of the named flight.}
+    \label{tab:poshold_gof}
+    \begin{tabular}{lrr}
+        \toprule
+        Source                  & peak \(|T|\) [\si{\decibel}] & \(f\) [\si{\hertz}] \\
+        \midrule
+        measured baseline       & \(+2.71\) & 0.13 \\
+        analytical (proposed)   & \(+4.79\) & 0.20 \\
+        measured proposed       & \(+4.05\) & 0.20 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
 
-\subsection*{Step Response Analysis}
+The analytical sensitivity \(S\) peaks near \SI{+5}{\decibel} and the controller effort \(SC\) stays below \SI{-8}{\decibel} within the coherent band, indicating modest actuation demand on the inner angle loop. The compliance \(SP\) peak falls at the lowest Welch bin, where the coherence is very low, and is interpreted as an artefact rather than a physical resonance.
+
+\subsection*{Step Response}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=1.0\linewidth]{Result_Step_Response_PosHold_big_tune.png}
-    \caption{Normalized step response of position hold controller.
-    Yellow: measured response with baseline tuning (Flight~1). 
-    Red: analytically predicted step response with proposed tuning (calculated from Flight~1 identification). 
-    Blue: measured response with proposed tuning (Flight~2).}
-    \label{fig:pos_step_response}
+    \includegraphics[width=1.0\linewidth]{poshold/poshold_step_response.png}
+    \caption{Step response of the position-hold closed loop, normalised to unity steady state: measured baseline, analytical prediction for the proposed tuning (from the baseline-flight identification), and measured proposed tuning.}
+    \label{fig:poshold_step}
 \end{figure}
 
-Step response analysis is limited by the \SI{10}{\hertz} GPS update rate, which fundamentally constrains the temporal resolution of the measurement. Consequently, the step response exhibits significant quantization noise that masks fine transient details. Despite this limitation, the measured response (blue) with proposed tuning remains stable and demonstrates comparable settling behavior to the baseline (yellow), with both reaching steady state around \SI{5}{\second}s.
+Per-tuning step-response metrics are listed in \autoref{tab:poshold_step}. Rise time \(t_r\) is measured between \SI{10}{\percent} and \SI{90}{\percent} of the steady-state value; the \SI{10}{\hertz} GPS rate limits the time resolution to \SI{0.1}{\second}.
 
-The analytically predicted response (red) diverges more noticeably from the measured response (blue) compared to the Gang of Four agreement, suggesting that the step response is more sensitive to unmodeled dynamics and GPS measurement artifacts. The proposed tuning parameters result in slightly increased overshoot relative to baseline, which is an acceptable trade-off for the improved frequency-domain characteristics and disturbance rejection demonstrated in the Gang of Four analysis.
+\begin{table}[H]
+    \centering
+    \caption{Position-hold step-response metrics. The analytical prediction applies the proposed controller to the identified baseline-flight plant; the measured values are taken from the chirp-window step of the named flight.}
+    \label{tab:poshold_step}
+    \begin{tabular}{llrr}
+        \toprule
+        Tuning   & Source     & \(t_r\) [\si{\second}] & overshoot [\si{\percent}] \\
+        \midrule
+        baseline & measured   & 1.4 & 30.0 \\
+        proposed & analytical & 1.3 & 44.7 \\
+        proposed & measured   & 1.2 & 47.6 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+The proposed tuning gives a faster rise with higher overshoot than the baseline. The analytical prediction for the proposed tuning is close to the measured proposed response, with the overshoot predicted within about \num{3} percentage points (\SI{44.7}{} versus \SI{47.6}{\percent}) and the rise time within one GPS sample (\SI{0.1}{\second}). Given the GPS-rate resolution, the step comparison is necessarily coarse.
 
 \chapter{Discussion}
 
 \section{Gyro Controller}
 
-The results indicate that the proposed method is capable of predicting the system response with high accuracy when the difference between the baseline and target tuning is moderate. As observed in \autoref{fig:gyro_small_change}, both the transient and steady-state behaviour are well captured, suggesting that the identified system model provides a reliable representation of the underlying dynamics in this regime.
+\subsection*{Validity range of the prediction}
 
-However, as the difference between the baseline and target tuning increases, the prediction accuracy decreases. This can be seen in \autoref{fig:gyro_large_change}, where deviations in rise time, overshoot and damping become more pronounced. This behaviour suggests that the system can only be approximated as linear and time-invariant within a limited operating range.
+Within the tested range, the analytical prediction reproduced both the rise time and the overshoot of the measured rate-loop response for each single-increment tuning step, which suggests that the identified plant and controller models capture the rate-loop dynamics well in this operating range. The agreement was close for both steps in \autoref{tab:gyro_step}; the overshoot gap was slightly larger for the bigger bad \(\rightarrow\) moderate step than for the smaller moderate \(\rightarrow\) tuned step, which is consistent with the linear, time-invariant assumption holding only approximately and the approximation loosening as the gain change grows.
 
-For larger parameter variations, nonlinear effects and time-varying dynamics become more significant, which are not captured by the simplified model used for the prediction. As a result, the calculated step response deviates from the measured response.
+\subsection*{Practical workflow recommendations}
 
-Nevertheless, even in these cases, the predicted response still captures the general trend of the system behaviour. Therefore, the method remains useful as a qualitative tool for estimating the effect of parameter changes, even when exact quantitative agreement cannot be achieved.
-
-Overall, the results demonstrate that the accuracy of the proposed tuning approach strongly depends on the similarity between the baseline and target configurations. This highlights the importance of selecting appropriate baseline data for reliable system identification and controller tuning.
+These observations suggest that the tool is well suited to incremental retuning of the rate gains: identifying the plant at the current tune and predicting one step at a time appeared to give close agreement here, and re-identifying between steps is advisable when a larger change is intended. The configurations under which these results were obtained --- the experimental airframe and firmware build, the rate loop running at \SI{8}{\kilo\hertz}, and the PID range spanned by the bad, moderate, and tuned settings --- bound the range over which the observations above should be transferred to other setups.
 
 \section{Angle Controller}
 
@@ -2295,13 +2383,18 @@ Identify the plant from a flight at the \emph{current} tune and do not reuse a p
 Two methodological notes follow from the same analysis. The chirp amplitude must be chosen so that the actuator does not saturate within the identification window: D-Boost and I-Term-Relax are disabled during the chirp specifically to keep the closed loop linear and throttle saturation would violate the same assumption; if saturation is observed in the throttle-offset trace, the chirp signal must be re-designed before the resulting identification is trusted. Finally, the configurations under which the tool was validated in this work---firmware build \href{https://github.com/InsaneBroccoli/betaflight/commit/898435640}{\texttt{InsaneBroccoli/betaflight @ 898435640}} (branching from upstream baseline \texttt{04e37a122}) with \texttt{USE\_ALTHOLD\_CHIRP} enabled, the airframe and propulsion configuration of the experimental drone and a hover-baseline operating point---bound the range over which the claims above should be transferred to other setups.
 
 \section{Position Hold Controller}
-The frequency response measurement of the position hold controller shows significant noise contamination above ~0.8 Hz, primarily attributable to the 10 Hz GPS update rate being insufficient for proper system identification via chirp excitation. Unlike the rate and angle controllers which operate at 8 kHz, the position controller is constrained by GPS data availability, creating a discrete-time system with approximately 100 ms latency. The cascading delays through position error measurement, PIDA computation and the inner rate loop introduce unmeasured, relative high phase lag that complicates frequency response estimation.
 
-The calculated step response (red, \autoref{fig:pos_step_response}) predicts slightly improved performance with proposed tuning. However, the measured Flight~2 response (blue) exhibits noticeably different transient characteristics: increased overshoot and significant divergence between analytical prediction and measured data. This discrepancy is not merely measurement noise, but rather reveals that the chirp-based system identification does not fully capture the discrete-time dynamics and quantization effects at 10 Hz GPS update rates.
+\subsection*{Identification limits}
 
-Despite the poorer step response prediction accuracy, the proposed tuning is justified because measured Flight~2 remains stable with no instability and the Gang of Four agreement between predicted (blue) and measured (yellow) is acceptable in the Tracking plot. The step response mismatch is an expected artifact of chirp-based system identification in discrete, GPS-limited systems where frequency-domain metrics are a more trustworthy indicator of closed-loop performance than transient step response accuracy.
+The position loop is identified through GPS feedback at approximately \SI{10}{\hertz}, which bounds the usable bandwidth far below that of the \SI{8}{\kilo\hertz} inner loops and introduces roughly \SI{100}{\milli\second} of latency through the cascaded position-error, PIDA, and rate stages. The joint coherence of the identification rises above 0.8 only between about \SI{0.27}{\hertz} and \SI{3}{\hertz} (\autoref{tab:poshold_plant}); below that band, wind disturbance and GPS noise dominate the position-error signal, so the frequency response there carries little information.
 
-These results indicate that the position hold controller is fundamentally limited by GPS-based feedback rather than computational constraints and further tuning refinement would require either higher-rate position estimates (via sensor fusion, optical flow or higher GPS update rates) or relaxation of the chirp frequency range to <0.5 Hz.
+\subsection*{Validity of the prediction}
+
+Within the coherent band the analytical tracking response is consistent with the measured proposed tuning, and the step-response prediction is closer than the GPS-limited resolution might suggest --- the predicted overshoot lies within about \num{3} percentage points of the measured value (\autoref{tab:poshold_step}). The proposed tuning increases overshoot relative to the baseline while giving a faster rise, and the measured proposed flight remained stable throughout. Because the step reconstruction is more sensitive to the un-excited high-frequency content and to GPS quantisation than the Gang of Four, the frequency-domain comparison appears to be the more reliable basis for tuning decisions here.
+
+\subsection*{Practical workflow recommendations}
+
+These observations suggest treating the position-hold tool as a proof of concept rather than a precise predictor: the Gang of Four within the approximately \SIrange{0.27}{3}{\hertz} coherent band is the most trustworthy artefact, and step-response values should be read as coarse indicators given the \SI{10}{\hertz} resolution. Closing the remaining gap would require higher-rate position estimates --- for example sensor fusion or optical flow --- or restricting the excitation to the lowest part of the band where the GPS feedback is most reliable.
 
 \chapter{Conclusion}
 
