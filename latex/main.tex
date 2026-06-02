@@ -1089,25 +1089,25 @@ By estimating different transfer functions from the measured data, the individua
 The first step is to estimate the closed-loop transfer function from the reference input \( w \) to the measured output \( y \), which is denoted as \( G_{yw} \):
 
 \begin{equation}
-T_{Gyro,meas}(\omega)=G_{yw}(\omega) = \frac{Y(\omega)}{W(\omega)}
+T_{\text{Gyro,meas}}(\omega)=G_{\text{yw}}(\omega) = \frac{Y(\omega)}{W(\omega)}
 \end{equation}
 
 where \( Y(\omega) \) is the Fourier transform of the measured output signal and \( W(\omega) \) is the Fourier transform of the reference input, including the chirp signal. These signals are filtered and processed as described in the theory chapter in order to reduce noise and improve the quality of the estimated frequency response.
 
-The transfer function \( G_{yw} \) represents the overall closed-loop behaviour of the system and can be used to evaluate important characteristics such as bandwidth, phase behaviour and stability margins.
+The transfer function \( G_{\text{yw}} \) represents the overall closed-loop behaviour of the system and can be used to evaluate important characteristics such as bandwidth, phase behaviour and stability margins.
 
 To estimate the plant transfer function, the transfer function from the reference input to the controller output \( u \) is additionally calculated:
 
 \begin{equation}
-G_{uw}(\omega) = \frac{U(\omega)}{W(\omega)}
+G_{\text{uw}}(\omega) = \frac{U(\omega)}{W(\omega)}
 \end{equation}
 
 where \( U(\omega) \) is the Fourier transform of the controller output signal. This transfer function describes the dynamic relationship between the reference input and the control action applied to the plant.
 
-To estimate the D-term of the controller, the transfer function from the reference input to the signal after the PI controller and the D-path filter is additionally required. This transfer function is denoted as \( G_{vw} \):
+To estimate the D-term of the controller, the transfer function from the reference input to the signal after the PI controller and the D-path filter is additionally required. This transfer function is denoted as \( G_{\text{vw}} \):
 
 \begin{equation}
-G_{vw}(\omega) = \frac{V(\omega)}{W(\omega)}
+G_{\text{vw}}(\omega) = \frac{V(\omega)}{W(\omega)}
 \end{equation}
 
 where \( V(\omega) \) is the Fourier transform of the signal after the PI controller and the D-path filter. This additional transfer function is required because the D-term is implemented in the feedback path of the control loop and therefore cannot directly be separated from the remaining controller dynamics.
@@ -1115,19 +1115,19 @@ where \( V(\omega) \) is the Fourier transform of the signal after the PI contro
 With these transfer functions, the plant transfer function can be estimated as
 
 \begin{equation}
-G_{yv}(\omega) = \frac{T_{Gyro,meas}(\omega)}{G_{uw}(\omega)}
+G_{\text{yv}}(\omega) = \frac{T_{\text{Gyro,meas}}(\omega)}{G_{\text{uw}}(\omega)}
 \end{equation}
 
 In this estimation, the influence of the gyro filter is still included in the estimated plant dynamics. Therefore, the estimated plant transfer function is divided by the gyro filter transfer function to obtain the real plant dynamics:
 
 \begin{equation}
-P_{Gyro}(\omega) = \frac{G_{yv}(\omega)}{G_{\text{FilterGyro}}(\omega)}
+P_{\text{Gyro}}(\omega) = \frac{G_{\text{yv}}(\omega)}{G_{\text{FilterGyro}}(\omega)}
 \end{equation}
 
 The transfer function of the PI controller can be estimated as
 
 \begin{equation}
-C_{\text{PI,meas}}(\omega) = \frac{G_{uw}(\omega)}{1 - T_{Gyro,meas}(\omega)}
+C_{\text{PI,meas}}(\omega) = \frac{G_{\text{uw}}(\omega)}{1 - T_{\text{Gyro,meas}}(\omega)}
 \end{equation}
 
 This estimation is required for the compensation of the I-Term Relax algorithm described in the theory chapter. By comparing the estimated transfer function with the analytical PI controller model, a compensation factor can be calculated and applied to both the original and the newly designed controller.
@@ -1135,7 +1135,7 @@ This estimation is required for the compensation of the I-Term Relax algorithm d
 The D-term and its filter can be estimated in a similar way:
 
 \begin{equation}
-C_{\text{D,meas}}(\omega) = \frac{G_{uw}(\omega) - G_{vw}(\omega)}{T_{Gyro,meas}(\omega)}
+C_{\text{D,meas}}(\omega) = \frac{G_{\text{uw}}(\omega) - G_{\text{vw}}(\omega)}{T_{\text{Gyro,meas}}(\omega)}
 \end{equation}
 
 The estimation of the D-term was especially useful during the development of the tuning framework, since it helped to better understand the D-term behaviour and identify implementation issues within the controller structure.
@@ -1151,7 +1151,7 @@ The relevant components for the angular rate controller are the PI controller \(
 With these components, the transfer functions for the Gang of Four analysis can be calculated. First, the closed-loop transfer function of the angular rate control loop is given by
 
 \begin{equation}
-T_{Gyro}(\omega)
+T_{\text{Gyro}}(\omega)
 =
 \frac{
 C_{\text{PI}}(\omega)\,
@@ -1161,7 +1161,7 @@ G_{\text{FilterGyro}}(\omega)
 1 +
 P_{\text{Gyro}}(\omega)
 \left(
-C_{\text{PI}}(\omega) + C_d(\omega)
+C_{\text{PI}}(\omega) + C_{\text{d}}(\omega)
 \right)
 G_{\text{FilterGyro}}(\omega)
 }
@@ -1170,7 +1170,7 @@ G_{\text{FilterGyro}}(\omega)
 The sensitivity function can also be calculated with the new controller as follows. As already discussed in the theoretical part, the sensitivity function is important for evaluating the robustness of the system and the disturbance rejection behaviour:
 
 \begin{equation}
-S_{Gyro}(\omega)
+S_{\text{Gyro}}(\omega)
 =
 \frac{
 1
@@ -1178,7 +1178,7 @@ S_{Gyro}(\omega)
 1 +
 P_{\text{Gyro}}(\omega)
 \left(
-C_{\text{PI}}(\omega) + C_d(\omega)
+C_{\text{PI}}(\omega) + C_{\text{d}}(\omega)
 \right)
 G_{\text{FilterGyro}}(\omega)
 }
@@ -1187,7 +1187,7 @@ G_{\text{FilterGyro}}(\omega)
 The compliance function shows how disturbances acting on the plant affect the system output:
 
 \begin{equation}
-SP_{Gyro}(\omega)
+SP_{\text{Gyro}}(\omega)
 =
 \frac{
 P_{\text{Gyro}}(\omega)
@@ -1195,7 +1195,7 @@ P_{\text{Gyro}}(\omega)
 1 +
 P_{\text{Gyro}}(\omega)
 \left(
-C_{\text{PI}}(\omega) + C_d(\omega)
+C_{\text{PI}}(\omega) + C_{\text{d}}(\omega)
 \right)
 G_{\text{FilterGyro}}(\omega)
 }
@@ -1204,135 +1204,24 @@ G_{\text{FilterGyro}}(\omega)
 The controller effort can also be calculated with the new controller as follows. This function can be used to evaluate the controller activity and the amplification of noise at higher frequencies:
 
 \begin{equation}
-SC_{Gyro}(\omega)
+SC_{\text{Gyro}}(\omega)
 =
 \frac{
 \left(
-C_{\text{PI}}(\omega) + C_d(\omega)
+C_{\text{PI}}(\omega) + C_{\text{d}}(\omega)
 \right)
 G_{\text{FilterGyro}}(\omega)
 }{
 1 +
 P_{\text{Gyro}}(\omega)
 \left(
-C_{\text{PI}}(\omega) + C_d(\omega)
+C_{\text{PI}}(\omega) + C_{\text{d}}(\omega)
 \right)
 G_{\text{FilterGyro}}(\omega)
 }
 \end{equation}
 
 By analyzing these transfer functions, the influence of different PID and filter parameters on the control loop behaviour can be evaluated. This allows the controller tuning to be analysed offline before performing additional flight tests.
-
-\subsection*{Filter tuning}
-
-Before we start tuning the PID controllers, we need good filtering to have clean signals to work with. The general aim here is to use as little filtering as possible because too much filtering causes delay in the system. However, no quadcopter build is perfect, so at least some filtering is necessary in order to achieve a well-tuned system.
-
-After running the program in MATLAB and importing a log file, you can see in the command window which filter and PID settings were used during that flight. Our tool, in its current state, doesn't copy these values to the code automatically, so the first step is to copy the settings from the command window to the correct position in the code.
-
-We then start by looking at the spectrograms and spectra figures to assess the effectiveness of the current filtering. It is important to note that the spectra and spectrogram plots only show the data recorded in the loaded log file. Changing filter settings in the code does not affect these plots, as they reflect the settings that were active during the flight. To see the effect of any changes, a new flight must be performed and logged with the updated settings.
-
-The \textbf{spectra} in \autoref{fig:gyro_Spectra_tuning} shows the frequency composition of the gyro signals.
-Peaks in this plot point to vibration sources at specific frequencies.
-When we analyze this plot, we look for three main things:
-\begin{itemize}
-	\item \textbf{Resonance Peaks:} If all three axes show a peak at the same frequency, it usually means there is a resonance in the frame or due to a poorly fixed component. This can be fixed with a specific notch filter or by attaching the loose parts properly.
-	\item \textbf{Noise:} A high noise level indicates general vibration issues. By adjusting the D-term low pass filter, you can counteract this. Clean lines in the plot show that the filtering is working well.
-	\item \textbf{Axis Sum:} The axis sum shows the overall vibration level across all gyro axes. A properly filtered signal drops quickly after the motor frequencies (after around 600 Hz) and remains low, indicating effective suppression of high-frequency noise and resonances.
-\end{itemize}
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=0.9\textwidth]{Spectra.png}
-	\caption{Frequency spectra of the measured gyro signals}
-	\label{fig:gyro_Spectra_tuning}
-\end{figure}
-
-We can see in this figure that our filter settings work well. The filtered signals have very little noise (smoother lines) and no large resonances. Only the yaw axis has a small peak around 550 Hz, which is acceptable. The axis sum drops nicely and stays low after about 600 Hz, approximately where the motor frequencies end. This shows the drone is running smoothly with vibrations under control. 
-The vibrations are also visible in the \textbf{spectrogram} plots in \autoref{fig:gyro_Spectrograms_tuning}.
-Here, frequencies are plotted against thrust level and the color shows the signal intensity. Red equals much vibration, blue equals little vibration.
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=0.9\textwidth]{Spectrograms.jpg}
-	\caption{Spectrograms}
-	\label{fig:gyro_Spectrograms_tuning}
-\end{figure}
-
-\textbf{Vertical lines} in the spectrogram indicate vibrations at fixed frequencies that do not change with thrust. These usually come from frame resonances or loose components. Such resonances can be removed with static notch filters, but because they are fixed at a single frequency, they must be used carefully. For more robust suppression, especially when frequencies shift due to bent props or changing load conditions, a dynamic notch filter is usually the better choice. Also to mention is, that static notch filters should only be applied, when the same resonances appear in all three axes at the same frequency.
-
-\textbf{Diagonal lines} show vibrations that change with motor speed, such as propeller noise. Using the RPM Filter, these propeller vibrations can be filtered out quite well. This filter uses real-time RPM telemetry data to place notch filters exactly on the fundamental and harmonic frequencies of each motor. As propeller vibrations are directly proportional to motor RPM, this approach eliminates noise at its source instead of relying on fixed or dynamic estimation. In our case, we kept the RPM filter with the default settings. We used \textbf{three-bladed} propellers, so the filter has been set to \textbf{three harmonics}. As we can see in \autoref{fig:gyro_Spectrograms_tuning} under the filtered plots, the RPM filter removes the diagonal lines effectively.
-
-\textbf{Aliasing}\\
-When sampling a signal that contains frequencies higher than half of your sampling rate, aliasing can occur. This would make high-frequency content appear as lower frequencies, corrupting the measurement data. To avoid this, we applied a PT1 low-pass filter with a cutoff frequency not greater than the sampling frequency divided by two. As we use a 2 kHz logging frequency, we set the cutoff to 800 Hz as a conservative choice.
-If aliasing occurs on your drone, it appears in the spectrogram as diagonal lines going down as you move to higher frequencies.
-
-\textbf{Dynamic notch filter}\\
-The dynamic notch filter automatically finds and removes mechanical motor noise with the highest amplitude for each axis. The standard setting here is 2 notches from 100 to 600 Hz. Through testing, we found that changing the notch filter count from two to three provided better filtering. We can see in \autoref{fig:gyro_Spectrograms_tuning} that the filtered plots don't show any diagonal lines anymore. It is important to keep in mind that adding more notches also adds delay to the system. However, for the robustness of our tune, this trade off can be turned in favor of compensating external influences.
-
-\textbf{D-term low-pass filter}\\
-The D-term in a PID controller amplifies high-frequency gyro noise. So this filter controls how much noise is fed back into the control loop. If too much noise passes through, the D-term causes rapid micro-oscillations in the motors, leading to overheating and potential hardware failure.
-For our initial flight, we configured a PT3 (third-order) filter with a cutoff of 100 Hz. We chose this filter because PT3 has a much steeper slope than a standard first- or second-order filter. This allows us to aggressively suppress high-frequency noise while minimizing delay in the lower frequencies where the actual flight control happens. The 100 Hz cutoff served as a conservative starting point and worked well. In further tuning, this value can be increased to improve responsiveness while keeping the motors cool. Through trial and error, the value can be increased as long as the motors don't heat up too much during flight.
-
-\textbf{Yaw low-pass filter}\\
-The yaw low-pass filter smooths the gyroscope signal by ignoring high-frequency noise. Since the yaw axis typically experiences less mechanical vibration than roll and pitch, the filter can often be configured less aggressively without compromising signal quality.
-For our setup, we retained the default Betaflight settings, as they provided good noise suppression without creating unnecessary delay.
-
-Further information about spectra and spectrograms can be found \href{https://github.com/InsaneBroccoli/bf_controller_tuning/blob/main/markdown/Spectrum_Spectrogram}{here}. Also consider looking at the \href{https://www.betaflight.com/docs/wiki/configurator/pid-tuning-tab}{Betaflight wiki page} for more information about Betaflight filters.
-
-\newpage
-
-\subsection*{Gyro PID Tuning}
-
-To tune the PID controllers, our program provides two different approaches: the step response and the Gang of Four. Both methods are based on the estimated plant and controller transfer functions, allowing for a systematic evaluation of the tuning adjustments. The step response is a time-domain analysis that shows how the system reacts to a sudden change in the reference input, while the Gang of Four is a frequency-domain analysis that provides insights into the stability and robustness of the system across a range of frequencies. For beginners, the step response is often more intuitive and easier to interpret, while the Gang of Four offers a more comprehensive view of the system's behaviour, especially for more experienced users.
-
-\subsubsection*{Evaluation Step Response}
-
-The \textbf{step response} plot shows exactly what happens when the pilot moves the stick rapidly. You can see how fast the drone reacts to the command, if it overshoots the target value and how quickly it settles to a steady state. The plot shows three curves, the yellow curve represents the measured response using the active PID values during flight, the blue curve shows the calculated response derived from the plant model and the red curve illustrates the predicted response using the newly tuned PID values implemented in the code.
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=0.9\textwidth]{Step_response_pitch_tuned.jpg}
-	\caption{Step Response}
-	\label{fig:step_response_tuning}
-\end{figure}
-
-\begin{itemize}
-	\item Tracking (Top Plot): It shows how the drone follows a command.
-	\item Compliance (Bottom Plot): It shows how the drone reacts to external disturbances, like wind.
-\end{itemize}
-
-\subsubsection*{Evaluation Gang of Four}
-
-The Gang of Four is a standard set of four transfer functions that together fully characterize a feedback control system. These four plots represent the Sensitivity (S), Complementary Sensitivity (T, Bode plot), Controller Effort (SC) and Compliance (SP). By analyzing these plots, we can assess the stability of the drone, its ability to follow commands, its response to external disturbances and the workload on the motors, all in one comprehensive view.
-
-\autoref{fig:gangoffour_tuning_gyro} shows the Gang of Four plots for our tuned system.
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=1.0\textwidth]{gang_of_four_pitch_tuned.jpg}
-	\caption{Gang of Four}
-	\label{fig:gangoffour_tuning_gyro}
-\end{figure}
-
-During our tuning process, we found these plots to be invaluable for diagnosing and improving the drone's performance. While all four plots provide useful information, we focused primarily on three of them:
-\begin{enumerate}
-	\item Sensitivity (S):
-	      This plot shows how the system reacts to noise and reference commands. The peak value is a key indicator of stability. In our experience, a peak below 6 dB is ideal for a well-damped system. Higher peaks suggest the drone might oscillate or become unstable, especially during aggressive maneuvers. We noticed that reducing the peak often required balancing stability with responsiveness, as overly conservative settings could make the drone feel sluggish.
-	\item Controller Effort (SC):
-	      This plot indicates how much work the controller is doing to maintain stability and follow commands. High effort at higher frequencies usually means the system is reacting to sensor noise rather than real disturbances. This can lead to unnecessary motor activity, overheating and wear. During tuning, we found that adjusting the D-term gains and optimizing filters helped reduce high-frequency effort while keeping the drone responsive.
-	\item Compliance (SP):
-	      Compliance measures how much external disturbances, like wind or propwash, affect the drone's motion. Lower compliance means the drone resists disturbances more effectively. We observed that increasing the P-term gains improved disturbance rejection, but setting them too high caused oscillations during rapid throttle changes. Finding the right balance was critical for maintaining both stability and responsiveness.
-\end{enumerate}
-
-In our experience, the Gang of Four plots provided a clear and structured way to assess the impact of tuning changes. Adjustments to the PID gains directly revealed their effects on stability, control effort and disturbance rejection. This enabled an efficient iterative tuning process and increased confidence in achieving robust performance across varying conditions.
-
-\subsubsection*{PID Tuning Summary}
-
-Our tuning objective was to achieve a fast step response without overshoot while maintaining good disturbance rejection and stability margins. It is important to note that there is no universally perfect tune. Settings depend heavily on pilot preferences. Racing pilots typically prefer aggressive, responsive tuning for competitive performance, while freestyle pilots may prioritize smoothness and flight feel. We focused on achieving robustness and a step response without overshoot. Robustness is practical in this case because it handles scenarios such as slightly bent propellers, a battery positioned off-center, or additional components such as cameras mounted on the drone. It should also be mentioned that the axes roll and pitch should be tuned as similarly as possible. This is because symmetrical tuning makes the drone more intuitive to pilot. When both axes respond identically to stick inputs, the drone behaves predictably during combined maneuvers, making control feel natural.
-
-The tuning process involved iteratively adjusting PID gains in MATLAB while monitoring both the step response and Gang of Four plots side by side. We found and used an online PID simulator as a guide to build intuition for how P, I and D values affect system behaviour. For the step response, we aimed for a fast rise time with minimal or no overshoot and a smooth curve without oscillations. On the Gang of Four side, we wanted the sensitivity peak to stay below 6 dB for good stability margins, low compliance across the control bandwidth for effective disturbance rejection and reasonable controller effort to avoid amplifying sensor noise. All transfer functions should show smooth, rounded shapes without sharp resonances that indicate problematic dynamics. Once we were satisfied with the curves and their shapes, we could take the P, I and D values for each axis from the command window in MATLAB and set them via the Betaflight configurator to the drone.
-
-\newpage
 
 \section{Angle Controller}
 
@@ -1448,7 +1337,7 @@ This allows the same signal processing steps as described in the theory chapter 
 Using the Fourier transforms of the target angle reference signal \(w\) and the measured angle \(q\), shown in \autoref{fig:angle_loop_modified}, the closed-loop transfer function can be estimated as
 
 \begin{equation}
-    T_{Angle,meas} = G_{cl}(\omega) =
+    T_{\text{Angle,meas}} = G_{\text{cl}}(\omega) =
     \frac{Q(\omega)}{W(\omega)}.
     \label{eq:G_cl}
 \end{equation}
@@ -1458,7 +1347,7 @@ This transfer function describes the complete behavior of the cascaded control s
 As described in the theoretical part of this thesis, it is also necessary to estimate the transfer function from the target angle \(w\) to the angular rate \(y\):
 
 \begin{equation}
-    G_{wy}(\omega) =
+    G_{\text{wy}}(\omega) =
     \frac{Y(\omega)}{W(\omega)}.
     \label{eq:G_wy}
 \end{equation}
@@ -1467,7 +1356,7 @@ With the two transfer functions \(T_{Angle,meas}(\omega)\) and \(G_{wy}(\omega)\
 
 \begin{equation}
     P_{\text{Angle}}(\omega) =
-    \frac{T_{Angle,meas}(\omega)}{G_{wy}(\omega)}.
+    \frac{T_{\text{Angle,meas}}(\omega)}{G_{\text{wy}}(\omega)}.
     \label{eq:G_plant}
 \end{equation}
 
@@ -1477,12 +1366,12 @@ The estimated plant transfer function can then be used to analyze the influence 
 
 \subsubsection*{Implementation of the Tuning Method}
 
-The calculation of the tuning parameters for the angle control loop follows the same approach as for the angular rate control loop, but uses different control loop components. The relevant components are the gyro control loop \(T_{\text{Gyro}}\) which we get out of the calculations of the gyro control loop, the angle controller and filter which are combined into \(C_{\text{Angle}}\) and the plant \(P_{\text{Angle}}\).
+The calculation of the tuning parameters for the angle control loop follows the same approach as for the angular rate control loop, but uses different control loop components. The relevant components are the gyro control loop \(T_{\text{Gyro}}\), which is obtained from the angular rate control loop calculations, the angle controller and filter combined into \(C_{\text{Angle}}\), and the plant \(P_{\text{Angle}}\).
 
 With these components, the transfer functions for the Gang of Four plot can be calculated. First, the closed-loop transfer function of the angle control loop is
 
 \begin{equation}
-T_{Angle}(\omega) =
+T_{\text{Angle}}(\omega) =
 \frac{C_{\text{Angle}}(\omega)\,T_{\text{Gyro}}(\omega)\,P_{\text{Angle}}(\omega)}
 {1 + C_{\text{Angle}}(\omega)\,T_{\text{Gyro}}(\omega)\,P_{\text{Angle}}(\omega)}.
 \label{eq:G_cl_new}
@@ -1517,51 +1406,6 @@ SP_{\text{Angle}}(\omega) =
 These expressions allow the computation of all relevant performance metrics such as gain margin, phase margin, bandwidth, controller effort, disturbance attenuation and robustness properties. Based on these metrics, plots can be generated and the suitability of the new controller parameters can be systematically evaluated.
 
 \newpage
-
-\subsection*{Drone Tuning}
-
-Based on the calculated transfer functions and tuning plots, the influence of different angle controller parameters on the drone behavior can be evaluated offline. By adjusting the controller gains and analyzing the resulting closed-loop responses, the controller tuning can be optimized before performing additional flight tests. During the tuning process, particular attention is paid to the tradeoff between responsiveness and robustness. Increasing the controller gain can improve the responsiveness of the Angle mode, but may also lead to oscillations or reduced stability margins. The Gang of Four plots and predicted step responses therefore provide important information for evaluating the resulting flight behavior.
-
-\subsubsection*{Evaluation Step Response}
-
-The step response of the angle controller illustrates how the drone reacts to a commanded step change in the desired roll angle. It provides insight into the rise time, settling behavior and overall stability of the system.
-
-As shown in \autoref{fig:angle_step_response_tuning}, three curves are compared: the measured response (yellow), the calculated response based on the plant model (blue) and the predicted response using the newly tuned controller parameters (red).
-
-All three responses exhibit a fast rise time and converge smoothly to the desired angle without significant overshoot, indicating stable system behavior. The predicted response (red) reaches the target angle slightly faster than the calculated and measured responses, suggesting an improved controller tuning. The measured response closely follows the predicted curve, demonstrating that the model represents the real system with good accuracy.
-
-Since the angle controller is implemented as a pure P-controller, it mainly influences the response speed by mapping the angle error directly to a desired angular rate. The damping and transient characteristics are primarily governed by the inner angular rate controller.
-
-Overall, the results confirm that the cascaded control structure achieves a fast, stable and accurate tracking of the commanded angle.
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=0.9\textwidth]{Step_Response_Angle_Tuning.png}
-	\caption{Step response of the Angle mode controller.}
-	\label{fig:angle_step_response_tuning}
-\end{figure}
-
-
-\subsubsection*{Evaluation Gang of Four}
-
-The general interpretation of the Gang of Four plots has already been discussed in the previous section. Therefore, the following evaluation focuses on the most relevant observations for the \textbf{angle controller}, as shown in \autoref{fig:gangoffour_tuning_angle}.
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=0.9\textwidth]{Angle_Gang_of_four.png}
-	\caption{Gang of Four (Angle Controller - Roll)}
-	\label{fig:gangoffour_tuning_angle}
-\end{figure}
-
-The \textbf{complementary sensitivity} $T$ shows good tracking performance at low frequencies, with all curves close to 0\,dB. At higher frequencies, $T$ rolls off sufficiently, preventing amplification of measurement noise. Minor deviations in the measured response at high frequencies are attributed to sensor noise and unmodeled dynamics.
-
-The \textbf{sensitivity} $S$ exhibits a moderate peak of only a few dB, indicating a good trade-off between robustness and responsiveness. The tuned controller slightly reduces this peak, suggesting improved stability margins.
-
-The \textbf{controller effort} $SC$ remains bounded across all frequencies and the new tuning does not significantly increase controller activity, avoiding unnecessary motor load.
-
-The \textbf{compliance} $SP$ is low at low frequencies, indicating effective disturbance rejection. At higher frequencies, the measured data becomes noisy, but the overall behaviour remains consistent.
-
-Overall, the tuned angle controller achieves a balanced performance in terms of tracking, robustness, disturbance rejection and actuator effort, consistent with a cascaded control structure dominated by the inner rate controller.
 
 \section{Altitude Hold Controller}
 
@@ -1629,25 +1473,25 @@ By estimating different transfer functions from the measured data, the behaviour
 The first step is to estimate the closed-loop transfer function from the reference input \( w \) to the measured output \( y \), which is denoted as \( G_{yw} \):
 
 \begin{equation}
-T_{AltHold,meas}(\omega)=G_{yw}(\omega) = \frac{Y(\omega)}{W(\omega)}
+T_{\text{AltHold,meas}}(\omega)=G_{\text{yw}}(\omega) = \frac{Y(\omega)}{W(\omega)}
 \end{equation}
 
 where \( Y(\omega) \) is the Fourier transform of the measured output signal and \( W(\omega) \) is the Fourier transform of the reference input, including the chirp signal. These signals are filtered and processed as described in the theory chapter in order to reduce noise and improve the quality of the estimated frequency response.
 
-The transfer function \( G_{yw} \) represents the overall closed-loop behaviour of the system and can be used to evaluate important characteristics such as bandwidth, phase behaviour and stability margins.
+The transfer function \( G_{\text{yw}} \) represents the overall closed-loop behaviour of the system and can be used to evaluate important characteristics such as bandwidth, phase behaviour and stability margins.
 
 To estimate the plant transfer function, the transfer function from the reference input to the controller output \( u \) is also calculated:
 
 \begin{equation}
-G_{uw}(\omega) = \frac{U(\omega)}{W(\omega)}
+G_{\text{uw}}(\omega) = \frac{U(\omega)}{W(\omega)}
 \end{equation}
 
 where \( U(\omega) \) is the Fourier transform of the controller output signal. This transfer function describes the dynamic relationship between the reference input and the control action applied to the plant.
 
-To estimate the D-term of the controller, the transfer function from the reference input to the shared output of the PI controller and the D-term is additionally required. This transfer function is denoted as \( G_{vw} \):
+To estimate the D-term of the controller, the transfer function from the reference input to the shared output of the PI controller and the D-term is additionally required. This transfer function is denoted as \( G_{\text{vw}} \):
 
 \begin{equation}
-G_{ur}(\omega) = \frac{U(\omega)}{W(\omega)}
+G_{\text{ur}}(\omega) = \frac{U(\omega)}{W(\omega)}
 \end{equation}
 
 where \( V(\omega) \) is the Fourier transform of the signal after the PI controller and before the D-term feedback path. This additional transfer function is required because the D-term is implemented in the feedback path of the control loop and therefore cannot directly be separated from the remaining controller dynamics.
@@ -1655,7 +1499,7 @@ where \( V(\omega) \) is the Fourier transform of the signal after the PI contro
 With these transfer functions, the plant transfer function can be estimated as
 
 \begin{equation}
-P_{\text{AltHold}}(\omega) = \frac{G_{yw}(\omega)}{G_{vw}(\omega)}
+P_{\text{AltHold}}(\omega) = \frac{G_{\text{yw}}(\omega)}{G_\text{{vw}}(\omega)}
 \end{equation}
 
 This approach allows the estimation of the real plant dynamics, which can then be used for further analysis and controller tuning.
@@ -1663,7 +1507,7 @@ This approach allows the estimation of the real plant dynamics, which can then b
 The transfer function of the PI controller can be estimated as
 
 \begin{equation}
-C_{\text{PI,meas}}(\omega) = \frac{G_{yw}(\omega)}{G_{vw}(\omega) - G_{yw}(\omega)}
+C_{\text{PI,meas}}(\omega) = \frac{G_{\text{yw}}(\omega)}{G_{\text{vw}}(\omega) - G_{\text{yw}}(\omega)}
 \end{equation}
 
 This estimation is required for the compensation of the I-Term Relax algorithm described in the theory chapter. By comparing the estimated transfer function with the analytical PI controller model, a compensation factor can be calculated and applied to both the original and the newly designed controller.
@@ -1671,7 +1515,7 @@ This estimation is required for the compensation of the I-Term Relax algorithm d
 The D-term and its filter can be estimated in a similar way:
 
 \begin{equation}
-C_{\text{D,meas}}(\omega) = \frac{G_{uw}(\omega) - G_{vw}(\omega)}{T_{AltHold,meas}(\omega)}
+C_{\text{D,meas}}(\omega) = \frac{G_{\text{uw}}(\omega) - G_{\text{vw}}(\omega)}{T_{\text{AltHold,meas}}(\omega)}
 \end{equation}
 
 The estimation of the D-term was especially useful during the development of the tuning tool, since it helped to better understand the D-term behaviour and identify implementation issues.
@@ -1682,31 +1526,31 @@ With the estimated plant and controller transfer functions, the complete control
 
 Based on the estimated plant and controller transfer functions, the tuning of the PID controllers can be performed. The goal is to adjust the controller parameters to achieve the desired tuning characteristics, such as stability, responsiveness and robustness.
 
-The calculation of the tuning parameters for the altitude hold control loop follows the same approach as for the previously described control loops, but uses different control loop components. The relevant components are the PI controller \( C_{\text{PI}} \), the D-controller with the PT2 filter \( C_d \) and the estimated plant \( P_{\text{AltHold}} \), which was obtained from the measured data.
+The calculation of the tuning parameters for the altitude hold control loop follows the same approach as for the previously described control loops, but uses different control loop components. The relevant components are the estimated plant \(P_{\text{AltHold}}\), obtained from the measured data, and the altitude hold controller consisting of the PI controller \(C_{\text{PI}}\), the D-controller \(C_\text{d}\) and the associated PT2 filter with the newly calculated tuning parameters.
 
 With these components, the transfer functions for the Gang of Four analysis can be calculated. First, the closed-loop transfer function of the altitude hold control loop is given by
 
 \begin{equation}
-T_{\text{AltHold}} = \frac{C_{\text{PI}}(\omega) P_{\text{AltHold}}(\omega)}{1 + P_{\text{AltHold}}(\omega)(C_{\text{PI}}(\omega) + C_d(\omega))}
+T_{\text{AltHold}} = \frac{C_{\text{PI}}(\omega) P_{\text{AltHold}}(\omega)}{1 + P_{\text{AltHold}}(\omega)(C_{\text{PI}}(\omega) + C_\text{d}(\omega))}
 \end{equation}
 
 The sensitivity function can also be calculated with the new controller as follows. As already discussed in the theoretical part, the  sensitivity function is important to evaluate the robustness of the system and the disturbance rejection behaviour:
 
 \begin{equation}
-S_{\text{AltHold}}(\omega) = \frac{1}{1 + P_{\text{AltHold}}(\omega)(C_{\text{PI}}(\omega) + C_d(\omega))}
+S_{\text{AltHold}}(\omega) = \frac{1}{1 + P_{\text{AltHold}}(\omega)(C_{\text{PI}}(\omega) + C_\text{d}(\omega))}
 \end{equation}
 
 The controller effort can also be calculated with the new controller as follows. This function can be used to evaluate the controller activity and the amplification of noise at higher frequencies:
 
 \begin{equation}
-SC_{\text{AltHold}}(\omega) = \frac{C_{\text{PI}}(\omega) + C_d(\omega)}
-{1 + P_{\text{AltHold}}(\omega)(C_{\text{PI}}(\omega) + C_d(\omega))}
+SC_{\text{AltHold}}(\omega) = \frac{C_{\text{PI}}(\omega) + C_\text{d}(\omega)}
+{1 + P_{\text{AltHold}}(\omega)(C_{\text{PI}}(\omega) + C_\text{d}(\omega))}
 \end{equation}
 
 Or the compliance function, which shows how disturbances acting on the plant affect the system output:
 \begin{equation}
 SP_{\text{AltHold}}(\omega) = \frac{P_{\text{AltHold}}(\omega)}
-{1 + P_{\text{AltHold}}(\omega)(C_{\text{PI}}(\omega) + C_d(\omega))}
+{1 + P_{\text{AltHold}}(\omega)(C_{\text{PI}}(\omega) + C_\text{d}(\omega))}
 \end{equation}
 
 These metrics allows us to evaluate the performance of the new controller parameters and make informed decisions about further adjustments to optimize the altitude hold control loop for improved stability, responsiveness and disturbance rejection. More details about that can be found in the next section, where the results of the tuning process are evaluated based on the step response and the Gang of Four plots.
@@ -1723,9 +1567,31 @@ The Position Hold controller represents the outermost control layer in the fligh
 \begin{figure}[H]
     \centering
     \includegraphics[width=1.0\textwidth]{Control_Loop_PosHold.png}
-    \caption{Block diagram of the Betaflight Position Hold controller. The position error is processed by proportional, integral, derivative and acceleration feedback paths. After coordinate transformation and PT3 upsampling, the resulting roll and pitch references are supplied to the inner angle control loop.}
+    \caption{Control structure of the Betaflight position hold controller.}
     \label{fig:Position_hold_control_loop}
 \end{figure}
+
+Figure \ref{fig:Position_hold_control_loop} illustrates the signal flow of the Position Hold controller. The control loop begins with the GPS position estimate, which is compared with the target hold position to generate position errors in the North-East plane. Based on these errors, the controller calculates corrective commands using proportional, integral, derivative and acceleration feedback terms.
+
+For each axis, the controller output is given by
+
+\begin{equation}
+u_{\text{axis}}
+=
+K_p d_{\text{axis}}
++
+K_i \int d_{\text{axis}} dt
++
+K_d \dot d_{\text{axis}}
++
+K_a \ddot d_{\text{axis}}
+\end{equation}
+
+where \(d_{\text{axis}}\) denotes the position error. The velocity term is estimated from successive position measurements, while the acceleration term is obtained by differentiating the velocity estimate. Since GPS measurements are inherently noisy, both signals are filtered before being used by the controller.
+
+The controller calculations are performed in the Earth-Fixed frame, where the position errors are expressed in the North-East directions. However, the inner angle controller requires roll and pitch commands in the aircraft Body Frame. Therefore, the resulting control vector is rotated according to the current yaw angle before being passed to the inner control loop.
+
+The resulting body-frame commands are then used as attitude references for the angle controller, which generates the corresponding angular rate commands for the underlying rate controller.
 
 \subsection*{Betaflight Firmware}
 \label{sec:Position Hold Betaflight Firmware}
@@ -1766,19 +1632,6 @@ Since the Position Hold controller operates only at the GPS update rate, typical
 
 Finally, a sanity check continuously monitors the distance between the aircraft and the target position. The allowable distance is scaled dynamically with ground speed and corresponds to twice the distance the aircraft would travel within two seconds, with a minimum threshold of 10 meters. If this limit is exceeded, indicating a GPS anomaly or loss of position control, Position Hold is automatically disengaged and control is returned to the pilot.
 
-\subsubsection*{Position Hold Control Loop}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=1.0\textwidth]{Control_Loop_PosHold.png}
-    \caption{Control structure of the Betaflight position hold controller.}
-    \label{fig:Position_hold_control_loop_handsketch.png}
-\end{figure}
-
-The Position Hold control loop represents the outermost control layer in the hierarchical flight controller architecture. \autoref{fig:Position_hold_control_loop_handsketch.png} illustrates the signal flow from the GPS inputs to the final body-frame attitude commands. The structure begins with position estimation derived from the GPS module, which provides geographic coordinates. These are compared to the target hold point to generate position error signals in the North-East plane (Earth-Fixed frame). The error signals feed into the multi-term P-I-D-A feedback controller, which computes velocity and acceleration by numerically differentiating the position measurements. These derivatives are heavily smoothed using adaptive PT1 filters before being scaled by their respective gains. 
-
-After the P, I, D and A terms are summed and limited, the resulting control vector undergoes a coordinate transformation. Using the current yaw angle from the attitude estimator, the Earth-Fixed correction vector is rotated into the aircraft's Body Frame, resulting in target pitch and roll angles. Finally, the PT3 upsampling block interpolates the low-frequency GPS-driven commands into the high-frequency reference signals demanded by the inner angle controller loop.
-
 \subsubsection*{Firmware Modifications}
 
 To evaluate and tune the Position Hold controller, an exponential chirp signal (as described in \autoref{sec:System Identification Using Chirp Signals}) is injected directly into the position error during flight. By sweeping through a predefined frequency range, the position controller is forced into a controlled response, allowing its frequency-dependent behaviour to be measured.
@@ -1811,46 +1664,69 @@ CLI commands were added to configure all chirp parameters including start and en
 
 \subsection*{Control Loop Calculation}
 
+With the injected chirp signal and the recorded flight data, the frequency response of the Position Hold control loop can be estimated. The estimation follows the procedure described in the theory chapter, including signal preprocessing, filtering and spectral averaging. The resulting transfer function represents the complete closed-loop behaviour of the Position Hold system, including both the controller and the aircraft dynamics.
+
+The estimated transfer functions provide insight into the dynamic behaviour of the system and allow key characteristics such as bandwidth, phase behaviour and stability margins to be evaluated. These results form the basis for the subsequent tuning and validation process.
+
 \subsubsection*{Estimation of the Closed-Loop Components}
 
-In position hold mode, the chirp signal is injected directly into the target location in the Earth-fixed frame. This differs from angle or altitude modes, where the chirp is injected into attitude or throttle commands. The key insight is that the position error drives the controller rather than the absolute position. The measurement approach was designed around this principle. Instead of logging absolute GPS coordinates, the position error in centimetres is logged, as the firmware calculates the control outputs based on this relative distance.
+In Position Hold mode, the chirp signal is injected directly into the target position in the Earth-fixed frame. This differs from Angle and Altitude Hold modes, where the excitation is applied to attitude or throttle commands. The Position Hold controller operates on the position error rather than the absolute position itself. Consequently, the position error is the most relevant signal for system identification and is therefore logged directly from the firmware.
 
-The injected chirp signal specifies the offset target position in centimetres. Before the chirp injection begins, the drone is assumed to maintain the target position with zero error. This allows us to establish that the target position equals the injected chirp signal:
+At the beginning of the measurement, the aircraft is assumed to be hovering at the target position. Under this condition, the position error is initially zero. Once the chirp injection starts, the target position is periodically displaced by the injected signal, causing the controller to generate corrective attitude commands in order to follow the moving reference.
+
+Since the injected chirp signal directly defines the target position offset, the reference position can be written as
 
 \begin{equation}
     x_\text{ref} = u_c,
 \end{equation}
 
-where $x_\text{ref}$ denotes the target position, $u_c$ the injected chirp signal and $e$ the GPS position error. The current physical position is then computed as:
+where \(x_\text{ref}\) denotes the target position and \(u_c\) the injected chirp signal. During flight, the aircraft does not perfectly follow this reference, resulting in a position error \(e\). The actual aircraft position can therefore be reconstructed from the measured position error as
 
 \begin{equation}
     x = x_\text{ref} - e = u_c - e.
 \end{equation}
 
-Using the rotating-frame filtering approach described in \autoref{sec:System Identification Using Chirp Signals}, the closed-loop transfer function from the target position to the current position is estimated as:
+This approach avoids the use of absolute GPS coordinates and directly utilizes the same signals that are used internally by the Position Hold controller. As a result, the identified transfer functions correspond closely to the actual firmware implementation.
+
+Using the rotating-frame filtering approach described in \autoref{sec:System Identification Using Chirp Signals}, the closed-loop transfer function from the target position to the actual aircraft position is estimated as
 
 \begin{equation}
-    T_\text{pos}(\omega) = \frac{X(\omega)}{X_\text{ref}(\omega)},
+    T_\text{pos}(\omega)
+    =
+    \frac{X(\omega)}
+         {X_\text{ref}(\omega)}.
 \end{equation}
 
-and the transfer function from the target position to the controller output $u_\text{EF}$ is estimated as:
+In addition, the transfer function from the target position to the controller output \(u_\text{EF}\) is estimated as
 
 \begin{equation}
-    G_{uw}(\omega) = \frac{U_\text{EF}(\omega)}{X_\text{ref}(\omega)}.
+    G_{uw}(\omega)
+    =
+    \frac{U_\text{EF}(\omega)}
+         {X_\text{ref}(\omega)}.
 \end{equation}
 
-From these two transfer functions, the plant and controller can be recovered through block diagram algebra, analogous to the approach described in \autoref{sec:Control Loop Calculations}:
+The first transfer function describes the closed-loop behaviour of the Position Hold system, while the second transfer function represents the relationship between the reference position and the controller output. Using standard block diagram algebra, the plant and controller transfer functions can then be recovered as
 
 \begin{equation}
-    P_\text{pos}(\omega) = \frac{T_\text{pos}(\omega)}{G_{uw}(\omega)}, \qquad
-    C_\text{PID}(\omega) = \frac{G_{uw}(\omega)}{1 - T_\text{pos}(\omega)}.
+    P_\text{pos}(\omega)
+    =
+    \frac{T_\text{pos}(\omega)}
+         {G_{uw}(\omega)},
+    \qquad
+    C_\text{PID}(\omega)
+    =
+    \frac{G_{uw}(\omega)}
+         {1-T_\text{pos}(\omega)}.
 \end{equation}
 
 \subsubsection*{Implementation of the Tuning Method}
 
-The calculation of the tuning parameters for the position hold control loop follows the same offline identification approach as for the previously described control loops, but uses the position related signals logged during the chirp experiment. For the position hold evaluation, the injected chirp signal is applied to the horizontal position setpoint (in \si{cm}) and the resulting response is reconstructed from the GPS error.
+The calculation of the tuning parameters for the Position Hold control loop follows the same approach as for the previously described control loops. For the Position Hold evaluation, the injected chirp signal is applied directly to the horizontal position setpoint, while the resulting aircraft position is reconstructed from the logged position error.
 
-With the identified controller $C_{\text{PID,Pos}}$ and plant $P_{\text{PosHold}}$, the transfer functions required for the Gang of Four evaluation can be calculated. First, the closed-loop transfer function is
+The relevant components are the estimated plant \(P_{\text{PosHold}}\), which was obtained from the measured data, and the updated controller \(C_{\text{PID,Pos}}\) using the newly calculated tuning parameters.
+
+With these components, the transfer functions required for the Gang of Four analysis can be calculated. First, the closed-loop transfer function is
 
 \begin{equation}
 T_{\text{Pos}}(\omega) =
@@ -1948,13 +1824,56 @@ The D-term in a PID controller amplifies high-frequency gyro noise. Therefore, t
 \textbf{Yaw low-pass filter}\\
 The yaw low-pass filter suppresses high-frequency noise on the yaw axis. Since yaw typically experiences less vibration than roll and pitch, less aggressive filtering is often sufficient. For our setup, the default Betaflight settings provided satisfactory performance.
 
-\subsubsection*{Evaluation of the Step Response}
+\subsection*{Gyro PID Tuning}
 
-The step response of the position hold controller is evaluated using the same methodology described in the Theoretical Foundations (\autoref{sec:Control Loop Calculations}). The tracking response shows the system's ability to reach target positions in both axes, while the compliance response indicates disturbance rejection capability when external forces act on the drone.
+To tune the PID controllers, our program provides two different approaches: the step response and the Gang of Four. Both methods are based on the estimated plant and controller transfer functions, allowing for a systematic evaluation of the tuning adjustments. The step response is a time-domain analysis that shows how the system reacts to a sudden change in the reference input, while the Gang of Four is a frequency-domain analysis that provides insights into the stability and robustness of the system across a range of frequencies. For beginners, the step response is often more intuitive and easier to interpret, while the Gang of Four offers a more comprehensive view of the system's behaviour, especially for more experienced users.
+
+\subsubsection*{Evaluation Step Response}
+
+The \textbf{step response} plot shows exactly what happens when the pilot moves the stick rapidly. You can see how fast the drone reacts to the command, if it overshoots the target value and how quickly it settles to a steady state. The plot shows three curves, the yellow curve represents the measured response using the active PID values during flight, the blue curve shows the calculated response derived from the plant model and the red curve illustrates the predicted response using the newly tuned PID values implemented in the code.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.9\textwidth]{step_response_roll.png}
+	\caption{Comparison of the measured step response and the calculated responses obtained with the original and newly tuned controller parameters.}
+	\label{fig:step_response_tuning}
+\end{figure}
+
+\begin{itemize}
+	\item Tracking (Top Plot): It shows how the drone follows a command.
+	\item Compliance (Bottom Plot): It shows how the drone reacts to external disturbances, like wind.
+\end{itemize}
 
 \subsubsection*{Evaluation Gang of Four}
 
-The Gang of Four plots characterize the position controller's stability and performance across frequencies, following the framework established in the Theoretical Foundations (\autoref{sec:Control Loop Calculations}). The plots compare actual parameters with the newly tuned parameters, providing insight into tracking accuracy, disturbance sensitivity, controller effort and compliance across the position control bandwidth.
+The Gang of Four is a standard set of four transfer functions that together fully characterize a feedback control system. These four plots represent the Sensitivity (S), Complementary Sensitivity (T, Bode plot), Controller Effort (SC) and Compliance (SP). By analyzing these plots, we can assess the stability of the drone, its ability to follow commands, its response to external disturbances and the workload on the motors, all in one comprehensive view.
+
+\autoref{fig:gangoffour_tuning_gyro} shows the Gang of Four plots for our tuned system.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1.0\textwidth]{gang_of_four_roll.png}
+	\caption{Gang of Four transfer functions of the identified system for the original and newly tuned controller parameters. The plots illustrate tracking performance (T), sensitivity (S), controller effort (SC) and disturbance rejection (SP).}
+	\label{fig:gangoffour_tuning_gyro}
+\end{figure}
+
+During our tuning process, we found these plots to be invaluable for diagnosing and improving the drone's performance. While all four plots provide useful information, we focused primarily on three of them:
+\begin{enumerate}
+	\item Sensitivity (S):
+	      This plot shows how the system reacts to noise and reference commands. The peak value is a key indicator of stability. In our experience, a peak below 6 dB is ideal for a well-damped system. Higher peaks suggest the drone might oscillate or become unstable, especially during aggressive maneuvers. We noticed that reducing the peak often required balancing stability with responsiveness, as overly conservative settings could make the drone feel sluggish.
+	\item Controller Effort (SC):
+	      This plot indicates how much work the controller is doing to maintain stability and follow commands. High effort at higher frequencies usually means the system is reacting to sensor noise rather than real disturbances. This can lead to unnecessary motor activity, overheating and wear. During tuning, we found that adjusting the D-term gains and optimizing filters helped reduce high-frequency effort while keeping the drone responsive.
+	\item Compliance (SP):
+	      Compliance measures how much external disturbances, like wind or propwash, affect the drone's motion. Lower compliance means the drone resists disturbances more effectively. We observed that increasing the P-term gains improved disturbance rejection, but setting them too high caused oscillations during rapid throttle changes. Finding the right balance was critical for maintaining both stability and responsiveness.
+\end{enumerate}
+
+In our experience, the Gang of Four plots provided a clear and structured way to assess the impact of tuning changes. Adjustments to the PID gains directly revealed their effects on stability, control effort and disturbance rejection. This enabled an efficient iterative tuning process and increased confidence in achieving robust performance across varying conditions.
+
+\subsubsection*{PID Tuning Summary}
+
+Our tuning objective was to achieve a fast step response without overshoot while maintaining good disturbance rejection and stability margins. It is important to note that there is no universally perfect tune. Settings depend heavily on pilot preferences. Racing pilots typically prefer aggressive, responsive tuning for competitive performance, while freestyle pilots may prioritize smoothness and flight feel. We focused on achieving robustness and a step response without overshoot. Robustness is practical in this case because it handles scenarios such as slightly bent propellers, a battery positioned off-center, or additional components such as cameras mounted on the drone. It should also be mentioned that the axes roll and pitch should be tuned as similarly as possible. This is because symmetrical tuning makes the drone more intuitive to pilot. When both axes respond identically to stick inputs, the drone behaves predictably during combined maneuvers, making control feel natural.
+
+The tuning process involved iteratively adjusting PID gains in MATLAB while monitoring both the step response and Gang of Four plots side by side. We found and used an online PID simulator as a guide to build intuition for how P, I and D values affect system behaviour. For the step response, we aimed for a fast rise time with minimal or no overshoot and a smooth curve without oscillations. On the Gang of Four side, we wanted the sensitivity peak to stay below 6 dB for good stability margins, low compliance across the control bandwidth for effective disturbance rejection and reasonable controller effort to avoid amplifying sensor noise. All transfer functions should show smooth, rounded shapes without sharp resonances that indicate problematic dynamics. Once we were satisfied with the curves and their shapes, we could take the P, I and D values for each axis from the command window in MATLAB and set them via the Betaflight configurator to the drone.
 
 \newpage
 
