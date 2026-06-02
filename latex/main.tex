@@ -1240,7 +1240,7 @@ After running the program in MATLAB and importing a log file, you can see in the
 
 We then start by looking at the spectrograms and spectra figures to assess the effectiveness of the current filtering. It is important to note that the spectra and spectrogram plots only show the data recorded in the loaded log file. Changing filter settings in the code does not affect these plots, as they reflect the settings that were active during the flight. To see the effect of any changes, a new flight must be performed and logged with the updated settings.
 
-The \textbf{spectra} in \autoref{fig:Spectra_tuning} shows the frequency composition of the gyro signals.
+The \textbf{spectra} in \autoref{fig:gyro_Spectra_tuning} shows the frequency composition of the gyro signals.
 Peaks in this plot point to vibration sources at specific frequencies.
 When we analyze this plot, we look for three main things:
 \begin{itemize}
@@ -1253,30 +1253,30 @@ When we analyze this plot, we look for three main things:
 	\centering
 	\includegraphics[width=0.9\textwidth]{Spectra.png}
 	\caption{Frequency spectra of the measured gyro signals}
-	\label{fig:Spectra_tuning}
+	\label{fig:gyro_Spectra_tuning}
 \end{figure}
 
 We can see in this figure that our filter settings work well. The filtered signals have very little noise (smoother lines) and no large resonances. Only the yaw axis has a small peak around 550 Hz, which is acceptable. The axis sum drops nicely and stays low after about 600 Hz, approximately where the motor frequencies end. This shows the drone is running smoothly with vibrations under control. 
-The vibrations are also visible in the \textbf{spectrogram} plots in \autoref{fig:Spectrograms_tuning}.
+The vibrations are also visible in the \textbf{spectrogram} plots in \autoref{fig:gyro_Spectrograms_tuning}.
 Here, frequencies are plotted against thrust level and the color shows the signal intensity. Red equals much vibration, blue equals little vibration.
 
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=0.9\textwidth]{Spectrograms.jpg}
 	\caption{Spectrograms}
-	\label{fig:Spectrograms_tuning}
+	\label{fig:gyro_Spectrograms_tuning}
 \end{figure}
 
 \textbf{Vertical lines} in the spectrogram indicate vibrations at fixed frequencies that do not change with thrust. These usually come from frame resonances or loose components. Such resonances can be removed with static notch filters, but because they are fixed at a single frequency, they must be used carefully. For more robust suppression, especially when frequencies shift due to bent props or changing load conditions, a dynamic notch filter is usually the better choice. Also to mention is, that static notch filters should only be applied, when the same resonances appear in all three axes at the same frequency.
 
-\textbf{Diagonal lines} show vibrations that change with motor speed, such as propeller noise. Using the RPM Filter, these propeller vibrations can be filtered out quite well. This filter uses real-time RPM telemetry data to place notch filters exactly on the fundamental and harmonic frequencies of each motor. As propeller vibrations are directly proportional to motor RPM, this approach eliminates noise at its source instead of relying on fixed or dynamic estimation. In our case, we kept the RPM filter with the default settings. We used \textbf{three-bladed} propellers, so the filter has been set to \textbf{three harmonics}. As we can see in \autoref{fig:Spectrograms_tuning} under the filtered plots, the RPM filter removes the diagonal lines effectively.
+\textbf{Diagonal lines} show vibrations that change with motor speed, such as propeller noise. Using the RPM Filter, these propeller vibrations can be filtered out quite well. This filter uses real-time RPM telemetry data to place notch filters exactly on the fundamental and harmonic frequencies of each motor. As propeller vibrations are directly proportional to motor RPM, this approach eliminates noise at its source instead of relying on fixed or dynamic estimation. In our case, we kept the RPM filter with the default settings. We used \textbf{three-bladed} propellers, so the filter has been set to \textbf{three harmonics}. As we can see in \autoref{fig:gyro_Spectrograms_tuning} under the filtered plots, the RPM filter removes the diagonal lines effectively.
 
 \textbf{Aliasing}\\
 When sampling a signal that contains frequencies higher than half of your sampling rate, aliasing can occur. This would make high-frequency content appear as lower frequencies, corrupting the measurement data. To avoid this, we applied a PT1 low-pass filter with a cutoff frequency not greater than the sampling frequency divided by two. As we use a 2 kHz logging frequency, we set the cutoff to 800 Hz as a conservative choice.
 If aliasing occurs on your drone, it appears in the spectrogram as diagonal lines going down as you move to higher frequencies.
 
 \textbf{Dynamic notch filter}\\
-The dynamic notch filter automatically finds and removes mechanical motor noise with the highest amplitude for each axis. The standard setting here is 2 notches from 100 to 600 Hz. Through testing, we found that changing the notch filter count from two to three provided better filtering. We can see in \autoref{fig:Spectrograms_tuning} that the filtered plots don't show any diagonal lines anymore. It is important to keep in mind that adding more notches also adds delay to the system. However, for the robustness of our tune, this trade off can be turned in favor of compensating external influences.
+The dynamic notch filter automatically finds and removes mechanical motor noise with the highest amplitude for each axis. The standard setting here is 2 notches from 100 to 600 Hz. Through testing, we found that changing the notch filter count from two to three provided better filtering. We can see in \autoref{fig:gyro_Spectrograms_tuning} that the filtered plots don't show any diagonal lines anymore. It is important to keep in mind that adding more notches also adds delay to the system. However, for the robustness of our tune, this trade off can be turned in favor of compensating external influences.
 
 \textbf{D-term low-pass filter}\\
 The D-term in a PID controller amplifies high-frequency gyro noise. So this filter controls how much noise is fed back into the control loop. If too much noise passes through, the D-term causes rapid micro-oscillations in the motors, leading to overheating and potential hardware failure.
