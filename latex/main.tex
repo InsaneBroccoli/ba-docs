@@ -197,10 +197,10 @@ Hexacopters and octocopters extend this concept by using six or eight rotors. Th
 Since this work is focused with the analysis and modeling of quadcopters, the quadcopter configuration is used as the reference platform throughout the remainder of this chapter.
 
 \begin{figure}[htbp]
-\centering
-\includegraphics[width=0.95\linewidth]{Figures/multirotor_types.png}
-\caption{Rotary-wing multirotor UAV configurations: quadcopter (left), hexacopter (center) and octocopter (right).}
-\label{fig:multirotor_types}
+    \centering
+    \includegraphics[width=0.95\linewidth]{Figures/multirotor_types.png}
+    \caption{Rotary-wing multirotor UAV configurations: quadcopter (left), hexacopter (center) and octocopter (right).}
+    \label{fig:multirotor_types}
 \end{figure}
 
 \subsection*{Sensors}
@@ -208,11 +208,11 @@ Since this work is focused with the analysis and modeling of quadcopters, the qu
 A quadcopter relies on a variety of sensors to measure its state and environment. The most common sensors include and the most important for this work are:
 
 \begin{itemize}
-\item \textbf{Inertial Measurement Unit (IMU):} The IMU consists of accelerometers and gyroscopes that measure linear acceleration and angular velocity. These measurements are used to estimate the drone's orientation and motion.
-\item \textbf{GPS:} GPS provides position and velocity measurements in a global Earth-fixed reference frame, which are mainly used for navigation and position control.
-\item \textbf{Electronic Speed Controllers (ESC's):} ESC's control the rotational speed of the motors and provide feedback for motor control.
-\item \textbf{Magnetometer:} A magnetometer measures the Earth's magnetic field and is used to estimate the heading of the drone.
-\item \textbf{Barometer:} A barometer measures atmospheric pressure, which can be used to estimate altitude.
+    \item \textbf{Inertial Measurement Unit (IMU):} The IMU consists of accelerometers and gyroscopes that measure linear acceleration and angular velocity. These measurements are used to estimate the drone's orientation and motion.
+    \item \textbf{GPS:} GPS provides position and velocity measurements in a global Earth-fixed reference frame, which are mainly used for navigation and position control.
+    \item \textbf{Electronic Speed Controllers (ESC's):} ESC's control the rotational speed of the motors and provide feedback for motor control.
+    \item \textbf{Magnetometer:} A magnetometer measures the Earth's magnetic field and is used to estimate the heading of the drone.
+    \item \textbf{Barometer:} A barometer measures atmospheric pressure, which can be used to estimate altitude.
 \end{itemize}
 
 These sensors provide the measurements needed for offline tuning. Depending on the application, additional sensors such as cameras or distance sensors may be used. In practice, measurements from multiple sensors are often combined through sensor fusion to obtain a more accurate estimate of the drone’s state. Sensor data form the basis for stabilization, navigation and control.
@@ -238,10 +238,10 @@ The quadcopter's orientation is described using a body-fixed coordinate system w
 \end{itemize}
 
 \begin{figure}[h]
-\centering
-\includegraphics[width=0.5\linewidth]{body_axes.png}
-\caption{Body-fixed coordinate system and rotational axes of a quadcopter.}
-\label{fig:body_axes}
+    \centering
+    \includegraphics[width=0.5\linewidth]{body_axes.png}
+    \caption{Body-fixed coordinate system and rotational axes of a quadcopter.}
+    \label{fig:body_axes}
 \end{figure}
 
 All motion is controlled by adjusting the rotational speeds of the four motors, which generate the necessary forces and torques. The motor configuration and control strategy are described in the following sections.
@@ -276,10 +276,10 @@ Yaw control relies on the reaction torques produced by the propellers. Since adj
 Combining these principles, all motions are controlled through the four motor speeds \(\Omega_1, \Omega_2, \Omega_3, \Omega_4\). The process of mapping the desired roll, pitch, yaw and throttle commands to individual motor speed setpoints is called \textit{control allocation} or \textit{motor mixing} and is a core part of the flight controller. For a standard quadcopter, this mapping is given by the following equations:
 
 \begin{align}
-M_1 &= T + \phi + \theta - \psi, \\
-M_2 &= T - \phi + \theta + \psi, \\
-M_3 &= T - \phi - \theta - \psi, \\
-M_4 &= T + \phi - \theta + \psi,
+    M_1 &= T + \phi + \theta - \psi, \\
+    M_2 &= T - \phi + \theta + \psi, \\
+    M_3 &= T - \phi - \theta - \psi, \\
+    M_4 &= T + \phi - \theta + \psi,
 \end{align}
 
 where \(M_i\) represents the speed command for the \(i\)-th motor, \(T\) is the throttle command and \(\phi\), \(\theta\) and \(\psi\) are the desired roll, pitch and yaw commands, respectively. The specific coefficients in these equations depend on the configuration of the drone and the direction of rotation of the motors \parencite{Drone_Control}.
@@ -360,7 +360,7 @@ For an exponential chirp, the instantaneous frequency increases exponentially fr
 The instantaneous frequency is defined as
 
 \begin{equation}
-f(t) = f_0 \left(\frac{f_1}{f_0}\right)^{\frac{t}{T}}.
+    f(t) = f_0 \left(\frac{f_1}{f_0}\right)^{\frac{t}{T}}.
 \end{equation}
 
 Compared to the linear chirp, this results in a more uniform excitation in logarithmic
@@ -369,20 +369,19 @@ frequency space, which is particularly useful when analysing systems using Bode 
 The corresponding phase trajectory is obtained by integrating the frequency \parencite{Matlab_Chirp}
 
 \begin{equation}
-\varphi(t) =
-\frac{2\pi T f_0}{\ln(f_1/f_0)}
-\left[
-\left(\frac{f_1}{f_0}\right)^{\frac{t}{T}}-1
-\right].
+    \varphi(t) = \frac{2\pi T f_0}{\ln(f_1/f_0)}
+    \left[
+    \left(\frac{f_1}{f_0}\right)^{\frac{t}{T}}-1
+    \right].
 \end{equation}
 
 These expressions define the phase trajectory \( \varphi(t) \) used both in the simulations and in the time-dependent frequency shifting approach. \autoref{fig:exponential_chirp} shows the resulting exponential chirp signal together with its instantaneous frequency and phase trajectory.
 
 \begin{figure}[H]
-\centering
-\includegraphics[width=1.0\linewidth]{Figures/exponential_chirp.png}
-\caption{Exponential chirp signal used for the simulation. The upper plot shows the generated chirp signal, the middle plot the exponential frequency sweep and the lower plot the wrapped phase used in the signal generation.}
-\label{fig:exponential_chirp}
+    \centering
+    \includegraphics[width=1.0\linewidth]{Figures/exponential_chirp.png}
+    \caption{Exponential chirp signal used for the simulation. The upper plot shows the generated chirp signal, the middle plot the exponential frequency sweep and the lower plot the wrapped phase used in the signal generation.}
+    \label{fig:exponential_chirp}
 \end{figure}
 
 
@@ -662,7 +661,7 @@ By taking the ratio of these two transfer functions, the plant transfer function
 
 \begin{equation}
     \frac{G_{yr}(\omega)}{G_{ur}(\omega)} = \frac{\dfrac{C(\omega)P(\omega)}{1 + C(\omega)P(\omega)}}
-        {\dfrac{C(\omega)}{1 + C(\omega)P(\omega)}} = P(\omega).
+    {\dfrac{C(\omega)}{1 + C(\omega)P(\omega)}} = P(\omega).
     \label{eq:Plant}
 \end{equation}
 
@@ -670,7 +669,7 @@ To determine the controller, the same principle is applied. The controller trans
 
 \begin{equation}
     \frac{G_{ur}(\omega)}{1-G_{yr}(\omega)} = \frac{\dfrac{C(\omega)}{1 + C(\omega)P(\omega)}}
-     {1 - \dfrac{C(\omega)P(\omega)}{1 + C(\omega)P(\omega)}} = C(\omega).
+    {1 - \dfrac{C(\omega)P(\omega)}{1 + C(\omega)P(\omega)}} = C(\omega).
 \end{equation}
 
 These relationships enable the identification of both the plant and the controller from measurable closed-loop signals. They provide the theoretical
@@ -790,29 +789,29 @@ The motor–propeller system is modeled using the well-established electromechan
 
 The electrical behaviour of the motor is described by
 \begin{equation}
-u(t) = R\,i(t) + L\,\frac{di(t)}{dt} + k_e\,\omega(t),
-\label{eq:dc_motor_electrical}
+    u(t) = R\,i(t) + L\,\frac{di(t)}{dt} + k_e\,\omega(t),
+    \label{eq:dc_motor_electrical}
 \end{equation}
 where $u(t)$ is the applied motor voltage, $i(t)$ the motor current, $R$ the winding resistance, $L$ the inductance, $k_e$ the back electromotive force constant and $\omega(t)$ the angular velocity.
 
 The mechanical dynamics are given by
 \begin{equation}
-J_{\mathrm{m}}\,\frac{d\omega(t)}{dt} = k_t\,i(t),
-\label{eq:dc_motor_mechanical}
+    J_{\mathrm{m}}\,\frac{d\omega(t)}{dt} = k_t\,i(t),
+    \label{eq:dc_motor_mechanical}
 \end{equation}
 where $J_{\mathrm{m}}$ is the combined moment of inertia of the motor and propeller and $k_t$ is the torque constant. For simplicity, viscous friction and aerodynamic load torque are neglected.
 
 Applying the Laplace transform to Eqs.~(\ref{eq:dc_motor_electrical}) and (\ref{eq:dc_motor_mechanical}) and eliminating $i(s)$ yields the transfer function from voltage to angular velocity:
 \begin{equation}
-G_{\text{motor}}(s) = \frac{\Omega(s)}{U(s)} =
-\frac{k_t}{J_{\mathrm{m}} L s^2 + J_{\mathrm{m}} R s + k_t k_e}.
-\label{eq:dc_motor_transfer}
+    G_{\text{motor}}(s) = \frac{\Omega(s)}{U(s)} =
+    \frac{k_t}{J_{\mathrm{m}} L s^2 + J_{\mathrm{m}} R s + k_t k_e}.
+    \label{eq:dc_motor_transfer}
 \end{equation}
 
 Since the torque constant and the back electromotive force constant have the same numerical value, the transfer function can be simplified to
 \begin{equation}
-G_{\text{motor}}(s) =
-\frac{k}{J_{\mathrm{m}} L s^2 + J_{\mathrm{m}} R s + k^2}.
+    G_{\text{motor}}(s) =
+    \frac{k}{J_{\mathrm{m}} L s^2 + J_{\mathrm{m}} R s + k^2}.
 \end{equation}
 
 This transfer function represents a second-order (PT2) system, capturing both electrical and mechanical dynamics. Due to the small electrical time constant, the inductance mainly affects higher frequencies and can often be neglected. In this case, the motor can be approximated by a first-order (PT1) system, which forms the basis for the subsequent analysis and controller design.
@@ -923,23 +922,23 @@ If the drone is hovering at a constant altitude, the total thrust equals the wei
 
 The horizontal acceleration can be expressed as
 \begin{equation}
-a_{\text{hor}}(t) = g \cdot \sin\!\left(\theta(t)\right).
+    a_{\text{hor}}(t) = g \cdot \sin\!\left(\theta(t)\right).
 \end{equation}
 
 Assuming that the drone operates at small angles during position hold, the small-angle approximation \( \sin(\theta) \approx \theta \) can be applied. This results in the simplified expression
 \begin{equation}
-a_{\text{hor}}(t) \approx g \cdot \theta(t).
+    a_{\text{hor}}(t) \approx g \cdot \theta(t).
 \end{equation}
 
 By integrating the horizontal acceleration twice with respect to time, the horizontal position of the drone is obtained:
 \begin{equation}
-x(t) = \int \int a_{\text{hor}}(t) \, dt^2
-\approx \int \int g \cdot \theta(t) \, dt^2.
+    x(t) = \int \int a_{\text{hor}}(t) \, dt^2
+    \approx \int \int g \cdot \theta(t) \, dt^2.
 \end{equation}
 
 Applying the Laplace transform yields the transfer function from the tilt angle to the horizontal position:
 \begin{equation}
-P_{\text{Position}}(s) = \frac{X(s)}{\Theta(s)} = \frac{g}{s^2}.
+    P_{\text{Position}}(s) = \frac{X(s)}{\Theta(s)} = \frac{g}{s^2}.
 \end{equation}
 
 This transfer function represents a double integrator. Consequently, the corresponding Bode plot exhibits a magnitude slope of \(-40\,\text{dB/decade}\) and a phase shift of \(-180^\circ\), which are characteristic features of such a system.
@@ -953,75 +952,67 @@ The altitude hold directly controls the vertical position of the drone by adjust
 The altitude plant consists of the motor dynamics and the transformation from motor speed to vertical motion.
 
 The thrust produced by a propeller can be approximated by
+
 \begin{equation}
-T = C_T \rho n^2 D^4,
+    T = C_T \rho n^2 D^4,
 \end{equation}
+
 where \(C_T\) is the thrust coefficient, \(\rho\) the air density, \(n\) the rotational speed and \(D\) the propeller diameter.
 
 The vertical acceleration follows from the force balance
+
 \begin{equation}
-a_{\text{ver}}(t) = \frac{T(t)}{m} - g.
+    a_{\text{ver}}(t) = \frac{T(t)}{m} - g.
 \end{equation}
 
 For hover, the thrust balances the weight of the drone:
+
 \begin{equation}
-T_0 = m g .
+    T_0 = m g .
 \end{equation}
 
 The corresponding hover speed is
 \begin{equation}
-n_0 = \sqrt{\frac{T_0}{C_T \rho D^4}} .
+    n_0 = \sqrt{\frac{T_0}{C_T \rho D^4}} .
 \end{equation}
 
 For small deviations \( \Delta n \) around the operating point \( n_0 \), linearizing the thrust equation yields
 
 \begin{equation}
-\Delta T \approx 
-\left.\frac{dT}{dn}\right|_{n_0} \Delta n,
-\quad \text{with} \quad
-\frac{dT}{dn} = 2 C_T \rho D^4 n.
+    \Delta T \approx 
+    \left.\frac{dT}{dn}\right|_{n_0} \Delta n,
+    \quad \text{with} \quad
+    \frac{dT}{dn} = 2 C_T \rho D^4 n.
 \end{equation}
 
 Substituting \(n_0\) gives
 \begin{equation}
-\Delta T \approx 
-2 C_T \rho D^4
-\sqrt{\frac{T_0}{C_T \rho D^4}}
-\,\Delta n .
+    \Delta T \approx 
+    2 C_T \rho D^4
+    \sqrt{\frac{T_0}{C_T \rho D^4}}
+    \,\Delta n .
 \end{equation}
 
 The corresponding vertical acceleration becomes
 \begin{equation}
-\Delta a_{\text{ver}}(t)
-=
-\frac{\Delta T(t)}{m}.
+    \Delta a_{\text{ver}}(t) = \frac{\Delta T(t)}{m}.
 \end{equation}
 
 Applying the Laplace transform and integrating twice yields
 \begin{equation}
-\Delta S(s)
-=
-\frac{1}{s^2}
-\Delta A_{\text{ver}}(s).
+    \Delta S(s) = \frac{1}{s^2}\Delta A_{\text{ver}}(s).
 \end{equation}
 
 Thus, the transfer function from motor speed variation to vertical position is
 \begin{equation}
-\frac{\Delta S(s)}{\Delta N(s)}
-=
-\frac{2 C_T \rho D^4}{m s^2}
-\sqrt{\frac{T_0}{C_T \rho D^4}}.
+    \frac{\Delta S(s)}{\Delta N(s)} = \frac{2 C_T \rho D^4}{m s^2}
+    \sqrt{\frac{T_0}{C_T \rho D^4}}.
 \end{equation}
 
 Including the motor dynamics, the complete altitude plant becomes
 \begin{equation}
-P_{\text{Altitude}}(s)
-=
-\frac{\Delta S(s)}{\Delta U(s)}
-=
-\frac{2 C_T \rho D^4}{m s^2}
-\sqrt{\frac{T_0}{C_T \rho D^4}}
-\,P_{\text{Motor}}(s).
+    P_{\text{Altitude}}(s) = \frac{\Delta S(s)}{\Delta U(s)}
+    = \frac{2 C_T \rho D^4}{m s^2}\sqrt{\frac{T_0}{C_T \rho D^4}}\,P_{\text{Motor}}(s).
 \end{equation}
 
 The plant exhibits a double integrator behaviour, resulting in a slope of \(-40\,\text{dB/decade}\) at low frequencies, while the motor dynamics introduce additional phase lag at higher frequencies.
