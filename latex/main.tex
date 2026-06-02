@@ -1777,7 +1777,7 @@ The filtering algorithms themselves were developed as part of the Project Thesis
 
 Before we start tuning the PID controllers, we need good filtering to have clean signals to work with. The general aim here is to use as little filtering as possible because too much filtering causes delay in the system. However, no quadcopter build is perfect, so at least some filtering is necessary in order to achieve a well-tuned system.
 
-After running the program in MATLAB and importing a log file, you can see in the command window which filter and PID settings were used during that flight. Our tool, in its current state, doesn't copy these values to the code automatically, so the first step is to copy the settings from the command window to the correct position in the code.
+After running the program in MATLAB or Python and importing a log file, you can see in the command window which filter and PID settings were used during that flight. Our tool, in its current state, doesn't copy these values to the code automatically, so the first step is to copy the settings from the command window to the correct position in the code.
 
 We then start by looking at the spectrograms and spectra figures to assess the effectiveness of the current filtering. It is important to note that the spectra and spectrogram plots only show the data recorded in the loaded log file. Changing filter settings in the code does not affect these plots, as they reflect the settings that were active during the flight. To see the effect of any changes, a new flight must be performed and logged with the updated settings.
 
