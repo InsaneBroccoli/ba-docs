@@ -1084,7 +1084,7 @@ The control loop in Acro mode can be represented as follows:
 
 Figure~\ref{fig:control_loop_acro} shows the complete gyro control loop in Acro mode. The reference input $w$ (desired angular rate) is combined with a chirp signal to excite the system over a wide frequency range. The resulting signal is fed into a PI controller, which generates the main control action.
 
-After the controller, input disturbances are added before the signal enters the plant $P_{\text{real}}$, representing the real drone dynamics. Output disturbances are introduced after the plant and before the gyro filtering stage. The measured angular rate $y$ is then fed back to the controller.
+After the controller, input disturbances are added before the signal enters the plant $P_{\text{Gyro}}$, representing the real drone dynamics. Output disturbances are introduced after the plant and before the gyro filtering stage. The measured angular rate $y$ is then fed back to the controller.
 
 A key feature of this control structure is the placement of the D-controller in the feedback path instead of the forward path. The D-controller acts on the measured output signal and is fed back negatively. This configuration is used to compensate for a zero in the plant dynamics, improving the system stability while reducing the noise amplification that would occur if the derivative term were applied directly to the reference signal.
 
@@ -1129,13 +1129,13 @@ where \( V(\omega) \) is the Fourier transform of the signal after the PI contro
 With these transfer functions, the plant transfer function can be estimated as
 
 \begin{equation}
-P_{real}(\omega) = \frac{T_{Gyro,meas}(\omega)}{G_{uw}(\omega)}
+G_{yv}(\omega) = \frac{T_{Gyro,meas}(\omega)}{G_{uw}(\omega)}
 \end{equation}
 
 In this estimation, the influence of the gyro filter is still included in the estimated plant dynamics. Therefore, the estimated plant transfer function is divided by the gyro filter transfer function to obtain the real plant dynamics:
 
 \begin{equation}
-P_{{Gyro}}(\omega) = \frac{P_{real}(\omega)}{G_{\text{FilterGyro}}(\omega)}
+P_{Gyro}(\omega) = \frac{G_{yv}(\omega)}{G_{\text{FilterGyro}}(\omega)}
 \end{equation}
 
 The transfer function of the PI controller can be estimated as
