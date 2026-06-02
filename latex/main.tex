@@ -1078,7 +1078,7 @@ The control loop in Acro mode can be represented as follows:
 \begin{figure}[H]
     \centering
     \includegraphics[width=1.0\textwidth]{Regelkreis_Gyro.png}
-    \caption{Control loop structure in Acro mode}
+    \caption{Control loop structure in Acro mode showing the chirp signal injection, the PI and D controller branches, the real drone dynamics (\textit{P real}), the gyro filter and the disturbance inputs used for system identification and frequency-response analysis.}
     \label{fig:control_loop_acro}
 \end{figure}
 
@@ -1237,117 +1237,6 @@ G_{\text{FilterGyro}}(\omega)
 
 By analyzing these transfer functions, the influence of different PID and filter parameters on the control loop behaviour can be evaluated. This allows the controller tuning to be analysed offline before performing additional flight tests.
 
-\subsection*{Filter tuning}
-
-Before we start tuning the PID controllers, we need good filtering to have clean signals to work with. The general aim here is to use as little filtering as possible because too much filtering causes delay in the system. However, no quadcopter build is perfect, so at least some filtering is necessary in order to achieve a well-tuned system.
-
-After running the program in MATLAB and importing a log file, you can see in the command window which filter and PID settings were used during that flight. Our tool, in its current state, doesn't copy these values to the code automatically, so the first step is to copy the settings from the command window to the correct position in the code.
-
-We then start by looking at the spectrograms and spectra figures to assess the effectiveness of the current filtering. It is important to note that the spectra and spectrogram plots only show the data recorded in the loaded log file. Changing filter settings in the code does not affect these plots, as they reflect the settings that were active during the flight. To see the effect of any changes, a new flight must be performed and logged with the updated settings.
-
-The \textbf{spectra} in \autoref{fig:Spectra_tuning} shows the frequency composition of the gyro signals.
-Peaks in this plot point to vibration sources at specific frequencies.
-When we analyze this plot, we look for three main things:
-\begin{itemize}
-	\item \textbf{Resonance Peaks:} If all three axes show a peak at the same frequency, it usually means there is a resonance in the frame or due to a poorly fixed component. This can be fixed with a specific notch filter or by attaching the loose parts properly.
-	\item \textbf{Noise:} A high noise level indicates general vibration issues. By adjusting the D-term low pass filter, you can counteract this. Clean lines in the plot show that the filtering is working well.
-	\item \textbf{Axis Sum:} The axis sum shows the overall vibration level across all gyro axes. A properly filtered signal drops quickly after the motor frequencies (after around 600 Hz) and remains low, indicating effective suppression of high-frequency noise and resonances.
-\end{itemize}
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=0.9\textwidth]{Spectra.png}
-	\caption{Frequency spectra of the measured gyro signals}
-	\label{fig:Spectra_tuning}
-\end{figure}
-
-We can see in this figure that our filter settings work well. The filtered signals have very little noise (smoother lines) and no large resonances. Only the yaw axis has a small peak around 550 Hz, which is acceptable. The axis sum drops nicely and stays low after about 600 Hz, approximately where the motor frequencies end. This shows the drone is running smoothly with vibrations under control. 
-The vibrations are also visible in the \textbf{spectrogram} plots in \autoref{fig:Spectrograms_tuning}.
-Here, frequencies are plotted against thrust level and the color shows the signal intensity. Red equals much vibration, blue equals little vibration.
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=0.9\textwidth]{Spectrograms.jpg}
-	\caption{Spectrograms}
-	\label{fig:Spectrograms_tuning}
-\end{figure}
-
-\textbf{Vertical lines} in the spectrogram indicate vibrations at fixed frequencies that do not change with thrust. These usually come from frame resonances or loose components. Such resonances can be removed with static notch filters, but because they are fixed at a single frequency, they must be used carefully. For more robust suppression, especially when frequencies shift due to bent props or changing load conditions, a dynamic notch filter is usually the better choice. Also to mention is, that static notch filters should only be applied, when the same resonances appear in all three axes at the same frequency.
-
-\textbf{Diagonal lines} show vibrations that change with motor speed, such as propeller noise. Using the RPM Filter, these propeller vibrations can be filtered out quite well. This filter uses real-time RPM telemetry data to place notch filters exactly on the fundamental and harmonic frequencies of each motor. As propeller vibrations are directly proportional to motor RPM, this approach eliminates noise at its source instead of relying on fixed or dynamic estimation. In our case, we kept the RPM filter with the default settings. We used \textbf{three-bladed} propellers, so the filter has been set to \textbf{three harmonics}. As we can see in \autoref{fig:Spectrograms_tuning} under the filtered plots, the RPM filter removes the diagonal lines effectively.
-
-\textbf{Aliasing}\\
-When sampling a signal that contains frequencies higher than half of your sampling rate, aliasing can occur. This would make high-frequency content appear as lower frequencies, corrupting the measurement data. To avoid this, we applied a PT1 low-pass filter with a cutoff frequency not greater than the sampling frequency divided by two. As we use a 2 kHz logging frequency, we set the cutoff to 800 Hz as a conservative choice.
-If aliasing occurs on your drone, it appears in the spectrogram as diagonal lines going down as you move to higher frequencies.
-
-\textbf{Dynamic notch filter}\\
-The dynamic notch filter automatically finds and removes mechanical motor noise with the highest amplitude for each axis. The standard setting here is 2 notches from 100 to 600 Hz. Through testing, we found that changing the notch filter count from two to three provided better filtering. We can see in \autoref{fig:Spectrograms_tuning} that the filtered plots don't show any diagonal lines anymore. It is important to keep in mind that adding more notches also adds delay to the system. However, for the robustness of our tune, this trade off can be turned in favor of compensating external influences.
-
-\textbf{D-term low-pass filter}\\
-The D-term in a PID controller amplifies high-frequency gyro noise. So this filter controls how much noise is fed back into the control loop. If too much noise passes through, the D-term causes rapid micro-oscillations in the motors, leading to overheating and potential hardware failure.
-For our initial flight, we configured a PT3 (third-order) filter with a cutoff of 100 Hz. We chose this filter because PT3 has a much steeper slope than a standard first- or second-order filter. This allows us to aggressively suppress high-frequency noise while minimizing delay in the lower frequencies where the actual flight control happens. The 100 Hz cutoff served as a conservative starting point and worked well. In further tuning, this value can be increased to improve responsiveness while keeping the motors cool. Through trial and error, the value can be increased as long as the motors don't heat up too much during flight.
-
-\textbf{Yaw low-pass filter}\\
-The yaw low-pass filter smooths the gyroscope signal by ignoring high-frequency noise. Since the yaw axis typically experiences less mechanical vibration than roll and pitch, the filter can often be configured less aggressively without compromising signal quality.
-For our setup, we retained the default Betaflight settings, as they provided good noise suppression without creating unnecessary delay.
-
-Further information about spectra and spectrograms can be found \href{https://github.com/InsaneBroccoli/bf_controller_tuning/blob/main/markdown/Spectrum_Spectrogram}{here}. Also consider looking at the \href{https://www.betaflight.com/docs/wiki/configurator/pid-tuning-tab}{Betaflight wiki page} for more information about Betaflight filters.
-
-\newpage
-
-\subsection*{Gyro PID Tuning}
-
-To tune the PID controllers, our program provides two different approaches: the step response and the Gang of Four. Both methods are based on the estimated plant and controller transfer functions, allowing for a systematic evaluation of the tuning adjustments. The step response is a time-domain analysis that shows how the system reacts to a sudden change in the reference input, while the Gang of Four is a frequency-domain analysis that provides insights into the stability and robustness of the system across a range of frequencies. For beginners, the step response is often more intuitive and easier to interpret, while the Gang of Four offers a more comprehensive view of the system's behaviour, especially for more experienced users.
-
-\subsubsection*{Evaluation Step Response}
-
-The \textbf{step response} plot shows exactly what happens when the pilot moves the stick rapidly. You can see how fast the drone reacts to the command, if it overshoots the target value and how quickly it settles to a steady state. The plot shows three curves, the yellow curve represents the measured response using the active PID values during flight, the blue curve shows the calculated response derived from the plant model and the red curve illustrates the predicted response using the newly tuned PID values implemented in the code.
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=0.9\textwidth]{Step_response_pitch_tuned.jpg}
-	\caption{Step Response}
-	\label{fig:step_response_tuning}
-\end{figure}
-
-\begin{itemize}
-	\item Tracking (Top Plot): It shows how the drone follows a command.
-	\item Compliance (Bottom Plot): It shows how the drone reacts to external disturbances, like wind.
-\end{itemize}
-
-\subsubsection*{Evaluation Gang of Four}
-
-The Gang of Four is a standard set of four transfer functions that together fully characterize a feedback control system. These four plots represent the Sensitivity (S), Complementary Sensitivity (T, Bode plot), Controller Effort (SC) and Compliance (SP). By analyzing these plots, we can assess the stability of the drone, its ability to follow commands, its response to external disturbances and the workload on the motors, all in one comprehensive view.
-
-Figure~\ref{fig:gangoffour_tuning_gyro} shows the Gang of Four plots for our tuned system.
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=1.0\textwidth]{gang_of_four_pitch_tuned.jpg}
-	\caption{Gang of Four}
-	\label{fig:gangoffour_tuning_gyro}
-\end{figure}
-
-During our tuning process, we found these plots to be invaluable for diagnosing and improving the drone's performance. While all four plots provide useful information, we focused primarily on three of them:
-\begin{enumerate}
-	\item Sensitivity (S):
-	      This plot shows how the system reacts to noise and reference commands. The peak value is a key indicator of stability. In our experience, a peak below 6 dB is ideal for a well-damped system. Higher peaks suggest the drone might oscillate or become unstable, especially during aggressive maneuvers. We noticed that reducing the peak often required balancing stability with responsiveness, as overly conservative settings could make the drone feel sluggish.
-	\item Controller Effort (SC):
-	      This plot indicates how much work the controller is doing to maintain stability and follow commands. High effort at higher frequencies usually means the system is reacting to sensor noise rather than real disturbances. This can lead to unnecessary motor activity, overheating and wear. During tuning, we found that adjusting the D-term gains and optimizing filters helped reduce high-frequency effort while keeping the drone responsive.
-	\item Compliance (SP):
-	      Compliance measures how much external disturbances, like wind or propwash, affect the drone's motion. Lower compliance means the drone resists disturbances more effectively. We observed that increasing the P-term gains improved disturbance rejection, but setting them too high caused oscillations during rapid throttle changes. Finding the right balance was critical for maintaining both stability and responsiveness.
-\end{enumerate}
-
-In our experience, the Gang of Four plots provided a clear and structured way to assess the impact of tuning changes. Adjustments to the PID gains directly revealed their effects on stability, control effort and disturbance rejection. This enabled an efficient iterative tuning process and increased confidence in achieving robust performance across varying conditions.
-
-\subsubsection*{PID Tuning Summary}
-
-Our tuning objective was to achieve a fast step response without overshoot while maintaining good disturbance rejection and stability margins. It is important to note that there is no universally perfect tune. Settings depend heavily on pilot preferences. Racing pilots typically prefer aggressive, responsive tuning for competitive performance, while freestyle pilots may prioritize smoothness and flight feel. We focused on achieving robustness and a step response without overshoot. Robustness is practical in this case because it handles scenarios such as slightly bent propellers, a battery positioned off-center, or additional components such as cameras mounted on the drone. It should also be mentioned that the axes roll and pitch should be tuned as similarly as possible. This is because symmetrical tuning makes the drone more intuitive to pilot. When both axes respond identically to stick inputs, the drone behaves predictably during combined maneuvers, making control feel natural.
-
-The tuning process involved iteratively adjusting PID gains in MATLAB while monitoring both the step response and Gang of Four plots side by side. We found and used an online PID simulator as a guide to build intuition for how P, I and D values affect system behaviour. For the step response, we aimed for a fast rise time with minimal or no overshoot and a smooth curve without oscillations. On the Gang of Four side, we wanted the sensitivity peak to stay below 6 dB for good stability margins, low compliance across the control bandwidth for effective disturbance rejection and reasonable controller effort to avoid amplifying sensor noise. All transfer functions should show smooth, rounded shapes without sharp resonances that indicate problematic dynamics. Once we were satisfied with the curves and their shapes, we could take the P, I and D values for each axis from the command window in MATLAB and set them via the Betaflight configurator to the drone.
-
-\newpage
-
 \section{Angle Controller}
 
 The Betaflight software provides three main flight modes: Angle, Horizon and Acro.
@@ -1394,11 +1283,9 @@ The Angle mode controller therefore consists of two cascaded loops:
 \label{fig:angle_mode_control_loop}
 \end{figure}
 
-The angle control loop consists of a proportional controller with an additional feedforward term. During normal flight operation, the feedforward term improves the responsiveness of the controller by directly reacting to stick movements.
+The angle control loop consists of a proportional controller and an additional feedforward term. While the feedforward improves responsiveness during normal flight operation by directly reacting to stick inputs, it complicates offline system identification because part of the controller output no longer originates from the feedback loop.
 
-However, for offline system identification and transfer function estimation, this additional control path complicates the analysis because parts of the controller action no longer originate purely from the feedback control loop.
-
-To simplify the tuning process and focus solely on the proportional controller behavior, the feedforward term is disabled in the modified firmware. This enables a more straightforward analysis of the control loop dynamics without additional influence from the feedforward component.
+To simplify transfer function estimation and controller tuning, the feedforward term is disabled in the modified firmware. This allows the angle control loop to be analyzed as a purely proportional controller.
 
 \subsubsection*{Derivation of the Target Angle}
 
@@ -1422,36 +1309,33 @@ where
 
 This proportional mapping allows the pilot to control the drone orientation directly through the stick position while limiting the maximum achievable tilt angle.
 
-\newpage
-
 \subsubsection*{Firmware Modifications}
 
 \begingroup
 \emergencystretch=1em
 
-The chirp generator described in the gyro-controller tuning section is reused here. Its public interface (\texttt{chirpInit}, \texttt{chirpUpdate} in \texttt{src/\allowbreak main/\allowbreak common/\allowbreak chirp.c}) and the invocation of \texttt{chirpInit} inside \texttt{pidInit} (\texttt{src/\allowbreak main/\allowbreak flight/\allowbreak pid\_\allowbreak init.c}) are unchanged; the configured frequency range, sweep time and per-axis amplitudes are reused from the gyro-tuning configuration. Injecting the chirp at the same point as in the gyro case would, however, leave the excitation inside the closed angle loop: the inner-loop rate setpoint would be driven simultaneously by the angle controller's output and by the chirp itself, so the transfer function from the angle target to the measured angle could not be recovered from the resulting logs directly. The relevant existing structure is shown in Figure~\ref{fig:angle_mode_control_loop}.
+The chirp generator used for gyro-controller tuning is also used for angle-controller tuning. The implementation of \texttt{chirpInit} and \texttt{chirpUpdate} remains unchanged and the same chirp configuration, including frequency range, sweep duration and amplitudes, can be reused.
 
-To make this transfer function identifiable, a small modification was made to \texttt{pidController} (\texttt{src/\allowbreak main/\allowbreak flight/\allowbreak pid.c}) so that, while \texttt{CHIRP\_\allowbreak MODE} is engaged and the affected axis is in angle mode, the chirp value is injected upstream of \texttt{pidLevel}, before the rate-to-angle transformation, rather than at the inner-loop rate setpoint. \texttt{pidLevel} first applies a linear transformation from the (rate-domain) \texttt{currentPidSetpoint} to a target angle, scaled by the configured tilt-angle limit divided by the maximum commanded rate. Because this transformation is linear, the \texttt{chirp\_\allowbreak amplitude\_\allowbreak *} values calibrated for rate-loop excitation map proportionally onto the angle-target excitation and carry over without re-tuning. The resulting structure is shown in Figure~\ref{fig:angle_loop_modified}.
+For the angle controller, the chirp cannot be injected at the same position as for gyro tuning. Otherwise, the excitation would be added inside the closed angle loop, making it difficult to identify the transfer function between the angle target and the measured angle. To avoid this, \texttt{pidController} was modified so that the chirp is injected before \texttt{pidLevel} whenever angle mode is active. The excitation therefore acts directly on the angle target instead of being added to the inner rate loop.
 
-\begin{figure}[htbp]
+Inside \texttt{pidLevel}, the rate-domain setpoint is converted into a target angle using a linear transformation based on the configured maximum tilt angle and commanded rate. Because this transformation is linear, the chirp amplitudes used for gyro tuning can be reused without additional adjustments. The resulting control structure is shown in Figure~\ref{fig:angle_loop_modified}.
+
+\begin{figure}[h]
     \centering
-    \includegraphics[width=1.0\textwidth]{Figures/Control_Loop_Angle_new.png}
-    \caption{Cascaded control structure of the Betaflight Angle mode controller.}
+    \includegraphics[width=\linewidth]{Figures/Control_Loop_Angle_new.png}
+    \caption{Modified control structure used for angle-controller tuning. The chirp signal is injected before the rate-to-angle transformation, allowing direct identification of the transfer function between the target angle and the measured angle.}
     \label{fig:angle_loop_modified}
 \end{figure}
 
-The excitation function is selected per axis from the corresponding \texttt{levelMode} state. On axes in angle mode the chirp emits a sine excitation so that the angle target oscillates symmetrically around the captured baseline, whereas axes in acro mode receive a cosine excitation together with the sub-1\,Hz amplitude taper inherited from the gyro-tuning case, both of which keep the resulting angle response bounded once the rate loop integrates the excitation. This selection is made at the call site in \texttt{pidController} rather than inside the chirp generator, so the same \texttt{chirpUpdate} advance feeds both paths. To keep the firmware compilable in the unusual configuration where \texttt{USE\_\allowbreak CHIRP} is defined but \texttt{USE\_\allowbreak ACC} is not, \texttt{levelMode} is given a static fall-back definition (\texttt{LEVEL\_\allowbreak MODE\_\allowbreak OFF}) on the no-accelerometer compile path, so the angle-target branch of the chirp injection becomes dead code under that build.
+The excitation signal is selected depending on the corresponding \texttt{levelMode} state. In angle mode, a sine-shaped chirp is used so that the target angle oscillates around the current angle setpoint. In acro mode, the existing gyro-tuning behaviour is retained, including the low-frequency amplitude taper below 1\,Hz. This prevents excessive angle excursions caused by the integrating behaviour of the rate loop.
 
-Some older airframes are flown in acro mode only and do not support angle mode. In that case the same chirp configuration is still used: with the angle controller and the \texttt{currentPidSetpoint}-to-target-angle transformation disabled, the injection collapses onto the gyro-tuning structure and the excitation enters at the rate setpoint as before. The same operator-facing configuration therefore covers both cases without parameter changes.
+To improve the signal-to-noise ratio, a new parameter called \texttt{chirp\_repeat} was added. This allows the same chirp sweep to be repeated multiple times before the sequencer advances to the next axis. A settling time of 750\,ms is inserted between repetitions. The parameter is limited to a maximum value of 9 so that the repeat counter can still be displayed in the OSD.
 
-To support signal-to-noise averaging across repeated sweeps, a \texttt{chirp\_\allowbreak repeat} parameter was added (CLI entry \texttt{chirp\_\allowbreak repeat}, exposed as a field on \texttt{pidProfile\_\allowbreak t}). While \texttt{BOXCHIRP} is held active, the sweep re-runs on the current axis up to \texttt{chirp\_\allowbreak repeat} times, separated by a 750\,ms settle interval, before the sequencer advances to the next configured axis. The parameter is capped at 9 so that the per-repeat counter fits the OSD HUD slot. The sequencer state, repeat counter and axis index are kept in the \texttt{pidRuntime} chirp-state members; per-repeat completion, per-axis completion and end-of-series transitions are surfaced to the pilot through the chirp HUD slot in \texttt{src/\allowbreak main/\allowbreak osd/\allowbreak osd\_\allowbreak elements.c} and through transient warnings in \texttt{src/\allowbreak main/\allowbreak osd/\allowbreak osd\_\allowbreak warnings.c}.
+A lag filter is applied to the chirp signal before injection. The filter was already available in the upstream implementation and is configured through the \texttt{chirp\_lag\_freq\_hz} and \texttt{chirp\_lead\_freq\_hz} parameters. To avoid transients from previous measurements, an additional \texttt{phaseCompReset} function was introduced. The filter state is reset whenever \texttt{CHIRP\_MODE} is activated, a new axis is selected or a new repetition starts.
 
-A phase-compensation pre-shaping filter is applied to the chirp signal before injection on both paths. The filter itself (\texttt{phaseCompApply} in \texttt{src/\allowbreak main/\allowbreak common/\allowbreak filter.c}, configured through the \texttt{chirp\_\allowbreak lag\_\allowbreak freq\_\allowbreak hz} and \texttt{chirp\_\allowbreak lead\_\allowbreak freq\_\allowbreak hz} parameters as covered in the theory chapter) was already present in the upstream baseline. A \texttt{phaseCompReset} entry point was added to clear the filter's internal state and it is invoked on \texttt{CHIRP\_\allowbreak MODE} engagement, on each axis advance and at the start of each repeat. This defensive reset suppresses carry-over transients from the previous run that would otherwise contaminate the first samples of the sweep.
+The internal signals required for the offline tuning tool are recorded through the existing \texttt{DEBUG\_CHIRP} channels. Besides the chirp phase, active axis, instantaneous frequency and excitation signal, the target and measured angle are also logged. These values are stored by the existing Blackbox system when \texttt{debug\_mode} is set to \texttt{CHIRP}, requiring no modifications to the Blackbox implementation itself.
 
-Internal signals are exposed to the offline tooling through the \texttt{DEBUG\_\allowbreak CHIRP} debug channels written from \texttt{pidController} and \texttt{pidLevel} via \texttt{DEBUG\_\allowbreak SET(DEBUG\_\allowbreak CHIRP, \ldots)}. These carry the current phase, the active axis, the instantaneous frequency and the raw excitation, together with the angle controller's target and measured angle. The channels are recorded by the existing blackbox subsystem when \texttt{debug\_\allowbreak mode} is set to \texttt{CHIRP} via the CLI and no changes to the blackbox encoding were required.
-
-All firmware-side logic and CLI surface described in this section is wrapped in \texttt{\#ifdef USE\_\allowbreak CHIRP} and requires the firmware to be built with \texttt{EXTRA\_\allowbreak FLAGS="-DUSE\_\allowbreak CHIRP"}. A build without that flag produces a binary functionally equivalent to the upstream baseline on which the fork sits.
-
+All functionality described in this section is only included when the firmware is compiled with \texttt{USE\_CHIRP}. Without this option, the firmware remains functionally equivalent to the upstream baseline.
 \endgroup
 
 \newpage
@@ -1537,51 +1421,6 @@ These expressions allow the computation of all relevant performance metrics such
 
 \newpage
 
-\subsection*{Drone Tuning}
-
-Based on the calculated transfer functions and tuning plots, the influence of different angle controller parameters on the drone behavior can be evaluated offline. By adjusting the controller gains and analyzing the resulting closed-loop responses, the controller tuning can be optimized before performing additional flight tests. During the tuning process, particular attention is paid to the tradeoff between responsiveness and robustness. Increasing the controller gain can improve the responsiveness of the Angle mode, but may also lead to oscillations or reduced stability margins. The Gang of Four plots and predicted step responses therefore provide important information for evaluating the resulting flight behavior.
-
-\subsubsection*{Evaluation Step Response}
-
-The step response of the angle controller illustrates how the drone reacts to a commanded step change in the desired roll angle. It provides insight into the rise time, settling behavior and overall stability of the system.
-
-As shown in Fig.~\ref{fig:angle_step_response_tuning}, three curves are compared: the measured response (yellow), the calculated response based on the plant model (blue) and the predicted response using the newly tuned controller parameters (red).
-
-All three responses exhibit a fast rise time and converge smoothly to the desired angle without significant overshoot, indicating stable system behavior. The predicted response (red) reaches the target angle slightly faster than the calculated and measured responses, suggesting an improved controller tuning. The measured response closely follows the predicted curve, demonstrating that the model represents the real system with good accuracy.
-
-Since the angle controller is implemented as a pure P-controller, it mainly influences the response speed by mapping the angle error directly to a desired angular rate. The damping and transient characteristics are primarily governed by the inner angular rate controller.
-
-Overall, the results confirm that the cascaded control structure achieves a fast, stable and accurate tracking of the commanded angle.
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=0.9\textwidth]{Step_Response_Angle_Tuning.png}
-	\caption{Step response of the Angle mode controller.}
-	\label{fig:angle_step_response_tuning}
-\end{figure}
-
-
-\subsubsection*{Evaluation Gang of Four}
-
-The general interpretation of the Gang of Four plots has already been discussed in the previous section. Therefore, the following evaluation focuses on the most relevant observations for the \textbf{angle controller}, as shown in Fig.~\ref{fig:gangoffour_tuning_angle}.
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=0.9\textwidth]{Angle_Gang_of_four.png}
-	\caption{Gang of Four (Angle Controller - Roll)}
-	\label{fig:gangoffour_tuning_angle}
-\end{figure}
-
-The \textbf{complementary sensitivity} $T$ shows good tracking performance at low frequencies, with all curves close to 0\,dB. At higher frequencies, $T$ rolls off sufficiently, preventing amplification of measurement noise. Minor deviations in the measured response at high frequencies are attributed to sensor noise and unmodeled dynamics.
-
-The \textbf{sensitivity} $S$ exhibits a moderate peak of only a few dB, indicating a good trade-off between robustness and responsiveness. The tuned controller slightly reduces this peak, suggesting improved stability margins.
-
-The \textbf{controller effort} $SC$ remains bounded across all frequencies and the new tuning does not significantly increase controller activity, avoiding unnecessary motor load.
-
-The \textbf{compliance} $SP$ is low at low frequencies, indicating effective disturbance rejection. At higher frequencies, the measured data becomes noisy, but the overall behaviour remains consistent.
-
-Overall, the tuned angle controller achieves a balanced performance in terms of tracking, robustness, disturbance rejection and actuator effort, consistent with a cascaded control structure dominated by the inner rate controller.
-
 \section{Altitude Hold Controller}
 
 The altitude hold control loop maintains a constant altitude by adjusting the throttle based on the measured vertical position. The altitude estimation is mainly based on GPS measurements fused with IMU sensor data to estimate the current vertical position and motion of the drone.
@@ -1615,21 +1454,21 @@ In the feedback path which includes the D-term, a D-Boost is implemented. During
 \begingroup
 \emergencystretch=1em
 
-The Betaflight fork used in this work branches from upstream master at the end of February 2026 baseline (commit \texttt{04e37a122}). All modifications described below are guarded by the compile-time flag \texttt{USE\_\allowbreak ALTHOLD\_\allowbreak CHIRP}, so a build without this flag is functionally identical to the upstream baseline. The changes fall into six areas: a new flight mode, an extension of the chirp signal generator, the injection of the excitation into the altitude setpoint, two conditional bypasses in the altitude PID, the exposure of internal signals via the debug-channel infrastructure and four new operator-facing parameters.
+The Betaflight fork used in this work is based on the upstream master branch from February 2026 (commit \texttt{04e37a122}). All modifications are protected by the compile-time flag \texttt{USE\_ALTHOLD\_CHIRP}, ensuring that a build without this flag behaves identically to the upstream version. The implementation consists of a dedicated flight mode, an extension of the chirp generator, modifications to the altitude controller, additional debug outputs and several user-configurable parameters.
 
-A dedicated flight mode was introduced so that the chirp excitation can be armed independently of altitude hold itself. A new box identifier \texttt{BOXALTHOLDCHIRP} was added in \texttt{rc\_\allowbreak modes.c}/\texttt{rc\_\allowbreak modes.h} and exposed through MSP in \texttt{msp\_\allowbreak box.c} so that the Betaflight Configurator can bind it to an RC switch. The corresponding flight-mode bit \texttt{ALTHOLD\_\allowbreak CHIRP\_\allowbreak MODE} was added to \texttt{flightModeFlags\_\allowbreak e} in \texttt{runtime\_\allowbreak config.h}, reusing the previously unused bit nine. The translation from switch state to flight-mode flag happens in \texttt{processRxModes} in \texttt{fc/\allowbreak core.c}. We require three conditions to hold simultaneously: the \texttt{BOXALTHOLDCHIRP} switch is active, altitude hold is already engaged and neither failsafe nor GPS rescue is active. This gating restricts the excitation to a defined hover operating point and ensures that any safety-related override disengages it.
+A new flight mode called \texttt{ALTHOLD\_CHIRP} was introduced to enable chirp-based system identification in altitude hold mode. The corresponding mode was added in \texttt{rc\_modes.c}, \texttt{rc\_modes.h} and \texttt{runtime\_config.h}. The mode can be activated via an RC switch and is only enabled when altitude hold is active. For safety reasons, the excitation is automatically disabled during failsafe or GPS rescue.
 
-The chirp signal itself is produced by an extension of the upstream chirp generator in \texttt{common/\allowbreak chirp.c}. The upstream generator, contributed in pull request 13105, was designed for the gyro loop and emits an integrated waveform --- an angle that, after differentiation by the rate loop, becomes the intended sine excitation. The altitude target is a position setpoint rather than a rate, so we added a sibling entry point \texttt{altChirpUpdate} that reuses the upstream logarithmic frequency sweep but emits the sine directly, without the integration step. The two entry points share the same state struct and the same sweep schedule; only the output stage differs. \texttt{altChirpUpdate} also signals completion of the sweep, which is queried by \texttt{altHold\allowbreak ChirpIsFinished} from the OSD layer.
+The chirp signal generation was implemented in \texttt{common/chirp.c}. While the original Betaflight chirp generator was designed for angular rate excitation, altitude hold requires a position-based excitation signal. Therefore, a new function called \texttt{altChirpUpdate} was added, which reuses the existing logarithmic frequency sweep but generates a direct sine signal suitable for altitude control.
 
-The injection of the chirp into the altitude-hold target takes place in \texttt{altHoldUpdate} in \texttt{flight/\allowbreak alt\_\allowbreak hold\_\allowbreak multirotor.c}. When the altitude-hold-chirp mode becomes active, the current target altitude is captured as a baseline. On every subsequent task tick the chirp generator output is multiplied by the configured amplitude and added to this baseline, so the excitation oscillates symmetrically around the captured hover setpoint. On mode exit the generator is reset via \texttt{chirpReset} so that a subsequent run starts from a defined state. The generator itself is initialised with the configured frequency range and sweep time in \texttt{altHoldInit}.
+The chirp is injected into the altitude setpoint within \texttt{altHoldUpdate} in \texttt{alt\_hold\_multirotor.c}. When the mode is activated, the current target altitude is stored as a reference value. The chirp signal is then added to this reference, causing the altitude setpoint to oscillate symmetrically around the hover point. When the mode is disabled, the generator is reset to ensure reproducible measurements.
 
-Two further modifications were made to the altitude PID in \texttt{altitudeControl} in \texttt{flight/\allowbreak autopilot\_\allowbreak multirotor.c}. When the altitude-hold-chirp mode is active, the I-term-relax scaling that normally attenuates integrator wind-up at large altitude errors is bypassed and the velocity-dependent D-boost term is also bypassed. Both elements are signal-dependent nonlinearities that would otherwise modulate the loop gain over the course of a sweep. Disabling them during the excitation is intended to keep the PID law linear around the hover operating point, so that the measured frequency response reflects the nominal controller rather than its state-dependent variants.
+To improve the quality of the frequency-response estimation, two nonlinear controller elements were temporarily disabled during the chirp excitation in \texttt{altitudeControl} within \texttt{autopilot\_multirotor.c}. These are the I-term-relax scaling and the velocity-dependent D-boost term. Disabling both features helps to maintain approximately linear controller behaviour during the measurement and improves the accuracy of the identified transfer function.
 
-Internal signals are exposed through the existing Betaflight debug infrastructure. A new entry \texttt{DEBUG\_\allowbreak ALTHOLD\_\allowbreak CHIRP} was added to the debug-mode enum and name table in \texttt{build/\allowbreak debug.c}/\texttt{debug.h}. When this mode is selected via the CLI, eight channels are published through \texttt{DEBUG\_\allowbreak SET} calls in \texttt{altHoldUpdate} and \texttt{altitudeControl}: the chirp drive, the measured altitude, the target altitude, the combined P-plus-I term, the D term, the throttle command, the vertical velocity and the total PID output. These channels are captured by the existing blackbox subsystem and form the input data for the offline frequency-response analysis.
+A new debug mode called \texttt{DEBUG\_ALTHOLD\_CHIRP} was added to expose all signals required for the offline analysis. The recorded signals include the chirp input, altitude, altitude setpoint, PID controller outputs, vertical velocity and throttle command. These signals are logged through the existing Blackbox infrastructure and form the basis for the frequency-domain identification process.
 
-Two small additions to the on-screen display in \texttt{osd/\allowbreak osd\_\allowbreak elements.c} and \texttt{osd/\allowbreak osd\_\allowbreak warnings.c} give the operator direct feedback during a test flight: a four-character flight-mode tag \texttt{ACHR} indicates that the altitude-hold-chirp mode is engaged and the warning \texttt{ACHRP EXC FINISHED} is shown once \texttt{altHold\allowbreak ChirpIsFinished} reports that the sweep has completed.
+Additional feedback was provided to the pilot through the on-screen display. A dedicated flight-mode indicator shows when the chirp mode is active, while a warning message informs the user when the frequency sweep has been completed.
 
-Four operator-facing parameters were added to the autopilot parameter group in \texttt{pg/\allowbreak autopilot\_\allowbreak multirotor.c} and surfaced as CLI settings in \texttt{cli/\allowbreak settings.c} via the names declared in \texttt{parameter\_\allowbreak names.h}: \texttt{ap\_\allowbreak alt\_\allowbreak chirp\_\allowbreak ampl} for the excitation amplitude, \texttt{ap\_\allowbreak alt\_\allowbreak chirp\_\allowbreak start\_\allowbreak freq\_\allowbreak hz\_\allowbreak centi} and \texttt{ap\_\allowbreak alt\_\allowbreak chirp\_\allowbreak end\_\allowbreak freq\_\allowbreak hz\_\allowbreak deci} for the start and end frequencies of the logarithmic sweep and \texttt{ap\_\allowbreak alt\_\allowbreak chirp\_\allowbreak sweep\_\allowbreak time\_\allowbreak sec} for the sweep duration. The end frequency is stored in units of deci-Hertz; the start frequency was migrated to centi-Hertz at a later stage so that lower start frequencies could be configured at the resolution needed for the sweep. The conversion to plain Hertz takes place when the values are passed to the chirp initialiser.
+Finally, four new CLI parameters were added to configure the chirp amplitude, start frequency, end frequency and sweep duration. These parameters allow the excitation signal to be adapted to different vehicles and measurement scenarios without modifying the source code.
 
 \endgroup
 
@@ -1730,12 +1569,6 @@ SP_{\text{AltHold}}(\omega) = \frac{P_{\text{AltHold}}(\omega)}
 
 These metrics allows us to evaluate the performance of the new controller parameters and make informed decisions about further adjustments to optimize the altitude hold control loop for improved stability, responsiveness and disturbance rejection. More details about that can be found in the next section, where the results of the tuning process are evaluated based on the step response and the Gang of Four plots.
 
-\subsection*{Drone Tuning}
-\subsubsection*{Evaluation of the Step Response}
-
-\subsubsection*{Evaluation Gang of Four}
-
-These metrics allows us to evaluate the performance of the new controller parameters and make informed decisions about further adjustments to optimize the altitude hold control loop for improved stability, responsiveness and disturbance rejection. More details about that can be found in the next section, where the results of the tuning process are evaluated based on the step response and the Gang of Four plots.
 
 \section{Position Hold Controller}
 
@@ -1903,21 +1736,121 @@ SP_{\text{Pos}}(\omega) =
 \label{eq:SP_pos}
 \end{equation}
 
-\subsection*{Drone Tuning}
+\newpage
 
-For this flight mode, the controller can be tuned by iteratively changing the PID parameters. After each parameter change, the expected closed-loop behaviour is recalculated from the identified frequency responses and evaluated using performance indicators (e.g.\ bandwidth, robustness and controller effort).
+\section{Drone Tuning}
 
-The evaluation is based on the measured transfer functions between the injected position setpoint chirp and the reconstructed position response. From these measurements, both the effective closed-loop response $T_{\text{Pos}}(\omega)$ and the corresponding controller and plant dynamics are obtained. This allows the influence of the individual parameters (P, I, D and filtering) on the overall position tracking and disturbance rejection to be assessed offline.
+The different control loops of the drone use different controller structures. However, the tuning methodology is largely the same for all of them. Therefore, this chapter focuses on the gyro controller. Once the tuning process is understood, the same approach can be applied to the remaining control loops.
 
-A key aspect of this tuning step is that the position controller does not act directly on the motors, but generates attitude targets (roll/pitch) which are then tracked by the inner angle and rate loops. Therefore, the tuning must ensure that the generated commands remain smooth and bounded and that the resulting closed-loop does not excite oscillations in the cascaded inner loops. By comparing the reconstructed closed-loop response for different parameter sets, a tuning candidate can be selected that improves low-frequency position accuracy while maintaining sufficient robustness against GPS noise and modelling uncertainties.
+The objective of the tuning process is to achieve a fast and responsive drone while maintaining sufficient stability and robustness. This is accomplished by combining time-domain and frequency-domain analysis methods.
 
-\subsubsection*{Evaluation of the Step Response}
+This chapter also describes the filter tuning process using spectra and spectrograms. Since these filters are only used in the gyro loop, this part is limited to the gyro controller.
 
-The step response of the position hold controller is evaluated using the same methodology described in the Theoretical Foundations (Section~\ref{sec:Control Loop Calculations}). The tracking response shows the system's ability to reach target positions in both axes, while the compliance response indicates disturbance rejection capability when external forces act on the drone.
+The filtering algorithms themselves were developed as part of the Project Thesis and are therefore not discussed in detail in this thesis. Instead, the focus is placed on their practical application and the resulting tuning process.
+
+\subsection*{Filter tuning}
+
+Before we start tuning the PID controllers, we need good filtering to have clean signals to work with. The general aim here is to use as little filtering as possible because too much filtering causes delay in the system. However, no quadcopter build is perfect, so at least some filtering is necessary in order to achieve a well-tuned system.
+
+After running the program in MATLAB and importing a log file, you can see in the command window which filter and PID settings were used during that flight. Our tool, in its current state, doesn't copy these values to the code automatically, so the first step is to copy the settings from the command window to the correct position in the code.
+
+We then start by looking at the spectrograms and spectra figures to assess the effectiveness of the current filtering. It is important to note that the spectra and spectrogram plots only show the data recorded in the loaded log file. Changing filter settings in the code does not affect these plots, as they reflect the settings that were active during the flight. To see the effect of any changes, a new flight must be performed and logged with the updated settings.
+
+The \textbf{spectra} in \autoref{fig:Spectra_tuning} shows the frequency composition of the gyro signals.
+Peaks in this plot point to vibration sources at specific frequencies.
+When we analyze this plot, we look for three main things:
+\begin{itemize}
+	\item \textbf{Resonance Peaks:} If all three axes show a peak at the same frequency, it usually means there is a resonance in the frame or due to a poorly fixed component. This can be fixed with a specific notch filter or by attaching the loose parts properly.
+	\item \textbf{Noise:} A high noise level indicates general vibration issues. By adjusting the D-term low pass filter, you can counteract this. Clean lines in the plot show that the filtering is working well.
+	\item \textbf{Axis Sum:} The axis sum shows the overall vibration level across all gyro axes. A properly filtered signal drops quickly after the motor frequencies (after around 600 Hz) and remains low, indicating effective suppression of high-frequency noise and resonances.
+\end{itemize}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.85\textwidth]{Spectra.png}
+	\caption{Frequency spectra of the measured gyro signals}
+	\label{fig:Spectra_tuning}
+\end{figure}
+
+We can see in this figure that our filter settings work well. The filtered signals have very little noise (smoother lines) and no large resonances. Only the yaw axis has a small peak around 550 Hz, which is acceptable. The axis sum drops nicely and stays low after about 600 Hz, approximately where the motor frequencies end. This shows the drone is running smoothly with vibrations under control. 
+The vibrations are also visible in the \textbf{spectrogram} plots in \autoref{fig:Spectrograms_tuning}.
+Here, frequencies are plotted against thrust level and the color shows the signal intensity. Red equals much vibration, blue equals little vibration.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.85\textwidth]{Spectrograms.jpg}
+	\caption{Spectrograms}
+	\label{fig:Spectrograms_tuning}
+\end{figure}
+
+\textbf{Vertical lines} in the spectrogram indicate vibrations at fixed frequencies that do not change with thrust. These usually come from frame resonances or loose components. Such resonances can be removed with static notch filters, but because they are fixed at a single frequency, they must be used carefully. For more robust suppression, especially when frequencies shift due to bent props or changing load conditions, a dynamic notch filter is usually the better choice. Static notch filters should only be used when the same resonance appears on all three axes at the same frequency.
+
+\textbf{Diagonal lines} show vibrations that change with motor speed, such as propeller noise. Using the RPM Filter, these propeller vibrations can be filtered out quite well. This filter uses real-time RPM telemetry data to place notch filters exactly on the fundamental and harmonic frequencies of each motor. In our case, we kept the RPM filter with the default settings. We used \textbf{three-bladed} propellers, so the filter has been set to \textbf{three harmonics}. As we can see in \autoref{fig:Spectrograms_tuning} under the filtered plots, the RPM filter removes the diagonal lines effectively.
+
+\textbf{Aliasing}\\
+When sampling a signal that contains frequencies higher than half of your sampling rate, aliasing can occur. This would make high-frequency content appear as lower frequencies, corrupting the measurement data. To avoid this, we applied a PT1 low-pass filter with a cutoff frequency not greater than the sampling frequency divided by two. As we use a 2 kHz logging frequency, we set the cutoff to 800 Hz as a conservative choice. If aliasing occurs on your drone, it appears in the spectrogram as diagonal lines going down as you move to higher frequencies.
+
+\textbf{Dynamic notch filter}\\
+The dynamic notch filter automatically finds and removes mechanical motor noise with the highest amplitude for each axis. The standard setting here is 2 notches from 100 to 600 Hz. Through testing, we found that changing the notch filter count from two to three provided better filtering. As shown in \autoref{fig:Spectrograms_tuning}, the filtered plots no longer contain diagonal lines. However, additional notches also introduce delay, requiring a trade-off between filtering performance and responsiveness.
+
+\textbf{D-term low-pass filter}\\
+The D-term in a PID controller amplifies high-frequency gyro noise. Therefore, this filter controls how much noise is fed back into the control loop. If too much noise passes through, the D-term causes rapid micro-oscillations in the motors, leading to overheating and potential hardware failure. For our initial flight, we configured a PT3 (third-order) filter with a cutoff of 100 Hz. We chose this filter because PT3 has a much steeper slope than a standard first- or second-order filter. This allows us to aggressively suppress high-frequency noise while introducing only limited delay at lower frequencies. The 100 Hz cutoff served as a conservative starting point and can be increased during tuning to improve responsiveness, provided that motor temperatures remain acceptable.
+
+\textbf{Yaw low-pass filter}\\
+The yaw low-pass filter suppresses high-frequency noise on the yaw axis. Since yaw typically experiences less vibration than roll and pitch, less aggressive filtering is often sufficient. For our setup, the default Betaflight settings provided satisfactory performance.
+
+\newpage
+
+\subsection*{Gyro PID Tuning}
+
+To tune the PID controllers, our program provides two different approaches: the step response and the Gang of Four. Both methods are based on the estimated plant and controller transfer functions, allowing for a systematic evaluation of the tuning adjustments. The step response is a time-domain analysis that shows how the system reacts to a sudden change in the reference input, while the Gang of Four is a frequency-domain analysis that provides insights into the stability and robustness of the system across a range of frequencies. For beginners, the step response is often more intuitive and easier to interpret, while the Gang of Four offers a more comprehensive view of the system's behaviour, especially for more experienced users.
+
+\subsubsection*{Evaluation Step Response}
+
+The \textbf{step response} plot shows exactly what happens when the pilot moves the stick rapidly. You can see how fast the drone reacts to the command, if it overshoots the target value and how quickly it settles to a steady state. The plot shows three curves, the yellow curve represents the measured response using the active PID values during flight, the blue curve shows the calculated response derived from the plant model and the red curve illustrates the predicted response using the newly tuned PID values implemented in the code.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1.0\textwidth]{step_response_roll.png}
+	\caption{Step Response}
+	\label{fig:step_response_tuning}
+\end{figure}
+
+\begin{itemize}
+	\item Tracking (Top Plot): It shows how the drone follows a command.
+	\item Compliance (Bottom Plot): It shows how the drone reacts to external disturbances, like wind.
+\end{itemize}
 
 \subsubsection*{Evaluation Gang of Four}
 
-The Gang of Four plots characterize the position controller's stability and performance across frequencies, following the framework established in the Theoretical Foundations (Section~\ref{sec:Control Loop Calculations}). The plots compare actual parameters with the newly tuned parameters, providing insight into tracking accuracy, disturbance sensitivity, controller effort, and compliance across the position control bandwidth.
+The Gang of Four is a standard set of four transfer functions that together fully characterize a feedback control system. These four plots represent the Sensitivity (S), Complementary Sensitivity (T, Bode plot), Controller Effort (SC) and Compliance (SP). By analyzing these plots, we can assess the stability of the drone, its ability to follow commands, its response to external disturbances and the workload on the motors, all in one comprehensive view.
+
+Figure~\ref{fig:gangoffour_tuning_gyro} shows the Gang of Four plots for our tuned system.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1.0\textwidth]{gang_of_four_roll.png}
+	\caption{Gang of Four}
+	\label{fig:gangoffour_tuning_gyro}
+\end{figure}
+
+During our tuning process, we found these plots to be invaluable for diagnosing and improving the drone's performance. While all four plots provide useful information, we focused primarily on three of them:
+\begin{enumerate}
+	\item Sensitivity (S):
+	      This plot shows how the system reacts to noise and reference commands. The peak value is a key indicator of stability. In our experience, a peak below 6 dB is ideal for a well-damped system. Higher peaks suggest the drone might oscillate or become unstable, especially during aggressive maneuvers. We noticed that reducing the peak often required balancing stability with responsiveness, as overly conservative settings could make the drone feel sluggish.
+	\item Controller Effort (SC):
+	      This plot indicates how much work the controller is doing to maintain stability and follow commands. High effort at higher frequencies usually means the system is reacting to sensor noise rather than real disturbances. This can lead to unnecessary motor activity, overheating and wear. During tuning, we found that adjusting the D-term gains and optimizing filters helped reduce high-frequency effort while keeping the drone responsive.
+	\item Compliance (SP):
+	      Compliance measures how much external disturbances, like wind or propwash, affect the drone's motion. Lower compliance means the drone resists disturbances more effectively. We observed that increasing the P-term gains improved disturbance rejection, but setting them too high caused oscillations during rapid throttle changes. Finding the right balance was critical for maintaining both stability and responsiveness.
+\end{enumerate}
+
+In our experience, the Gang of Four plots provided a clear and structured way to assess the impact of tuning changes. Adjustments to the PID gains directly revealed their effects on stability, control effort and disturbance rejection. This enabled an efficient iterative tuning process and increased confidence in achieving robust performance across varying conditions.
+
+\subsubsection*{PID Tuning Summary}
+
+Our tuning objective was to achieve a fast step response without overshoot while maintaining good disturbance rejection and stability margins. It is important to note that there is no universally perfect tune. Settings depend heavily on pilot preferences. Racing pilots typically prefer aggressive, responsive tuning for competitive performance, while freestyle pilots may prioritize smoothness and flight feel. We focused on achieving robustness and a step response without overshoot. Robustness is practical in this case because it handles scenarios such as slightly bent propellers, a battery positioned off-center, or additional components such as cameras mounted on the drone. It should also be mentioned that the axes roll and pitch should be tuned as similarly as possible. This is because symmetrical tuning makes the drone more intuitive to pilot. When both axes respond identically to stick inputs, the drone behaves predictably during combined maneuvers, making control feel natural.
+
+The tuning process involved iteratively adjusting PID gains in MATLAB while monitoring both the step response and Gang of Four plots side by side. We found and used an online PID simulator as a guide to build intuition for how P, I and D values affect system behaviour. For the step response, we aimed for a fast rise time with minimal or no overshoot and a smooth curve without oscillations. On the Gang of Four side, we wanted the sensitivity peak to stay below 6 dB for good stability margins, low compliance across the control bandwidth for effective disturbance rejection and reasonable controller effort to avoid amplifying sensor noise. All transfer functions should show smooth, rounded shapes without sharp resonances that indicate problematic dynamics. Once we were satisfied with the curves and their shapes, we could take the P, I and D values for each axis from the command window in MATLAB and set them via the Betaflight configurator to the drone.
 
 \newpage
 
