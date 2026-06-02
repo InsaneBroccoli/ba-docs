@@ -1073,7 +1073,7 @@ The control loop in Acro mode can be represented as follows:
 \begin{figure}[H]
     \centering
     \includegraphics[width=1.0\textwidth]{Regelkreis_Gyro.png}
-    \caption{Control loop structure in Acro mode showing the chirp signal injection, the PI and D controller branches, the real drone dynamics (\textit{P real}), the gyro filter and the disturbance inputs used for system identification and frequency-response analysis.}
+    \caption{Control loop structure in Acro mode showing the chirp signal injection, the PI and D controller branches, the real drone dynamics (\textit{P Gyro}), the gyro filter and the disturbance inputs used for system identification and frequency-response analysis.}
     \label{fig:control_loop_acro}
 \end{figure}
 
@@ -1723,50 +1723,57 @@ These metrics allows us to evaluate the performance of the new controller parame
 
 \section{Position Hold Controller}
 
-Position Hold is an autonomous control mode that maintains the aircraft at a fixed geographic location and constant altitude without pilot intervention. By combining simultaneous altitude hold and position hold, the system processes GPS position data alongside barometric or GPS altitude measurements. These inputs are used to compute corrective attitude commands that resist external disturbances such as wind or drift. In Angle and Acro modes, a stable hover requires continuous pilot input to compensate for these disturbances. In Position Hold, the system establishes a target position based on the current GPS location and aims to maintain the aircraft close to this point by evaluating the position error in both the North-South and East-West axes. These errors are converted into corrective attitude commands through a PIDA controller. This controller operates as an outer control loop commanding the inner angle controller, integrating cleanly with the existing flight control structure.
+Position Hold is an autonomous flight mode that allows the aircraft to maintain its current position without continuous pilot intervention. The flight controller continuously evaluates the position of the aircraft and generates corrective commands to counteract disturbances such as wind or drift. Similar to the previously discussed flight modes, the controller is integrated into the existing control architecture and uses GPS measurements as feedback. The following sections explain the underlying control structure, coordinate transformation and required sensors in more detail.
 
-One major aspect of this control strategy is the coordinate transformation. The controller calculates corrective efforts in the Earth-Fixed (EF) frame (North, East, Down) based on GPS data, which must be mapped into the aircraft's Body Frame (BF) (roll, pitch, yaw) for execution by the flight controller. This coordinate transformation is performed after the entire PID calculation, directly rotating the computed attitude commands using the aircraft's instantaneous yaw angle. 
+\subsubsection*{Position Hold Control Loop}
 
-Reliable Position Hold operation depends on a functioning GPS module with a strong satellite fix, providing fundamental position and velocity measurements. A magnetometer (compass) is strongly recommended, as accurate heading estimation directly determines whether corrective attitudes point toward or away from the target location. Without a magnetometer, the system must estimate its heading from the aircraft's flight path by flying a straight-line segment for around 50 to 100 meters at sufficient speed, with a positive pitch angle and zero roll or yaw input.
+The Position Hold controller represents the outermost control layer in the flight control architecture. Its objective is to maintain the aircraft at a desired geographic location by continuously evaluating the position error and generating corrective attitude commands. These commands are forwarded to the existing angle controller, resulting in a cascaded control structure.
 
-Once Position Hold stabilizes, the system maintains altitude using an automatically-adjusted throttle command, while roll and pitch are regulated to zero out position errors.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\textwidth]{Control_Loop_PosHold.png}
+    \caption{Block diagram of the Betaflight Position Hold controller. The position error is processed by proportional, integral, derivative and acceleration feedback paths. After coordinate transformation and PT3 upsampling, the resulting roll and pitch references are supplied to the inner angle control loop.}
+    \label{fig:Position_hold_control_loop}
+\end{figure}
 
 \subsection*{Betaflight Firmware}
 \label{sec:Position Hold Betaflight Firmware}
 
-In the Betaflight firmware, Position Hold operates asynchronously, executing once per GPS update rather than at the fixed, high-speed rate of the main control loop. The algorithm processes distance and velocity estimates in Earth-fixed coordinates before rotating the computed PID sum into the aircraft's body frame as roll and pitch angle commands. 
+While the previous section described the general control structure, the Betaflight firmware introduces several implementation-specific features to improve stability, robustness and GPS-based position tracking performance.
 
-Upon receiving new GPS data, the controller computes the horizontal distance vector from the current aircraft position to the target hold point. This computation runs only when fresh GPS data arrives, effectively reducing computational overhead and exploiting the update rate of the GPS unit. The result is a 2D vector with components in the East-West (longitude) and North-South (latitude) directions, expressed in centimeters.
+Unlike the inner attitude controller, which operates at a fixed update rate of 100 Hz, the Position Hold controller is executed asynchronously and runs only when new GPS data becomes available.
 
-The position controller operates with two distinct operational phases: the \textbf{stopping phase} and the \textbf{holding phase}. The stopping phase is triggered when the pilot deflects the control sticks while in position hold. During this phase, the proportional, derivative and acceleration terms remain active while the integral term accumulation is suppressed. Additionally, any accumulated integral term is gradually leaked away to prevent windup upon release. The derivative term is boosted by a factor of 1.6 to enable rapid deceleration. The controller monitors both the raw velocity and its low-pass filtered counterpart. When their signs differ (indicating direction reversal), the aircraft has stopped on that axis, which then transitions into the holding phase. Upon initialization, the controller always enters the stopping phase first. However, if the sticks remain centered, the stopping phase completes immediately without the 1.6x D-boost applying and the controller transitions directly into the holding phase.
+To improve both position capture and stationary hovering performance, the controller operates in two distinct phases: the \textbf{stopping phase} and the \textbf{holding phase}.
 
-During the holding phase, all four feedback terms (P, I, D, A) contribute to the control output. The integral term becomes active and accumulates position error over time, enabling steady-state error elimination. This phase persists as long as the sticks remain centered.
+The stopping phase is activated whenever the pilot deflects the control sticks while Position Hold is enabled. During this phase, only the proportional, derivative and acceleration terms contribute to the control output, while accumulation of the integral term is suppressed. Any previously accumulated integral contribution is gradually leaked away to prevent windup when the aircraft is brought back to the target position. To improve braking performance, the derivative contribution is multiplied by a factor of 1.6.
 
-For each axis, the four feedback terms are computed and summed:
+The controller continuously monitors both the raw velocity estimate and its filtered counterpart. When their signs differ, indicating a reversal of motion, the aircraft is considered stopped on that axis and the controller transitions into the holding phase. During initialization, the controller always enters the stopping phase first. However, if the control sticks remain centered, the transition into the holding phase occurs immediately and the derivative boost is never applied.
 
-\begin{equation} 
-u_{\text{axis}} = K_p \cdot d_{\text{axis}} + K_i \cdot \int d_{\text{axis}} \, dt + K_d \cdot \dot{d}_{\text{axis}} + K_a \cdot \ddot{d}_{\text{axis}}
-\end{equation}
+During the holding phase, all four feedback terms contribute to the control output. The integral term becomes active and accumulates position error over time, allowing steady-state position errors to be eliminated.
 
-where $d_{\text{axis}}$ is the position error in centimeters, $\dot{d}_{\text{axis}} = v_{\text{filtered}}$ and $\ddot{d}_{\text{axis}} = a_{\text{filtered}}$ represent the velocity and acceleration of the position error. Velocity is computed numerically as the finite difference of successive position measurements scaled by the GPS update frequency, then low-pass filtered using an adaptive first-order (PT1) filter. The cutoff frequency is adjusted dynamically based on the current GPS data interval. Acceleration is derived by differentiating the filtered velocity and applying a second adaptive PT1 filter to further attenuate high-frequency noise.
+To reduce GPS-induced measurement noise, the velocity estimate is filtered using an adaptive first-order (PT1) low-pass filter whose cutoff frequency depends on the current GPS update interval. The acceleration estimate is obtained by differentiating the filtered velocity signal and applying a second adaptive PT1 filter.
 
-After computing both P+I and D+A components for each axis, their magnitudes are evaluated and constrained if necessary. First the firmware limits the magnitude of the combined D and A contributions to 35 degrees to prevent overly aggressive corrections that could cause instability when correcting GPS position errors or when initiating position hold at high speeds. Should this limit be exceeded, the vector is scaled proportionally:
+Before the generated attitude commands are forwarded to the inner control loop, several safety limits are applied. First, the combined derivative and acceleration contribution is limited to a maximum magnitude of \(35^\circ\). This prevents excessively aggressive corrections during rapid position changes or when Position Hold is activated at higher speeds. If the limit is exceeded, the vector is scaled proportionally:
 
 \begin{equation}
-\text{if} \quad |\vec{u}_{\text{DA}}| > 35\text{°}, \quad
-\vec{u}_{\text{DA}} \leftarrow \vec{u}_{\text{DA}} \cdot \frac{35\text{°}}{|\vec{u}_{\text{DA}}|}
+\text{if} \quad |\vec{u}_{\text{DA}}| > 35^\circ, \quad
+\vec{u}_{\text{DA}} \leftarrow \vec{u}_{\text{DA}}
+\cdot
+\frac{35^\circ}{|\vec{u}_{\text{DA}}|}
 \end{equation}
 
-After adding the P+I components, the complete attitude command is constrained to the configurable maximum allowed tilt angle using the same proportional scaling method:
+After the proportional and integral contributions have been added, the complete PIDA command vector is constrained to the configurable maximum tilt angle:
 
-\begin{equation} 
-    \text{if} \quad |\vec{u}_{\text{PIDA}}| > \theta_{\max}, \quad 
-    \vec{u}_{\text{PIDA}} \leftarrow \vec{u}_{\text{PIDA}} \cdot \frac{\theta_{\max}}{|\vec{u}_{\text{PIDA}}|} 
+\begin{equation}
+\text{if} \quad |\vec{u}_{\text{PIDA}}| > \theta_{\max}, \quad
+\vec{u}_{\text{PIDA}} \leftarrow \vec{u}_{\text{PIDA}}
+\cdot
+\frac{\theta_{\max}}{|\vec{u}_{\text{PIDA}}|}
 \end{equation}
 
-Because the position controller updates only at the slower GPS frequency (< 10 Hz) while the inner angle controller operates at 100 Hz, a PT3 upsampling filter interpolates the body-frame attitude commands to 100 Hz reference rates. This reduces aliasing effects from discrete GPS updates and minimizes control latency. 
+Since the Position Hold controller operates only at the GPS update rate, typically below 10 Hz, while the inner angle controller runs at 100 Hz, a PT3 upsampling filter is used to interpolate the generated attitude commands to the higher controller rate. This provides smooth attitude references for the inner angle controller despite the low GPS update rate.
 
-Finally, a sanity check continuously monitors the distance from the target against a dynamically-scaled threshold based on ground speed. The sanity distance is computed as twice the distance the aircraft would travel in two seconds at the current ground speed, with a minimum of 10 meters. If the aircraft drifts beyond this limit, indicating a GPS anomaly or extreme external disturbance, Position Hold disengages to return manual control to the pilot.
+Finally, a sanity check continuously monitors the distance between the aircraft and the target position. The allowable distance is scaled dynamically with ground speed and corresponds to twice the distance the aircraft would travel within two seconds, with a minimum threshold of 10 meters. If this limit is exceeded, indicating a GPS anomaly or loss of position control, Position Hold is automatically disengaged and control is returned to the pilot.
 
 \subsubsection*{Position Hold Control Loop}
 
