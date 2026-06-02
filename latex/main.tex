@@ -1996,17 +1996,17 @@ For each step, the closed-loop step response at the higher tuning was predicted 
         Step & Source & \(t_r\) [\si{\second}] & overshoot [\si{\percent}] \\
         \midrule
         bad \(\rightarrow\) moderate   & base (bad)      & 0.034 & 5.2 \\
-                                       & predicted       & 0.015 & 4.0 \\
+                                       & analytical      & 0.015 & 4.0 \\
                                        & measured        & 0.016 & 4.9 \\
         \midrule
         moderate \(\rightarrow\) tuned & base (moderate) & 0.016 & 4.9 \\
-                                       & predicted       & 0.014 & 4.8 \\
+                                       & analytical      & 0.014 & 4.8 \\
                                        & measured        & 0.015 & 4.6 \\
         \bottomrule
     \end{tabular}
 \end{table}
 
-The analytical prediction reproduces both the rise time and the overshoot of the measured response for each step. The predicted and measured rise times agree to within \SI{0.001}{\second} for both steps, and the predicted overshoot lies within about \SI{0.9}{} percentage points of the measured value. The larger bad \(\rightarrow\) moderate step shows the slightly larger overshoot gap, consistent with the agreement loosening as the gain change grows.
+The analytical prediction reproduces both the rise time and the overshoot of the measured response for each step. The analytical and measured rise times agree to within \SI{0.001}{\second} for both steps, and the analytical overshoot lies within about \SI{0.9}{} percentage points of the measured value. The larger bad \(\rightarrow\) moderate step shows the slightly larger overshoot gap, consistent with the agreement loosening as the gain change grows.
 
 \newpage
 
@@ -2085,26 +2085,6 @@ The altitude-hold loop was identified by injecting an exponential chirp into the
 
 The althold loop runs at \SI{100}{\hertz}, decimated from the \SI{8}{\kilo\hertz} inner loops. The chirp was swept exponentially from \SI{0.05}{\hertz} to \SI{3}{\hertz} over a \SI{75}{\second} sweep, repeated three times per flight (about \SI{230}{\second} in total). Frequency-domain estimates use Welch's method with a Hann window of \SI{15}{\second} length and \SI{90}{\percent} overlap, giving a frequency resolution of \(\Delta f \approx \SI{0.067}{\hertz}\).
 
-\subsection*{Identified Plant Response}
-
-The plant from throttle offset to measured altitude was estimated for the default flight. The associated Bode magnitude, phase and joint coherence are reported in the plant identification figure of \autoref{sec:System Identification Using Chirp Signals}. Plant magnitude, phase and joint coherence at four reference frequencies are listed in \autoref{tab:althold_plant}. The plant magnitude slope between \SI{0.1}{\hertz} and \SI{1}{\hertz} is \(-39\,\text{dB/decade}\). The joint coherence crosses 0.79 at \SI{0.27}{\hertz}, reaches 0.89 at \SI{1}{\hertz} and falls to 0.27 by \SI{3}{\hertz}; the lowest Welch bin (\SI{0.067}{\hertz}) has a coherence below 0.05. % TODO: replace the methodology figure cross-reference with the actual \label{} used at main.tex:1104 once verified
-
-\begin{table}[H]
-    \centering
-    \caption{Identified althold plant magnitude, phase and joint coherence at four reference frequencies (default flight).}
-    \label{tab:althold_plant}
-    \begin{tabular}{rrrr}
-        \toprule
-        \(f\) [\si{\hertz}] & \(|P|\) [\si{\decibel}] & \(\angle P\) [\si{\degree}] & coherence \\
-        \midrule
-        0.13 & \(+20.51\) & \(-160.9\) & 0.65 \\
-        0.27 &  \(+9.18\) & \(+175.6\) & 0.79 \\
-        1.00 & \(-13.63\) & \(+106.1\) & 0.89 \\
-        3.00 & \(-24.00\) & \(+159.1\) & 0.27 \\
-        \bottomrule
-    \end{tabular}
-\end{table}
-
 \subsection*{Closed-Loop Frequency Response}
 
 \begin{figure}[H]
@@ -2177,51 +2157,17 @@ Per-case step-response metrics are listed in \autoref{tab:althold_step}. Rise ti
         Case    & Source     & \(t_r\) [\si{\second}] & overshoot [\si{\percent}] \\
         \midrule
         default & measured   & 1.46 &  5.0 \\
-        tuned   & measured   & 1.21 &  7.9 \\
         tuned   & analytical & 1.14 & 16.2 \\
-        medium  & measured   & 1.57 &  7.4 \\
+        tuned   & measured   & 1.21 &  7.9 \\
         medium  & analytical & 1.41 & 22.4 \\
-        bad     & measured   & 1.69 & 13.8 \\
+        medium  & measured   & 1.57 &  7.4 \\
         bad     & analytical & 1.64 & 28.1 \\
+        bad     & measured   & 1.69 & 13.8 \\
         \bottomrule
     \end{tabular}
 \end{table}
 
 The absolute difference between analytical and measured overshoot is \SI{8.3}{} percentage points for tuned, \SI{15.0}{} percentage points for medium and \SI{14.3}{} percentage points for bad. Rise-time differences between analytical and measured remain below \SI{0.07}{\second} for all three cases.
-
-\subsection*{Time-Domain Flight Tracking}
-
-Altitude tracking over the chirp window is shown in \autoref{fig:althold_tracking}, the corresponding throttle offset in \autoref{fig:althold_throttle}. \autoref{tab:althold_time} lists root-mean-square tracking error, peak tracking error and peak throttle excursion over each chirp window. RMS error remains within \SIrange{126}{132}{\centi\meter} for the default, tuned and medium cases and rises to \SI{145.69}{\centi\meter} for the bad case. Peak tracking error ranges from \SI{283}{\centi\meter} (default) to \SI{395}{\centi\meter} (bad). Peak throttle excursion lies between \(80\) and \(113\) PWM units.
-
-\begin{figure}[!htbp]
-    \centering
-    \includegraphics[width=0.95\linewidth]{althold/althold_tracking.png}
-    \caption{Altitude setpoint and measured altitude over the chirp window. Top: default flight. Bottom: tuned flight.}
-    \label{fig:althold_tracking}
-\end{figure}
-
-\begin{figure}[!htbp]
-    \centering
-    \includegraphics[width=0.95\linewidth]{althold/althold_throttle.png}
-    \caption{Throttle offset over the chirp window for the default and tuned flights, overlaid.}
-    \label{fig:althold_throttle}
-\end{figure}
-
-\begin{table}[H]
-    \centering
-    \caption{Time-domain tracking error and control effort over the chirp window.}
-    \label{tab:althold_time}
-    \begin{tabular}{lrrr}
-        \toprule
-        Case    & RMS error [\si{\centi\meter}] & peak \(|e|\) [\si{\centi\meter}] & peak \(|\Delta u|\) [PWM] \\
-        \midrule
-        default & 128.30 & 283.0 & 87  \\
-        tuned   & 126.35 & 309.0 & 113 \\
-        medium  & 131.98 & 318.0 & 81  \\
-        bad     & 145.69 & 395.0 & 80  \\
-        \bottomrule
-    \end{tabular}
-\end{table}
 
 \section{Position Hold Controller}
 
@@ -2245,32 +2191,12 @@ The position-hold loop operates at the GPS update rate of approximately \SI{10}{
 
 The chirp was swept exponentially from \SI{0.05}{\hertz} to \SI{3}{\hertz} over a \SI{75}{\second} sweep (amplitude \SI{70}{\centi\meter}), remaining below the \SI{5}{\hertz} Nyquist limit of the GPS rate. A lead-lag pre-filter was applied to the injected signal to keep the combined D+A vector within the firmware's \SI{35}{\degree} limit; its parameters were set so that the simulated D+A contribution stayed below that limit across the band. Frequency-domain estimates use Welch's method with a Hann window of \SI{15}{\second} length and \SI{90}{\percent} overlap, giving a frequency resolution of \(\Delta f \approx \SI{0.067}{\hertz}\).
 
-\subsection*{Identified Plant Response}
-
-The plant from the position setpoint to the measured position was estimated for the baseline flight. Its magnitude, phase, and joint coherence at four reference frequencies are listed in \autoref{tab:poshold_plant}. The plant magnitude slope between \SI{0.1}{\hertz} and \SI{1}{\hertz} is about \(-32\,\text{dB/decade}\). The joint coherence rises above 0.8 near \SI{0.27}{\hertz} and stays high up to \SI{3}{\hertz} (0.97 at \SI{1}{\hertz}), while below \SI{0.27}{\hertz} it drops sharply, which is consistent with wind disturbance and GPS noise dominating the low-frequency position error.
-
-\begin{table}[H]
-    \centering
-    \caption{Identified position-hold plant magnitude, phase, and joint coherence at four reference frequencies (baseline flight).}
-    \label{tab:poshold_plant}
-    \begin{tabular}{rrrr}
-        \toprule
-        \(f\) [\si{\hertz}] & \(|P|\) [\si{\decibel}] & \(\angle P\) [\si{\degree}] & coherence \\
-        \midrule
-        0.13 & \(+28.24\) & \(+175.0\) & 0.33 \\
-        0.27 & \(+13.67\) & \(+147.4\) & 0.83 \\
-        1.00 &  \(+0.24\) &  \(+39.1\) & 0.97 \\
-        3.00 &  \(+6.86\) &  \(+27.1\) & 0.91 \\
-        \bottomrule
-    \end{tabular}
-\end{table}
-
 \subsection*{Closed-Loop Frequency Response}
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=1.0\linewidth]{poshold/poshold_gang_of_four.png}
-    \caption{Gang of Four magnitude responses for the position-hold loop. Tracking \(T\): the calculated response (proposed controller applied to the baseline-flight plant), the measured baseline, and the measured proposed tuning. Sensitivity \(S\), controller effort \(SC\), and compliance \(SP\): calculated responses (proposed controller) for the baseline-flight and proposed-flight plants.}
+    \caption{Gang of Four magnitude responses for the position-hold loop. Tracking \(T\): the analytical response (proposed controller applied to the baseline-flight plant), the measured baseline, and the measured proposed tuning. Sensitivity \(S\), controller effort \(SC\), and compliance \(SP\): analytical responses (proposed controller) for the baseline-flight and proposed-flight plants.}
     \label{fig:poshold_gof}
 \end{figure}
 
@@ -2310,7 +2236,7 @@ Per-tuning step-response metrics are listed in \autoref{tab:poshold_step}. Rise 
     \label{tab:poshold_step}
     \begin{tabular}{llrr}
         \toprule
-        Tuning   & Source     & \(t_r\) [\si{\second}] & overshoot [\si{\percent}] \\
+        Case     & Source     & \(t_r\) [\si{\second}] & overshoot [\si{\percent}] \\
         \midrule
         baseline & measured   & 1.4 & 30.0 \\
         proposed & analytical & 1.3 & 44.7 \\
@@ -2331,7 +2257,7 @@ Within the tested range, the analytical prediction reproduced both the rise time
 
 \subsection*{Practical workflow recommendations}
 
-These observations suggest that the tool is well suited to incremental retuning of the rate gains: identifying the plant at the current tune and predicting one step at a time appeared to give close agreement here, and re-identifying between steps is advisable when a larger change is intended. The configurations under which these results were obtained --- the experimental airframe and firmware build, the rate loop running at \SI{8}{\kilo\hertz}, and the PID range spanned by the bad, moderate, and tuned settings --- bound the range over which the observations above should be transferred to other setups.
+These observations suggest that the tool is well suited to incremental retuning of the rate gains: identifying the plant at the current tune and predicting one step at a time appeared to give close agreement here, and re-identifying between steps is advisable when a larger change is intended. The configurations under which these results were obtained (the experimental airframe and firmware build, the rate loop running at \SI{8}{\kilo\hertz}, and the PID range spanned by the bad, moderate, and tuned settings) bound the range over which the observations above should be transferred to other setups.
 
 \section{Angle Controller}
 
@@ -2341,14 +2267,14 @@ Within the tested range, the analytical prediction reproduced the measured rise-
 
 \subsection*{Practical workflow recommendations}
 
-These observations suggest that the tool is best applied to incremental retuning of the angle gain: identifying the plant at the current tune and predicting one gain step at a time appeared to give the closest agreement here, and re-identifying between steps is advisable when a larger change is intended. The configurations under which these results were obtained --- the experimental airframe and firmware build, a proportional angle controller with a third-order pre-filter at \(f_{c} = \SI{50}{\hertz}\), and the gain range \(P = 50\) to \(100\) --- bound the range over which the observations above should be transferred to other setups.
+These observations suggest that the tool is best applied to incremental retuning of the angle gain: identifying the plant at the current tune and predicting one gain step at a time appeared to give the closest agreement here, and re-identifying between steps is advisable when a larger change is intended. The configurations under which these results were obtained (the experimental airframe and firmware build, a proportional angle controller with a third-order pre-filter at \(f_{c} = \SI{50}{\hertz}\), and the gain range \(P = 50\) to \(100\)) bound the range over which the observations above should be transferred to other setups.
 
 \section{Altitude Hold Controller}
 \label{sec:discussion_althold}
 
 The results section establishes that the analytical tuning model reproduces the measured closed-loop response within a bounded range of controller-gain settings around the baseline and that the agreement degrades as the gain step from baseline grows larger. The four cases reported in \autoref{tab:althold_gof_T} and \autoref{tab:althold_step} also expose two further patterns worth addressing: the analytical step response systematically over-predicts the measured overshoot and the joint coherence of the identification limits the frequency band over which any of these comparisons can be trusted. This discussion treats the four themes in turn: the validity range of the prediction, the identification limits, the step-response over-prediction and the practical workflow that follows from them.
 
-\subsection*{Validity range of the analytical prediction}
+\subsection*{Validity range of the prediction}
 
 The model-vs-measured divergence reported in the results section grows monotonically with the gain step from the default tune: the \(|T|\)-peak gap rises from \SI{1.08}{\decibel} (tuned) through \SI{1.45}{\decibel} (medium) to \SI{1.93}{\decibel} (bad) in \autoref{tab:althold_gof_T} and the step-response overshoot gap rises from \SI{8.3}{} to \SI{15.0}{} percentage points across the same cases in \autoref{tab:althold_step}. D-Boost and I-Term-Relax are disabled during the chirp and throttle saturation does not occur within the tested envelope, so candidate causes that depend on those firmware nonlinearities do not apply here.
 
@@ -2358,7 +2284,7 @@ Within the tested range, this places the tool in the role of a guidance instrume
 
 \subsection*{Identification limits}
 
-The identified plant has a magnitude slope close to \(-40\,\text{dB/decade}\) between \SI{0.1}{\hertz} and \SI{1}{\hertz} (\autoref{tab:althold_plant}) and the joint coherence rises above 0.79 only between approximately \SI{0.27}{\hertz} and \SI{1}{\hertz}. Outside this band the prediction has no measured ground truth to support it.
+The identified plant has a magnitude slope close to \(-40\,\text{dB/decade}\) between \SI{0.1}{\hertz} and \SI{1}{\hertz}, and the joint coherence rises above 0.79 only between approximately \SI{0.27}{\hertz} and \SI{1}{\hertz}. Outside this band the prediction has no measured ground truth to support it.
 
 The narrow coherence band is consistent with several mechanisms. The exponential chirp distributes its energy logarithmically across frequency, so the lowest decade is under-excited; the Welch estimate at the lowest bin (\SI{0.067}{\hertz}) contains only about one period of that frequency within the \SI{15}{\second} window and therefore has high variance independently of the chirp design. Environmental disturbances such as ambient drift, thermals and slow wind components dominate the altitude signal below \SI{0.3}{\hertz} and reduce the input--output correlation that the coherence measures. The controller pre-filter and the disabled-during-identification nonlinearities together limit the usable upper band.
 
@@ -2380,21 +2306,21 @@ The three preceding subsections converge on a small set of recommendations for u
 
 Identify the plant from a flight at the \emph{current} tune and do not reuse a plant identification across substantially different controllers. Limit each retuning step to small increments on the scale of the default-to-tuned step described in the results section; re-fly and re-identify between steps when a larger change is intended. Use the Gang of Four as the primary tuning artefact and treat the synthesised step response as a sanity check rather than a precise prediction. Read the analytical Gang of Four as design guidance only within the approximately \SIrange{0.3}{1}{\hertz} coherence band and treat values reported outside that band as uncertain.
 
-Two methodological notes follow from the same analysis. The chirp amplitude must be chosen so that the actuator does not saturate within the identification window: D-Boost and I-Term-Relax are disabled during the chirp specifically to keep the closed loop linear and throttle saturation would violate the same assumption; if saturation is observed in the throttle-offset trace, the chirp signal must be re-designed before the resulting identification is trusted. Finally, the configurations under which the tool was validated in this work---firmware build \href{https://github.com/InsaneBroccoli/betaflight/commit/898435640}{\texttt{InsaneBroccoli/betaflight @ 898435640}} (branching from upstream baseline \texttt{04e37a122}) with \texttt{USE\_ALTHOLD\_CHIRP} enabled, the airframe and propulsion configuration of the experimental drone and a hover-baseline operating point---bound the range over which the claims above should be transferred to other setups.
+Two methodological notes follow from the same analysis. The chirp amplitude must be chosen so that the actuator does not saturate within the identification window: D-Boost and I-Term-Relax are disabled during the chirp specifically to keep the closed loop linear, and throttle saturation would violate the same assumption; if saturation is observed in the throttle-offset trace, the chirp signal must be re-designed before the resulting identification is trusted. Finally, the configurations under which the tool was validated in this work bound the range over which the claims above should be transferred to other setups: firmware build \href{https://github.com/InsaneBroccoli/betaflight/commit/898435640}{\texttt{InsaneBroccoli/betaflight @ 898435640}} (branching from upstream baseline \texttt{04e37a122}) with \texttt{USE\_ALTHOLD\_CHIRP} enabled, the airframe and propulsion configuration of the experimental drone, and a hover-baseline operating point.
 
 \section{Position Hold Controller}
 
 \subsection*{Identification limits}
 
-The position loop is identified through GPS feedback at approximately \SI{10}{\hertz}, which bounds the usable bandwidth far below that of the \SI{8}{\kilo\hertz} inner loops and introduces roughly \SI{100}{\milli\second} of latency through the cascaded position-error, PIDA, and rate stages. The joint coherence of the identification rises above 0.8 only between about \SI{0.27}{\hertz} and \SI{3}{\hertz} (\autoref{tab:poshold_plant}); below that band, wind disturbance and GPS noise dominate the position-error signal, so the frequency response there carries little information.
+The position loop is identified through GPS feedback at approximately \SI{10}{\hertz}, which bounds the usable bandwidth far below that of the \SI{8}{\kilo\hertz} inner loops and introduces roughly \SI{100}{\milli\second} of latency through the cascaded position-error, PIDA, and rate stages. The joint coherence of the identification rises above 0.8 only between about \SI{0.27}{\hertz} and \SI{3}{\hertz}; below that band, wind disturbance and GPS noise dominate the position-error signal, so the frequency response there carries little information.
 
-\subsection*{Validity of the prediction}
+\subsection*{Validity range of the prediction}
 
-Within the coherent band the analytical tracking response is consistent with the measured proposed tuning, and the step-response prediction is closer than the GPS-limited resolution might suggest --- the predicted overshoot lies within about \num{3} percentage points of the measured value (\autoref{tab:poshold_step}). The proposed tuning increases overshoot relative to the baseline while giving a faster rise, and the measured proposed flight remained stable throughout. Because the step reconstruction is more sensitive to the un-excited high-frequency content and to GPS quantisation than the Gang of Four, the frequency-domain comparison appears to be the more reliable basis for tuning decisions here.
+Within the coherent band the analytical tracking response is consistent with the measured proposed tuning, and the step-response prediction is closer than the GPS-limited resolution might suggest: the predicted overshoot lies within about \num{3} percentage points of the measured value (\autoref{tab:poshold_step}). The proposed tuning increases overshoot relative to the baseline while giving a faster rise, and the measured proposed flight remained stable throughout. Because the step reconstruction is more sensitive to the un-excited high-frequency content and to GPS quantisation than the Gang of Four, the frequency-domain comparison appears to be the more reliable basis for tuning decisions here.
 
 \subsection*{Practical workflow recommendations}
 
-These observations suggest treating the position-hold tool as a proof of concept rather than a precise predictor: the Gang of Four within the approximately \SIrange{0.27}{3}{\hertz} coherent band is the most trustworthy artefact, and step-response values should be read as coarse indicators given the \SI{10}{\hertz} resolution. Closing the remaining gap would require higher-rate position estimates --- for example sensor fusion or optical flow --- or restricting the excitation to the lowest part of the band where the GPS feedback is most reliable.
+These observations suggest treating the position-hold tool as a proof of concept rather than a precise predictor: the Gang of Four within the approximately \SIrange{0.27}{3}{\hertz} coherent band is the most trustworthy artefact, and step-response values should be read as coarse indicators given the \SI{10}{\hertz} resolution. Closing the remaining gap would require higher-rate position estimates (for example, sensor fusion or optical flow) or restricting the excitation to the lowest part of the band where the GPS feedback is most reliable.
 
 \chapter{Conclusion}
 
