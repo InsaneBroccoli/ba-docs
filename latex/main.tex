@@ -708,7 +708,7 @@ controller output and is defined as \parencite{lutzTaschenbuchRegelungstechnik}
 
 \subsection*{Compensation of the I-Term}
 
-The integral term of a PI or PID controller is used to compensate for steady-state errors by integrating the control error over time. In flight control systems, this helps to counteract constant disturbances such as motor imbalances or aerodynamic effects. During fast stick movements or aggressive maneuvers, however, the integral term can accumulate excessive error. As a result, the accumulated I-term no longer represents a disturbance but instead opposes the intended motion, which can lead to overshoot, bounce-back effects, or slow settling after the maneuver \parencite{RT1_Skript}.
+The integral term of a PI or PID controller is used to compensate for steady-state errors by integrating the control error over time. In flight control systems, this helps to counteract aerodynamic effects. During fast stick movements or aggressive maneuvers, however, the integral term can accumulate excessive error. As a result, the accumulated I-term no longer represents a disturbance but instead opposes the intended motion, which can lead to overshoot, bounce-back effects, or slow settling after the maneuver \parencite{RT1_Skript}.
 
 To reduce these effects, Betaflight uses a feature called I-Term Relax \parencite{I_Term}. This mechanism temporarily reduces the integral action when rapid changes are detected. Depending on the configuration, these changes are identified either from the control setpoint or from the measured gyroscope signal. When a defined threshold is exceeded, the I-term integration is reduced or paused. This helps to prevent excessive buildup of the integral term during aggressive maneuvers, reducing overshoot and bounce-back while maintaining good disturbance rejection.
 
@@ -720,7 +720,7 @@ For analysis and controller tuning, the effect of I-Term Relax must be considere
 	\label{fig:I_term}
 \end{figure}
 
-The I-Term Relax algorithm is inherently nonlinear because the integral action is modified depending on the current flight condition. As a result, the effective controller behaviour changes over time and cannot be fully represented by a fixed linear transfer function. To account for this effect, the measured controller transfer function is compared with an analytically derived controller transfer function. A compensation factor is then defined as the ratio between the measured PI controller transfer function and its analytical counterpart:
+The I-Term Relax algorithm is inherently nonlinear because the integral action is modified depending on the current flight condition. As a result, the effective controller behaviour changes over time and cannot be fully represented by a fixed linear transfer function. To account for this effect, the measured controller transfer function is compared with an analytically derived controller transfer function. A compensation factor \( C_{\mathrm{PI,com}}(\omega) \) is then defined as the ratio between the measured PI controller \( C_{\mathrm{PI}}(\omega) \) transfer function and its analytical counterpart \( C_{\mathrm{PI,ana}} \):
 
 \begin{equation}
 	C_{\mathrm{PI,com}}(\omega) = \frac{C_{\mathrm{PI}}(\omega)}{C_{\mathrm{PI,ana}}(\omega)}
