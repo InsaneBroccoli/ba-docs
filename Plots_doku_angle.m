@@ -3,21 +3,33 @@ clc;
 clear variables;
 close all;
 
-% addpath('/home/janick-dort/Dokumente/Studium_ZHAW/BA/bf_controller_tuning/lib/');
-% addpath(genpath('/home/janick-dort/Dokumente/Studium_ZHAW/BA/bf_controller_tuning'));
+addpath('/home/janick-dort/Dokumente/Studium_ZHAW/BA/bf_controller_tuning/lib/');
+addpath(genpath('/home/janick-dort/Dokumente/Studium_ZHAW/BA/bf_controller_tuning'));
 
 addpath('../bf_controller_tuning/lib/');
 
+%% Plotsettings
+
+set(cstprefs.tbxprefs, 'MagnitudeUnits', 'dB');
+set(cstprefs.tbxprefs, 'FrequencyUnits', 'Hz');
+set(cstprefs.tbxprefs, 'PhaseUnits',     'deg');
+set(cstprefs.tbxprefs, 'UnwrapPhase',    'Off');
+set(cstprefs.tbxprefs, 'Grid',           'On');
+
+opt = bodeoptions('cstprefs');
+opt.MagScale      = 'linear';
+opt.PhaseWrapping = 'on';
+
 %% File paths
 
-log_folder    = '../bf_controller_tuning/logs';
-flight_folder = 'angle';
+log_folder    = 'logs';
+flight_folder = '20260601';
 
-log_name1 = 'P_50_flipmini.csv'; % default
-log_name2 = 'P_80_flipmini.csv'; % tuned
-log_name3 = 'P_100_flipmini.csv'; % more tuned
+log_name1 = 'P_50_flipmini.TXT.csv'; % default
+log_name2 = 'P_80_flipmini.TXT.csv'; % tuned
+log_name3 = 'P_100_flipmini.TXT.csv'; % more tuned
 
-base = 2;
+base = 1;
 compare = 3;
 switch base
   case 1
@@ -163,6 +175,9 @@ out1 = apply_rotfiltfilt(Glp, sinarg_ax1, y1);
 [T_ax1, C_T_ax1] = estimate_frequency_response(inp1(idx1), out1(idx1), ...
     window, Noverlap, Nest, Ts_log);
 
+f_bode = squeeze(C_T_ax1.Frequency);
+omega_bode = 2*pi*f_bode;
+
 % Plant
 v1     = flight1(:, ind1.gyroADC(axis));
 out_v1 = apply_rotfiltfilt(Glp, sinarg_ax1, v1);
@@ -183,9 +198,6 @@ Cp_ax1 = G_wc1 / (1 - T_ax1);
 
 % Gyro loop transfer function
 T_gy1 = G_wv1 / G_wc1;
-
-[T_gy1, C_G_wc1] = estimate_frequency_response(out_c1(idx1), out_v1(idx1), ...
-    window, Noverlap, Nest, Ts_log);
 
 %% =========================
 %% Flight 2
@@ -316,6 +328,54 @@ ylim([0 1])
 
 linkaxes(axp, 'x')
 xlim(axp(1), [1 100])   % adjust to the angle chirp band if needed
+
+
+%% Get Closed loop Data
+
+% flight 1
+CL_ana1 = calculate_closed_loop_angle(C_Angle_ana, ...
+                T_gy1, P_angle1);
+
+CL_new1 = calculate_closed_loop_angle(C_Angle_new, ...
+                T_gy1, P_angle1);            
+
+%flight 2
+CL_ana2 = calculate_closed_loop_angle(C_Angle_ana, ...
+                T_gy2, P_angle2);
+
+CL_new2 = calculate_closed_loop_angle(C_Angle_new, ...
+                T_gy2, P_angle2); 
+
+%% Gang of Four
+
+figure(11)
+ax(1) = subplot(2,2,1);
+bodemag(ax(1), CL_ana1.T, T_ax1, CL_new2.T, omega_bode, opt);
+title('Tracking T');
+legend('Calculated Flight1','Measured Flight1','Measured Flight2','Location','best');
+grid on;
+
+ax(2) = subplot(2,2,2);
+bodemag(ax(2), CL_ana1.S, CL_new2.S, omega_bode, opt);
+title('Sensitivity S')
+legend('Calculated Flight1','Calculated Flight2','Location','best')
+grid on
+
+ax(3) = subplot(2,2,3);
+bodemag(ax(3), CL_ana1.SC, CL_new2.SC, omega_bode, opt);
+title('Controller Effort SC');
+legend('Calculated Flight1','Calculated Flight2','Location','best');
+grid on;
+
+ax(4) = subplot(2,2,4);
+bodemag(ax(4), CL_ana1.SP, CL_new2.SP, omega_bode, opt);
+title('Compliance SP');
+legend('Calculated Flight1','Calculated Flight2','Location','best');
+grid on;
+
+linkaxes(ax,'x');
+xlim(ax(1), [0.5 600]);
+sgtitle('Gang of Four - Angle');
 
 
 %% Numerical metrics for thesis Results section (Angle)

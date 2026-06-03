@@ -3,42 +3,58 @@ clc;
 clear variables;
 close all;
 
+addpath('/home/janick-dort/Dokumente/Studium_ZHAW/BA/bf_controller_tuning/lib/');
+addpath(genpath('/home/janick-dort/Dokumente/Studium_ZHAW/BA/bf_controller_tuning'));
+
 addpath('../bf_controller_tuning/lib/');
+
+%% Plotsettings
+
+set(cstprefs.tbxprefs, 'MagnitudeUnits', 'dB');
+set(cstprefs.tbxprefs, 'FrequencyUnits', 'Hz');
+set(cstprefs.tbxprefs, 'PhaseUnits',     'deg');
+set(cstprefs.tbxprefs, 'UnwrapPhase',    'Off');
+set(cstprefs.tbxprefs, 'Grid',           'On');
+
+opt = bodeoptions('cstprefs');
+opt.MagScale      = 'linear';
+opt.PhaseWrapping = 'on';
 
 do_compensate_iterm = true;
 
 %% File paths
-log_folder = '../bf_controller_tuning/logs/gyro/';
+log_folder = 'logs';
+flight_folder = '20260601';
 
 % Each gyro log (path relative to log_folder) with the gains it was flown at:
-log_name1 = 'Tuned_flipmini.csv';                       % tuned     P=46, I=74, D=30
-log_name2 = 'Moderate_flipmini.csv';   % moderate  P=46, I=66, D=32
-log_name3 = 'Bad_flipmini.csv';  % bad       P=30, I=60, D=30
+log_name1 = 'Tuned_flipmini.TXT.csv';                       % tuned     P=46, I=74, D=30
+log_name2 = 'Moderate_flipmini.TXT.csv';   % moderate  P=46, I=66, D=32
+log_name3 = 'Bad_flipmini.TXT.csv';  % bad       P=30, I=60, D=30
 
-base    = 2;   % flight whose plant is identified (the baseline)
-compare = 1;   % measured target flight to predict and compare against
+base    = 3;   % flight whose plant is identified (the baseline)
+compare = 2;   % measured target flight to predict and compare against
 %   case 1 = tuned, 2 = moderate, 3 = bad
 
 switch base
   case 1
-    file_path1 = fullfile(log_folder, log_name1);
+    file_path1 = fullfile(log_folder,flight_folder, log_name1);
   case 2
-    file_path1 = fullfile(log_folder, log_name2);
+    file_path1 = fullfile(log_folder,flight_folder, log_name2);
   case 3
-    file_path1 = fullfile(log_folder, log_name3);
+    file_path1 = fullfile(log_folder,flight_folder, log_name3);
   otherwise
     disp("invalid base")
 end
 
 switch compare
   case 1
-    file_path2 = fullfile(log_folder, log_name1);
+    file_path2 = fullfile(log_folder,flight_folder, log_name1);
     P_new =46 ; I_new = 74; D_new = 30;
   case 2
-    file_path2 = fullfile(log_folder, log_name2);
+    file_path2 = fullfile(log_folder,flight_folder, log_name2);
     P_new = 46; I_new = 66; D_new = 32;
   case 3
-    file_path2 = fullfile(log_folder, log_name3);
+    file_path2 = fullfile(log_folder,flight_folder, log_name3);
     P_new = 30; I_new = 60; D_new = 30;
   otherwise
     disp("invalid compare")
@@ -54,11 +70,12 @@ name_compare = case_names{compare};
 [para2, Nheader2, ind2, ind_cntr2] = extract_header_information(file_path2);
 
 %% Load data from CSV or cached MAT file
-[folder1, base1, ~] = fileparts(file_path1);
-mat_path1 = fullfile(folder1, [base1 '.mat']);
+[~, base1, ~] = fileparts(file_path1);
+mat_path1 = [base1 '.mat'];  % Speichert direkt im aktuellen Arbeitsverzeichnis
 
-[folder2, base2, ~] = fileparts(file_path2);
-mat_path2 = fullfile(folder2, [base2 '.mat']);
+[~, base2, ~] = fileparts(file_path2);
+mat_path2 = [base2 '.mat'];  % Speichert direkt im aktuellen Arbeitsverzeichnis
+
 
 try
     S = load(mat_path1);
@@ -182,6 +199,9 @@ v2   = apply_rotfiltfilt(Glp, flight2(:,ind2.sinarg), flight2(:,ind2.axisSumPI(i
 [Gvw1, C_Gvw1] = estimate_frequency_response(inp1(ind_eval1), v1(ind_eval1), window, Noverlap, Nest, Ts_log);
 [Gvw2, C_Gvw2] = estimate_frequency_response(inp2(ind_eval2), v2(ind_eval2), window, Noverlap, Nest, Ts_log);
 
+f_bode = squeeze(T1.Frequency);
+omega_bode = 2*pi*f_bode;
+
 %% Plant and measured controller estimates
 P1 = T1 / Guw1;
 P2 = T2 / Guw2;
@@ -253,11 +273,17 @@ end
 
 %% Closed loop
 
-CL_ana = calculate_closed_loop(Cpi_ana1, tf(1,1,Ts_log), ...
+CL_ana1 = calculate_closed_loop(Cpi_ana1, tf(1,1,Ts_log), ...
     P1 / Gf_ana1, Gf_ana1, Cd_ana1);
 
-CL_ana_new = calculate_closed_loop(Cpi_ana_new, tf(1,1,Ts_log), ...
+CL_new1 = calculate_closed_loop(Cpi_ana_new, tf(1,1,Ts_log), ...
     P1 / Gf_ana1, Gf_ana_new, Cd_ana_new);
+
+CL_ana2 = calculate_closed_loop(Cpi_ana2, tf(1,1,Ts_log), ...
+    P2 / Gf_ana2, Gf_ana2, Cd_ana2);
+
+CL_new2 = calculate_closed_loop(Cpi_ana_new, tf(1,1,Ts_log), ...
+    P2 / Gf_ana2, Gf_ana_new, Cd_ana_new);
 
 %% Optional I-term compensation
 
@@ -270,9 +296,54 @@ if do_compensate_iterm
     CL_ana_new_comp = calculate_closed_loop(Cpi_ana_new * Cpi_com, tf(1,1,Ts_log), ...
         P1 / Gf_ana1, Gf_ana_new, Cd_ana_new);
 
-    CL_ana.T     = CL_ana_comp.T;
-    CL_ana_new.T = CL_ana_new_comp.T;
+    CL_ana1.T     = CL_ana_comp.T;
+    CL_new1.T = CL_ana_new_comp.T;
 end
+
+if do_compensate_iterm
+    Cpi_com = Cpi2 / Cpi_ana2;
+
+    CL_ana_comp = calculate_closed_loop(Cpi_ana1 * Cpi_com, tf(1,1,Ts_log), ...
+        P2 / Gf_ana2, Gf_ana2, Cd_ana2);
+
+    CL_ana_new_comp = calculate_closed_loop(Cpi_ana_new * Cpi_com, tf(1,1,Ts_log), ...
+        P2 / Gf_ana2, Gf_ana_new, Cd_ana_new);
+
+    CL_ana2.T     = CL_ana_comp.T;
+    CL_new2.T = CL_ana_new_comp.T;
+end
+
+%% Gang of Four
+
+figure(11)
+ax(1) = subplot(2,2,1);
+bodemag(ax(1), CL_new1.T, T1, T2, omega_bode, opt);
+title('Tracking T');
+legend('Calculated Flight1','Measured Flight1','Measured Flight2','Location','best');
+grid on;
+
+ax(2) = subplot(2,2,2);
+bodemag(ax(2), CL_new1.S, CL_new2.S, omega_bode, opt);
+title('Sensitivity S')
+legend('Calculated Flight1','Calculated Flight2','Location','best')
+grid on
+
+ax(3) = subplot(2,2,3);
+bodemag(ax(3), CL_new1.SC, CL_new2.SC, omega_bode, opt);
+title('Controller Effort SC');
+legend('Calculated Flight1','Calculated Flight2','Location','best');
+grid on;
+
+ax(4) = subplot(2,2,4);
+bodemag(ax(4), CL_new1.SP, CL_new2.SP, omega_bode, opt);
+title('Compliance SP');
+legend('Calculated Flight1','Calculated Flight2','Location','best');
+grid on;
+
+linkaxes(ax,'x');
+xlim(ax(1), [0.5 600]);
+sgtitle('Gang of Four - Gyro');
+
 
 %% Step responses
 
@@ -283,7 +354,7 @@ step_time = (0:Nest-1).' * Ts_log;
 
 step_resp = [ ...
     calculate_step_response_from_frd(T1, f_max), ...
-    calculate_step_response_from_frd(CL_ana_new.T, f_max), ...
+    calculate_step_response_from_frd(CL_new1.T, f_max), ...
     calculate_step_response_from_frd(T2, f_max)];
 
 step_resp_mean = mean(step_resp(step_time > T_mean(1) & step_time < T_mean(2), :));
