@@ -73,7 +73,6 @@
 
 % --- Abstract (German + English) ----------------------------------------------
 \chapter*{Summary}
-\addcontentsline{toc}{chapter}{Zusammenfassung}
 
 Diese Bachelorarbeit befasst sich mit der Entwicklung eines Offline-Tuning-Tools für verschiedene Regelkreise von FPV-Drohnen mit Betaflight-Firmware. Ziel des Tools ist es, aufgezeichnete Flugdaten zu analysieren, um die Systemdynamik zu identifizieren und dadurch das Verhalten verschiedener Reglerparameter vorherzusagen, ohne dass für jede Änderung zusätzliche Flugtests erforderlich sind.
 
@@ -83,7 +82,7 @@ Die Tuning-Algorithmen für den Winkelgeschwindigkeitsregler und den Winkelregle
 
 Die Ergebnisse dieser Arbeit werden der Betaflight-Community über ein GitHub-Repository zur Verfügung gestellt und in einem umfassenden Bericht dokumentiert. Die experimentelle Validierung erfolgt durch reale FPV-Flüge, um die Wirksamkeit der vorgeschlagenen Methoden zu überprüfen.
 
-\chapter*{Abstract}
+\section*{Abstract}
 \addcontentsline{toc}{chapter}{Abstract}
 
 This project presents the development of an offline tuning tool for multiple control loops in FPV drones based on the Betaflight firmware. The tool analyzes recorded flight data to estimate the system dynamics and predict the behaviour of different controller parameters without requiring additional flight tests for every parameter change.
@@ -246,6 +245,8 @@ The quadcopter's orientation is described using a body-fixed coordinate system w
 
 All motion is controlled by adjusting the rotational speeds of the four motors, which generate the necessary forces and torques. The motor configuration and control strategy are described in the following sections.
 
+\newpage
+
 \subsection*{Force and Torque Generation}
 
 As already mentioned, a quadcopter generates all forces and torques through the thrust produced by the propellers. Therefore, the control of the drone is achieved by adjusting the speed of each motor, which in turn changes the thrust and the resulting forces and torques.
@@ -353,7 +354,7 @@ The quality of the chirp excitation depends strongly on the chosen sweep paramet
 
 With the exception of \( f_1 \), these values are taken from the default chirp settings used in Betaflight for the angle and gyro control loops. The final frequency in the simulation is limited to \( 50\,\text{Hz} \) to improve plot readability, whereas in practice \( f_1 \) is typically set much higher (e.g., \( 600\,\text{Hz} \)) to cover the full control bandwidth of the system.
 
-\subsubsection*{Exponential chirp (as used in Betaflight):}
+\subsubsection*{Exponential chirp:}
 
 For an exponential chirp, the instantaneous frequency increases exponentially from the starting frequency \( f_0 \) to the final frequency \( f_1 \) over the time interval \( T \). This means that lower frequencies are covered more slowly, while higher frequencies are reached more rapidly. \parencite{Matlab_Chirp}
 
@@ -418,6 +419,7 @@ For the simulation shown in \autoref{fig:chirpleadlag}, the same parameters as i
     \label{fig:chirpleadlag}
 \end{figure}
 
+\newpage
 
 \subsection*{Signal Processing}
 
@@ -510,6 +512,8 @@ A second-order Butterworth low-pass filter with a cutoff frequency of $10\,\text
     \caption{Time-domain signal before (top) and after (bottom) baseband filtering, showing the reduction of measurement noise.}
     \label{fig:time_filtered}
 \end{figure}
+
+\newpage
 
 \subsubsection*{Frequency Response Estimation}
 
@@ -737,39 +741,67 @@ The resulting compensated controller transfer functions are then reinserted into
 
 \subsection*{Step Response Analysis}
 
-The step response provides a direct and intuitive way to evaluate the performance of a control system. By applying a step input to the reference signal, the resulting output response can be analysed to assess key performance metrics such as rise time, overshoot, settling time and steady-state error. These metrics provide insights into the speed, stability and accuracy of the control system.
+The step response provides a direct and intuitive way to evaluate the performance of a control system. By applying a step input to the reference signal, the resulting output response can be analysed with respect to key performance metrics such as rise time, overshoot and settling time. These metrics provide insight into the speed, stability and accuracy of the control system. Therefore, the step response is a simple and practical method for evaluating controller settings, especially for users without a deeper background in control engineering.
 
-Starting from the closed-loop transfer function as seen in \autoref{fig:control_loop_easy}, the system output in the time domain can be obtained by transforming the frequency-domain representation back into the time domain. This relationship is expressed as
-
-\begin{equation}
-    y(t) = \mathcal{F}^{-1}\left\{ G_{yr}(\omega) \cdot R(\omega) \right\},
-\end{equation}
-
-where \( \mathcal{F}^{-1} \) denotes the inverse Fourier transform, \( G_{yr}(\omega) \) is the closed-loop transfer function from the reference input to the output and \( R(\omega) \) is the Fourier transform of the step input \parencite{lutzTaschenbuchRegelungstechnik}.
-
-According to the convolution theorem, the system output results from the convolution of the impulse response \( g_{yr}(t) \) with the input signal \( r(t) \). For a step input, the output can be expressed as
+The first step in calculating the step response is to transform the frequency response of the system back into the time domain. This is done using the inverse fast Fourier transform (IFFT). The resulting signal corresponds to the impulse response of the system
 
 \begin{equation}
-    y(t) = g_{yr}(t) * r(t) = \int_{0}^{t} g_{yr}(\tau) \cdot r(t-\tau) \, d\tau,
+g[k] = \mathrm{IFFT}\left\{T(\omega)\right\}.
 \end{equation}
 
-where \( g_{yr}(t) \) is the impulse response of the system, which can be obtained by taking the inverse Fourier transform of the closed-loop transfer function \( G_{yr}(\omega) \) \parencite{lutzTaschenbuchRegelungstechnik}.
-
-Similar to the step response of the system, the step response of the compliance function can be calculated by applying the same procedure to the compliance function \( SP(\omega) \). This allows for a direct comparison of the system response to disturbances with the response to reference inputs.
-
-The step response of the compliance function provides insight into the system's reaction to sudden disturbance forces. While the step response of \( G_{yr} \) evaluates the tracking performance with respect to reference inputs, the compliance step response characterizes the system's disturbance rejection capability and effective stiffness. A small and rapidly settling displacement indicates a stiff and disturbance-resistant system, whereas larger deflections or oscillations suggest higher compliance. Considering both responses therefore enables a more comprehensive assessment of the closed-loop system behaviour.
-
-While the step response can be derived analytically from the closed-loop transfer function using the inverse Fourier transform, this approach is not always practical when the system is described by measured or numerically obtained frequency response data. In such cases, the step response is determined directly from the available frequency-domain representation.
-
-In this work, the step response is therefore calculated based on the available frequency response data of the closed-loop system. First, the complex frequency response \( G_{yr}(\omega) \) is limited to a relevant frequency range in order to reduce the influence of high-frequency components. A symmetric spectrum is then constructed to ensure that the resulting time-domain signal is real-valued.
-
-By applying the inverse fast Fourier transformation to this spectrum, an approximation of the system's impulse response \( g_{yr}(t) \) is obtained. Since the step response represents the accumulated effect of the impulse response, it is calculated in discrete time as the cumulative sum of the impulse response samples:
+For the step response, a unit step is used as the input signal. The reference signal can therefore be written as
 
 \begin{equation}
-    y[k] = \sum_{i=0}^{k} g[i].
+r[k] = 1 \qquad \text{for } k \geq 0.
 \end{equation}
 
-This approach provides a simple and effective way to estimate the time-domain step response directly from frequency response data \parencite{lutzTaschenbuchRegelungstechnik}.
+The step response is obtained by combining the impulse response with the unit step input. In discrete time, this can be written as
+
+\begin{equation}
+y[k] = \sum_{i=0}^{k} g[i] \cdot r[i].
+\end{equation}
+
+Since the value of the unit step remains equal to one after the step occurs, the equation simplifies to
+
+\begin{equation}
+y[k] = \sum_{i=0}^{k} g[i].
+\end{equation}
+
+Depending on the system dynamics, the resulting step response does not necessarily converge to a final value of one. However, for a better interpretation of the results and an easier comparison between different controller settings, the step response is normalized using its steady-state mean value
+
+\begin{equation}
+y_{\mathrm{norm}}[k]
+=
+\frac{y[k]}
+{\overline{y}},
+\end{equation}
+
+where \(\overline{y}\) denotes the mean value of the settled response. This scales the final value of the step response approximately to one.
+
+Similar to the system step response, a step response can also be calculated for the compliance function \(SP(\omega)\). The calculation follows exactly the same procedure as described above. This allows a direct comparison between the response to reference changes and the response to external disturbances.
+
+The only difference is the final scaling. For the compliance response, the steady-state value is not normalized to one. Instead, the mean value within a selected steady-state interval is subtracted from the complete response
+
+\begin{equation}
+y_{\mathrm{comp,corr}}[k]
+=
+y_{\mathrm{comp}}[k]
+-
+\overline{y}_{\mathrm{comp}},
+\end{equation}
+
+where
+
+\begin{equation}
+\overline{y}_{\mathrm{comp}}
+=
+\mathrm{mean}
+\left(
+y_{\mathrm{comp}}[k_1:k_2]
+\right).
+\end{equation}
+
+This removes the steady-state offset and centres the compliance response around zero. As a result, the disturbance rejection behaviour of the controller can be interpreted more easily.
 
 \newpage
 
@@ -777,15 +809,13 @@ This approach provides a simple and effective way to estimate the time-domain st
 
 The goal of this thesis is to analyze the control loops of the Betaflight flight controller based on measurements obtained from flight experiments. To validate the proposed measurement and analysis methods, theoretical plant models are introduced as reference systems.
 
-By comparing the experimentally identified system behaviour with these theoretical models, the accuracy and reliability of the applied analysis techniques can be assessed. In addition, the models provide a framework for understanding the interaction between the different control loops implemented in Betaflight.
-
-The following subsections describe the plant models corresponding to the main control layers of the flight controller: angular rate, angle, altitude hold and position hold.
+By comparing the experimentally identified system behaviour with these theoretical models, the accuracy and reliability of the applied analysis techniques can be assessed. The models also provide a framework for understanding the interaction between the different control loops implemented in Betaflight. The following subsections describe the plant models corresponding to the main control layers of the flight controller: angular rate, angle, altitude hold and position hold.
 
 \subsection*{Motor Dynamics}
 
-As the basis of the overall system, the transfer function of the motor dynamics must be determined.
+As the basis of the overall system, the transfer function of the motor dynamics must be determined. Since the internal implementation of the BLHeli32 ESC firmware is proprietary and not publicly available, the exact dynamics of the motor--ESC system are unknown. The following model therefore does not represent the real system exactly but serves as a simplified approximation of the dominant motor dynamics.
 
-The motor–propeller system is modeled using the well-established electromechanical model of a DC motor, which can also be applied to brushless DC (BLDC) motors in an equivalent form. The model consists of one electrical and one mechanical differential equation.
+The motor--propeller system is modeled using the well-established electromechanical model of a DC motor, which can also be applied to brushless DC (BLDC) motors in an equivalent form. The model consists of one electrical and one mechanical differential equation.
 
 The electrical behaviour of the motor is described by
 \begin{equation}
@@ -818,11 +848,9 @@ This transfer function represents a second-order (PT2) system, capturing both el
 
 \subsection*{Plant Angular Rate}
 
-The angular rate controller forms the basis of the flight control system, regulating the rotational speed of the drone around its axes. As the innermost control loop, it directly influences the performance of the outer loops, such as the angle and position controllers. Therefore, its plant model serves as the fundamental reference for the overall system analysis.
+The angular rate controller forms the innermost control loop of the flight controller and directly influences the performance of the outer loops, such as the angle and position controllers. Therefore, its plant model serves as the basis for the overall system analysis.
 
-Based on the motor dynamics described in the previous section, the plant of the angular rate controller can be derived. The input to this plant is the applied motor voltage, while the output is the resulting angular rate.
-
-The transfer function between the input voltage and the motor speed is given by the previously introduced motor model. However, the relationship between motor speed and angular rate is additionally influenced by the drone geometry and the aerodynamic forces generated by the propellers. In particular, variations in motor speed lead to changes in thrust, which ultimately generate the torques responsible for rotational motion. The thrust produced by each propeller can be approximated by
+Based on the motor dynamics described in the previous section, the plant of the angular rate controller can be derived. The input to this plant is the applied motor voltage, while the output is the resulting angular rate. The transfer function between the input voltage and the motor speed is given by the previously introduced motor model. The relationship between motor speed and angular rate is additionally influenced by the drone geometry and the aerodynamic forces generated by the propellers. Changes in motor speed lead to changes in thrust, which generate the torques responsible for the rotational motion. The thrust produced by each propeller can be approximated by
 
 \begin{equation}
     T = C_T \rho n^2 D^4,
@@ -892,7 +920,7 @@ To verify this theoretical behaviour, the frequency response of the angle plant 
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.9\linewidth]{Bode_Angle.png}
+    \includegraphics[width=1.0\linewidth]{Bode_Angle.png}
     \caption{Estimated frequency response of the angle plant (roll axis)}
     \label{fig:plant_angle_measured}
 \end{figure}
@@ -902,8 +930,6 @@ The measured frequency response confirms the expected integrator behaviour at lo
 At higher frequencies, deviations from the ideal integrator behaviour can be observed. These effects are mainly caused by measurement noise, limited excitation and unmodeled dynamics in the system.
 
 The coherence is close to one in the low-frequency range, indicating a reliable estimate. As the frequency increases, the coherence decreases, suggesting that the estimation becomes less reliable due to noise and reduced signal-to-noise ratio.
-
-\newpage
 
 \subsection*{Plant Position Hold}
 
@@ -915,7 +941,7 @@ If the drone is hovering at a constant altitude, the total thrust equals the wei
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.8\textwidth]{Drone_Pos_Hold.png}
+    \includegraphics[width=0.65\textwidth]{Drone_Pos_Hold.png}
     \caption{Illustration of a quadcopter tilted by an angle \( \theta \) during position hold. The tilt redirects the thrust vector, generating a horizontal acceleration that results in translational motion.}
     \label{fig:drone_pos_hold}
 \end{figure}
@@ -941,7 +967,16 @@ Applying the Laplace transform yields the transfer function from the tilt angle 
     P_{\text{Position}}(s) = \frac{X(s)}{\Theta(s)} = \frac{g}{s^2}.
 \end{equation}
 
-This transfer function represents a double integrator. Consequently, the corresponding Bode plot exhibits a magnitude slope of \(-40\,\text{dB/decade}\) and a phase shift of \(-180^\circ\), which are characteristic features of such a system.
+The measured frequency response generally follows the expected double-integrator characteristic. However, a deviation can be observed around \(0.6\,\mathrm{Hz}\). One possible explanation is the increasing violation of the small-angle assumption used in the derivation of the plant model. As the excitation frequency increases, larger attitude angles are required to generate the corresponding lateral acceleration. Consequently, the approximation \(\sin(\theta)\approx\theta\) becomes less accurate and the real system behaviour deviates from the idealized double-integrator model.
+
+\begin{figure}[htbp]
+    \centering
+    \scalebox{1.2}[1]{
+        \includegraphics[width=0.75\textwidth]{Plant_PosHold.png}
+    }
+    \caption{Estimated frequency response of the Position Hold plant for the roll (black) and pitch (red) axes.}
+    \label{fig:plant_pos_hold}
+\end{figure}
 
 \newpage
 
@@ -1021,16 +1056,12 @@ To validate the derived model, the frequency response of the altitude plant is e
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.9\linewidth]{Plant_AltHold.png}
+    \includegraphics[width=1.0\linewidth]{Plant_AltHold.png}
     \caption{Estimated frequency response of the altitude plant. Magnitude, phase and coherence are shown.}
     \label{fig:plant_altitude_measured}
 \end{figure}
 
 The estimated frequency response confirms the expected behaviour at low frequencies, where the magnitude follows approximately a \(-40\,\text{dB/dec}\) slope, consistent with the double integrator model.
-
-However, the coherence is relatively low in the very low-frequency range due to external disturbances such as wind and slow environmental effects, which reduce the signal-to-noise ratio.
-
-At higher frequencies, the coherence decreases again as measurement noise and unmodeled dynamics become dominant.
 
 \chapter{Methodology}
 \label{ch:methodology}
@@ -2405,191 +2436,7 @@ All in all, the interesst in this project and the tuning tool is high,
 \appendix
 \chapter{Appendix}
 
-\section{Project Management}
-
-\subsubsection*{Project Assignment}
-
-\textbf{Title}
-
-Betaflight -- Offline Controller Tuning
-
-\vspace{0.5em}
-
-\textbf{Description}
-
-Betaflight is an open-source project specialized in the control of FPV quadcopters,
-particularly in the field of racing drones. The firmware is continuously developed by a
-large community and is available on many different hardware platforms. Betaflight is the
-most widely used firmware for FPV drones and is used by both hobbyists and professional
-pilots.
-
-Flight performance strongly depends on the quality of the rate control system. The
-controllers are responsible for stabilizing the drone, suppressing disturbances such as
-wind and prop wash and ensuring agile responses to pilot inputs. Therefore, the
-controllers and filters must be carefully tuned and configured to achieve optimal flight
-performance. FPV pilots typically fly in ACRO mode, meaning that the system is rate
-controlled and the pilot stick inputs are interpreted as setpoints for the rate controller.
-
-Within the FPV community, controller tuning is commonly performed using a trial-and-error
-approach. Pilots iteratively adjust controller parameters and test the resulting flight
-behaviour. This process can be time-consuming and frustrating, especially for beginners,
-as finding suitable controller parameters is often difficult.
-
-A proof of concept already exists which enables offline tuning of the rate controllers
-based on a measurement-derived drone model obtained from chirp signal experiments during
-flight. The objective of this project is to further develop this offline tuning method for
-the gyro rate controllers.
-
-The goal is to develop a complete, cleanly implemented and easily extendable open-source
-library in both MATLAB and Python. In addition, comprehensive documentation with practical
-examples shall be created for the Python implementation using GitHub Markdown
-documentation. The long-term objective is to provide a library that can be used by the FPV
-community to improve drone flight performance and simplify the controller tuning process.
-
-\vspace{0.5em}
-
-\textbf{Students}
-
-\begin{itemize}
-    \item Yuri Bianchi (biancyur)
-    \item Janick Dort (dortjan1)
-    \item Dario Jurietti (juriedar)
-\end{itemize}
-
-\textbf{Supervisors}
-
-\begin{itemize}
-    \item Main Supervisor: Michael Peter (pmic)
-    \item Co-Supervisor: Prof.\ Dr.\ Ruprecht Altenburger (altb)
-\end{itemize}
-
-\textbf{Additional Persons}
-
-\begin{itemize}
-    \item Camille Huber (hurc)
-\end{itemize}
-
-\textbf{Prerequisites}
-
-\begin{itemize}
-    \item GRT, RT1
-    \item At least one team member must possess the remote pilot certificate A1/A3
-    (A2 optional but recommended)
-    \item Sufficient liability insurance, organized independently by the students
-    \item Experience with FPV drones (building, repairing, configuring, flying)
-    \item MATLAB and Python experience
-\end{itemize}
-
-\textbf{Agreement}
-
-The agreement is established between the supervisor Michael Peter (pmic) and the students
-Yuri Bianchi (biancyur), Janick Dort (dortjan1) and Dario Jurietti (juriedar).
-
-Since this is a bachelor thesis conducted by three students, the report shall be divided
-into three separately assessable parts.
-
-\vspace{0.5em}
-
-\textbf{Schedule}
-
-See:
-\url{https://intra.zhaw.ch/departemente/school-of-engineering/bachelorstudium/projekt-und-bachelorarbeiten}
-
-\begin{table}[h]
-\centering
-\caption{Bachelor thesis schedule FS 2026}
-\begin{tabular}{|l|l|}
-\hline
-\textbf{Date} & \textbf{Milestone} \\ \hline
-From 09.02.2026 & Assignment of bachelor thesis topics \\ \hline
-Until 05.06.2026 18:00 & Submission of thesis in Complesis \\ \hline
-24.06. -- 30.06.2026 & Bachelor thesis defense \\ \hline
-07.07.2026 & Grade release from 18:00 \\ \hline
-\end{tabular}
-\end{table}
-
-\textbf{Workspace}
-
-TE 617
-
-\vspace{0.5em}
-
-\textbf{Hardware}
-
-\begin{itemize}
-    \item Hardware can be provided by Michael Peter and IMS
-    \begin{itemize}
-        \item 2 $\times$ 3.5 inch drones
-        \item 2 $\times$ 5.0 inch drones
-    \end{itemize}
-    \item Two additional drones (1 $\times$ 5.0 inch) may also be built
-\end{itemize}
-
-\vspace{0.5em}
-
-\textbf{Deliverables}
-
-A report consisting of approximately 30--60 pages shall appropriately document the
-results. In addition, the project results will be presented in the form of a technical
-presentation.
-
-The software shall be published in a public GitHub repository. Furthermore, a
-software-specific documentation with examples shall be provided in Markdown format within
-the repository.
-
-\vspace{0.5em}
-
-\textbf{Research Areas}
-
-\begin{itemize}
-    \item Control Engineering and Advanced Control
-    \item Data visualization
-    \item Digital signal processing
-    \item Software engineering
-\end{itemize}
-
-\vspace{0.5em}
-
-\textbf{Miscellaneous}
-
-\textbf{Degree Programme}
-
-Systems Engineering
-
-\vspace{0.5em}
-
-\textbf{Industrial Partner}
-
-None
-
-\vspace{0.5em}
-
-\textbf{Institute / Centers}
-
-Institute for Mechatronic Systems (IMS)
-
-\vspace{0.5em}
-
-\textbf{Internal Partners}
-
-None
-
-\vspace{0.5em}
-
-\textbf{Information Links}
-
-\begin{itemize}
-    \item \url{https://github.com/pichim/bf_controller_tuning}
-    \item \url{https://github.com/InsaneBroccoli/bf_controller_tuning}
-\end{itemize}
-
-\vspace{0.5em}
-
-\textbf{Language}
-
-German / English
-
-\section{Project Timeline}
+\section*{Project Timeline}
 
 \subsubsection*{Project Schedule — Version 0}
 
@@ -2602,7 +2449,15 @@ This project schedule was created at the beginning of the project.
 \end{figure}
 
 
+\clearpage
 
+\includepdf[
+    pages=-,
+    pagecommand={\thispagestyle{empty}},
+    fitpaper=true
+]{pdf/Pflichtenheft.pdf}
+
+\clearpage
 
 
 % =============================================================================
