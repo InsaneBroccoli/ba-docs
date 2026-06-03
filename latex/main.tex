@@ -82,12 +82,14 @@ Die Tuning-Algorithmen für den Winkelgeschwindigkeitsregler und den Winkelregle
 
 Die Ergebnisse dieser Arbeit werden der Betaflight-Community über ein GitHub-Repository zur Verfügung gestellt und in einem umfassenden Bericht dokumentiert. Die experimentelle Validierung erfolgt durch reale FPV-Flüge, um die Wirksamkeit der vorgeschlagenen Methoden zu überprüfen.
 
+\newpage
+
 \section*{Abstract}
 \addcontentsline{toc}{chapter}{Abstract}
 
 This project presents the development of an offline tuning tool for multiple control loops in FPV drones based on the Betaflight firmware. The tool analyzes recorded flight data to estimate the system dynamics and predict the behaviour of different controller parameters without requiring additional flight tests for every parameter change.
 
-The proposed approach is based on the injection of a chirp signal into the control loop, allowing systematic excitation of the system over a wide frequency range. Using signal processing techniques, the recorded data is evaluated to identify the transfer functions of the control loops. Based on these models, suitable controller parameters are derived to improve flight performance.
+The proposed approach is based on the injection of a chirp signal into the control loop, allowing systematic excitation of the system over a wide frequency range. Using signal processing techniques, the recorded data is evaluated to identify the frequency responses of the control loops. Based on these models, suitable controller parameters are derived to improve flight performance.
 
 The tuning algorithms for the angular rate controller and the angle controller are implemented in MATLAB and Python, ensuring accessibility and usability for the FPV community. In addition, prototype implementations for altitude hold and position hold controllers are developed in MATLAB as proof of concept, considering the ongoing development of the Betaflight firmware.
 
@@ -183,7 +185,7 @@ The results of this work are published in a public GitHub repository and documen
 \chapter{Theoretical Foundations}
 \label{ch:theory}
 
-This chapter provides the theoretical background for the methods used in this thesis. It covers the fundamental principles of drone dynamics and control, the use of chirp signals for system identification and the signal processing techniques applied to estimate the transfer functions of the control loops. The concepts introduced here form the basis for the practical implementation and analysis of the control loops in the following chapters.
+This chapter provides the theoretical background for the methods used in this thesis. It covers the fundamental principles of drone dynamics and control, the use of chirp signals for system identification and the signal processing techniques applied to estimate the frequency responses of the control loops. The concepts introduced here form the basis for the practical implementation and analysis of the control loops in the following chapters.
 
 \section{Drone Types and Sensors}
 
@@ -216,6 +218,8 @@ A quadcopter relies on a variety of sensors to measure its state and environment
 
 These sensors provide the measurements needed for offline tuning. Depending on the application, additional sensors such as cameras or distance sensors may be used. In practice, measurements from multiple sensors are often combined through sensor fusion to obtain a more accurate estimate of the drone’s state. Sensor data form the basis for stabilization, navigation and control.
 
+\newpage
+
 \section{Drone Dynamics and Control Principles}
 
 A quadcopter is a dynamic system that uses four rotors to generate lift and control its motion. By adjusting the rotational speeds of the individual motors, the drone can control its orientation and movement in three-dimensional space.
@@ -232,18 +236,18 @@ The quadcopter's orientation is described using a body-fixed coordinate system w
 
 \begin{itemize}
     \item \textbf{Roll} (\(\phi\)): rotation around the forward-pointing \(x\)-axis
-    \item \textbf{Pitch} (\(\theta\)): rotation around the leftward-pointing \(y\)-axis
-    \item \textbf{Yaw} (\(\psi\)): rotation around the upward-pointing \(z\)-axis
+    \item \textbf{Pitch} (\(\theta\)): rotation around the rightward-pointing \(y\)-axis
+    \item \textbf{Yaw} (\(\psi\)): rotation around the downward-pointing \(z\)-axis
 \end{itemize}
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.5\linewidth]{body_axes.png}
-    \caption{Body-fixed coordinate system and rotational axes of a quadcopter.}
+    \includegraphics[width=0.52\linewidth]{body_axes.png}
+    \caption{Body-fixed coordinate system and rotational axes of a quadcopter. \parencite{autonomous_robots} }
     \label{fig:body_axes}
 \end{figure}
 
-All motion is controlled by adjusting the rotational speeds of the four motors, which generate the necessary forces and torques. The motor configuration and control strategy are described in the following sections.
+All motion is controlled by adjusting the rotational speeds of the four motors, which generate the necessary forces and torques. The motor configuration and control strategy are described in the following sections \parencite{autonomous_robots}.
 
 \newpage
 
@@ -317,7 +321,7 @@ A chirp signal is a signal in which the frequency increases or decreases over ti
 
 The main advantage of a chirp signal is that it allows a wide frequency range to be excited within a single experiment. Instead of testing individual frequencies one by one, the system is continuously stimulated with increasing frequency. This makes the approach both efficient and well suited for practical applications. \parencite{Matlab_Chirp}
 
-By observing how the system responds to this input, it becomes possible to analyse its frequency-dependent behaviour. In particular, the measured input and output signals can be used to estimate the frequency response of the system. From this frequency response, the transfer function can then be identified. This provides valuable insight into the system dynamics and forms the basis for the methods described in the following sections. \parencite{Matlab_Chirp}
+By observing how the system responds to this input, it becomes possible to analyse its frequency-dependent behaviour. In particular, the measured input and output signals can be used to estimate the frequency response of the system. This provides valuable insight into the system dynamics and forms the basis for the methods described in the following sections. \parencite{Matlab_Chirp}
 
 \newpage
 
@@ -558,7 +562,7 @@ In practice, the spectral densities are estimated from finite measurement record
 
 To obtain reliable estimates of the spectral densities, Welch’s method is applied. As discussed in the previous section, direct computation from finite data is sensitive to noise. Therefore, averaging techniques are required to approximate the expected values of the spectral quantities \parencite{System_Identification}. 
 
-The spectral densities describe how the signal energy is distributed over frequency and form the basis for estimating the transfer function \parencite{System_Identification}.
+The spectral densities describe how the signal energy is distributed over frequency and form the basis for estimating the frequency responses \parencite{System_Identification}.
 
 Let \(u[n]\) and \(y[n]\) denote the discrete-time input and output signals of length \(N\). In Welch’s method, the signals are divided into \(K\) overlapping segments of length \(L\). Each segment is multiplied by a window function \(w[n]\) to reduce spectral leakage \parencite{System_Identification}.
 
@@ -589,7 +593,7 @@ Welch’s method reduces the variance of the estimates by averaging over all seg
     \hat{S}_{yu}(\omega) = \frac{1}{K} \sum_{k=1}^{K} P_{yu,k}(\omega), 
 \end{equation}
 
-Using these quantities, the transfer function estimate is computed as
+Using these quantities, the frequency responses estimate is computed as
 
 \begin{equation}
     \hat{G}(\omega) = \frac{\hat{S}_{yu}(\omega)}{\hat{S}_{uu}(\omega)}.
@@ -600,13 +604,13 @@ In our example, the spectral densities are estimated using Welch’s method with
 \begin{figure}[h]
     \centering
     \includegraphics[width=\linewidth]{transferfunction_after_processing.png}
-    \caption{Comparison of the true and estimated transfer function obtained using Welch’s method. The magnitude response is shown at the top, the phase response in the middle and the coherence at the bottom.}
+    \caption{Comparison of the true and estimated frequency responses obtained using Welch’s method. The magnitude response is shown at the top, the phase response in the middle and the coherence at the bottom.}
     \label{fig:transfer_estimation_filtered}
 \end{figure}
 
-The estimated transfer function is shown in \autoref{fig:transfer_estimation_filtered}. The estimated magnitude and phase closely follow the true system response over a wide frequency range. Compared to the direct estimation approach, the usable frequency range is significantly extended.
+The estimated frequency responses is shown in \autoref{fig:transfer_estimation_filtered}. The estimated magnitude and phase closely follow the true system response over a wide frequency range. Compared to the direct estimation approach, the usable frequency range is significantly extended.
 
-The quality of the transfer function estimate can be evaluated using the coherence. As already mentioned, coherence values close to one indicate a reliable transfer function estimate. The coherence is defined as
+The quality of the frequency responses estimate can be evaluated using the coherence. As already mentioned, coherence values close to one indicate a reliable frequency responses estimate. The coherence is defined as
 
 $$
 \gamma^2(\omega) = \frac{|S_{yu}(\omega)|^2}{S_{uu}(\omega)\, S_{yy}(\omega)},
@@ -614,7 +618,7 @@ $$
 
 and takes values in the range \(0 \leq \gamma^2(\omega) \leq 1\). It provides a frequency-dependent measure of how strongly the output is linearly related to the input \parencite{signal_processing}.
 
-As shown in \autoref{fig:transfer_estimation_filtered}, the coherence remains close to one up to approximately 10 Hz, where only minor deviations between the estimated and true transfer function are visible. At higher frequencies, the coherence decreases and the estimation error gradually increases.
+As shown in \autoref{fig:transfer_estimation_filtered}, the coherence remains close to one up to approximately 10 Hz, where only minor deviations between the estimated and true frequency responses are visible. At higher frequencies, the coherence decreases and the estimation error gradually increases.
 
 \section{Control Loop Calculations}
 \label{sec:Control Loop Calculations}
