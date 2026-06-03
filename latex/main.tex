@@ -812,6 +812,7 @@ The goal of this thesis is to analyze the control loops of the Betaflight flight
 By comparing the experimentally identified system behaviour with these theoretical models, the accuracy and reliability of the applied analysis techniques can be assessed. The models also provide a framework for understanding the interaction between the different control loops implemented in Betaflight. The following subsections describe the plant models corresponding to the main control layers of the flight controller: angular rate, angle, altitude hold and position hold.
 
 \subsection*{Motor Dynamics}
+As the basis of the overall system, the transfer function of the motor dynamics must be determined. The motor–propeller system is modeled using the well-established electromechanical model of a DC motor, applicable to brushless DC (BLDC) motors in equivalent form. The model comprises one electrical and one mechanical differential equation.
 
 As the basis of the overall system, the transfer function of the motor dynamics must be determined. Since the internal implementation of the BLHeli32 ESC firmware is proprietary and not publicly available, the exact dynamics of the motor--ESC system are unknown. The following model therefore does not represent the real system exactly but serves as a simplified approximation of the dominant motor dynamics.
 
@@ -822,29 +823,36 @@ The electrical behaviour of the motor is described by
     u(t) = R\,i(t) + L\,\frac{di(t)}{dt} + k_e\,\omega(t),
     \label{eq:dc_motor_electrical}
 \end{equation}
-where $u(t)$ is the applied motor voltage, $i(t)$ the motor current, $R$ the winding resistance, $L$ the inductance, $k_e$ the back electromotive force constant and $\omega(t)$ the angular velocity.
+where $u(t)$ is the motor voltage, $i(t)$ the motor current, $R$ the winding resistance, $L$ the inductance, $k_e$ the back electromotive force constant, and $\omega(t)$ the angular velocity.
 
 The mechanical dynamics are given by
 \begin{equation}
     J_{\mathrm{m}}\,\frac{d\omega(t)}{dt} = k_t\,i(t),
     \label{eq:dc_motor_mechanical}
 \end{equation}
-where $J_{\mathrm{m}}$ is the combined moment of inertia of the motor and propeller and $k_t$ is the torque constant. For simplicity, viscous friction and aerodynamic load torque are neglected.
+where $J_{\mathrm{m}}$ is the combined moment of inertia and $k_t$ the torque constant. Viscous friction and aerodynamic load torque are neglected.
 
-Applying the Laplace transform to Eqs.~(\ref{eq:dc_motor_electrical}) and (\ref{eq:dc_motor_mechanical}) and eliminating $i(s)$ yields the transfer function from voltage to angular velocity:
+Applying the Laplace transform and eliminating $i(s)$ yields
 \begin{equation}
     G_{\text{motor}}(s) = \frac{\Omega(s)}{U(s)} =
     \frac{k_t}{J_{\mathrm{m}} L s^2 + J_{\mathrm{m}} R s + k_t k_e}.
     \label{eq:dc_motor_transfer}
 \end{equation}
 
-Since the torque constant and the back electromotive force constant have the same numerical value, the transfer function can be simplified to
+Since $k_t = k_e = k$, this simplifies to a second-order (PT2) system:
 \begin{equation}
-    G_{\text{motor}}(s) =
-    \frac{k}{J_{\mathrm{m}} L s^2 + J_{\mathrm{m}} R s + k^2}.
+    G_{\text{motor}}(s) = \frac{k}{J_{\mathrm{m}} L s^2 + J_{\mathrm{m}} R s + k^2}.
 \end{equation}
 
-This transfer function represents a second-order (PT2) system, capturing both electrical and mechanical dynamics. Due to the small electrical time constant, the inductance mainly affects higher frequencies and can often be neglected. In this case, the motor can be approximated by a first-order (PT1) system, which forms the basis for the subsequent analysis and controller design.
+Due to the small electrical time constant, the inductance can be neglected for practical controller design, yielding a first-order (PT1) approximation.
+
+\subsubsection*{Modeling Assumptions and ESC Dynamics}
+
+The transfer function assumes direct voltage-to-angular-velocity control. In practice, the motor is controlled through an Electronic Speed Controller (ESC) running proprietary BLHeli32 firmware (closed-source), whose control algorithms cannot be fully verified.
+
+The ESC firmware includes inner control loops for current regulation and commutation, operating at higher bandwidth than the drone's outer rate and angle controllers. These effects are not captured in the simplified model, which assumes the ESC acts as a proportional voltage source.
+
+The actual plant dynamics may therefore differ from $G_{\text{motor}}(s)$ due to unmeasured effects in the ESC firmware. The PT1 approximation serves as a foundation for controller design, acknowledging that the real system exhibits additional complexity not fully captured by this linearized model.
 
 \subsection*{Plant Angular Rate}
 
