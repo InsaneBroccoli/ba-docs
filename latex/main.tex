@@ -1810,66 +1810,76 @@ The filtering algorithms themselves were developed as part of the Project Thesis
 
 \subsection*{Filter tuning}
 
-Before we start tuning the PID controllers, we need good filtering to have clean signals to work with. The general aim here is to use as little filtering as possible because too much filtering causes delay in the system. However, no quadcopter build is perfect, so at least some filtering is necessary in order to achieve a well-tuned system.
+Before tuning the PID controllers, effective filtering is essential to obtain clean signals. The general aim is to use minimal filtering, as excessive filtering introduces delay. However, filtering is necessary to achieve proper system tuning.
 
-After running the program in MATLAB or Python and importing a log file, you can see in the command window which filter and PID settings were used during that flight. Our tool, in its current state, doesn't copy these values to the code automatically, so the first step is to copy the settings from the command window to the correct position in the code.
+After running the analysis tool and importing a log file, the command window displays the filter and PID settings that were active during that flight. The tool does not automatically copy these values to the code, so manual transfer is required.
 
-We then start by looking at the spectrograms and spectra figures to assess the effectiveness of the current filtering. It is important to note that the spectra and spectrogram plots only show the data recorded in the loaded log file. Changing filter settings in the code does not affect these plots, as they reflect the settings that were active during the flight. To see the effect of any changes, a new flight must be performed and logged with the updated settings.
+The next step involves analyzing the spectra and spectrogram plots to assess filtering effectiveness. It is important to note that these plots reflect only the data recorded in the loaded log file and the settings active during that flight. Changing filter settings in the code does not affect the existing plots. To evaluate the effects of parameter changes, a new flight must be performed and logged with the updated settings.
 
-The \textbf{spectra} in \autoref{fig:Spectra_tuning} shows the frequency composition of the gyro signals.
-Peaks in this plot point to vibration sources at specific frequencies.
-When we analyze this plot, we look for three main things:
+\newpage
+
+The \textbf{spectra} \autoref{fig:Spectra_tuning} shows the frequency composition of the gyro signals. Peaks in this plot point to vibration sources at specific frequencies.
+Three key aspects should be analyzed:
+
 \begin{itemize}
-	\item \textbf{Resonance Peaks:} If all three axes show a peak at the same frequency, it usually means there is a resonance in the frame or due to a poorly fixed component. This can be fixed with a specific notch filter or by attaching the loose parts properly.
-	\item \textbf{Noise:} A high noise level indicates general vibration issues. By adjusting the D-term low pass filter, you can counteract this. Clean lines in the plot show that the filtering is working well.
-	\item \textbf{Axis Sum:} The axis sum shows the overall vibration level across all gyro axes. A properly filtered signal drops quickly after the motor frequencies (after around 600 Hz) and remains low, indicating effective suppression of high-frequency noise and resonances.
+    \item \textbf{Resonance Peaks:} If all three axes show a peak at the same frequency, a resonance in the frame or loose component may be present. This can be addressed with a notch filter or by securing loose parts properly.
+	\item \textbf{Noise:} High noise levels indicate general vibration issues. Adjusting the D-term low-pass filter can mitigate this. Clean spectral lines indicate effective filtering.
+	\item \textbf{Axis Sum:} The axis sum displays the overall vibration level across all gyro axes. A properly filtered signal drops quickly after motor frequencies (around 600 Hz) and remains low, indicating effective suppression of high-frequency noise and resonances.
 \end{itemize}
 
 \begin{figure}[H]
-	\centering
-	\includegraphics[width=0.85\textwidth]{Spectra.png}
-	\caption{Frequency spectra of the measured gyro signals}
-	\label{fig:Spectra_tuning}
+    \centering
+    \includegraphics[width=1.0\textwidth]{Spectra.png}
+    \caption{Frequency spectra of the measured gyro signals.}
+    \label{fig:Spectra_tuning}
 \end{figure}
 
-We can see in this figure that our filter settings work well. The filtered signals have very little noise (smoother lines) and no large resonances. Only the yaw axis has a small peak around 550 Hz, which is acceptable. The axis sum drops nicely and stays low after about 600 Hz, approximately where the motor frequencies end. This shows the drone is running smoothly with vibrations under control. 
+The figure demonstrates effective filter settings. The filtered signals exhibit minimal noise (smoother lines) and no significant resonances. Only the yaw axis has a small peak around 550 Hz, which is acceptable. The axis sum drops quickly after approximately 600 Hz, where motor frequencies end, indicating smooth operation with controlled vibrations.
+
+\newpage
+
 The vibrations are also visible in the \textbf{spectrogram} plots in \autoref{fig:Spectrograms_tuning}.
-Here, frequencies are plotted against thrust level and the color shows the signal intensity. Red equals much vibration, blue equals little vibration.
+Here, frequencies are plotted against thrust level and the color shows the signal intensity.
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.85\textwidth]{Spectrograms.jpg}
-	\caption{Spectrograms}
+	\includegraphics[width=0.9\textwidth]{Spectrograms.png}
+	\caption{Gyro Spectrograms. Red equals much vibration, blue equals little vibration.}
 	\label{fig:Spectrograms_tuning}
 \end{figure}
 
-\textbf{Vertical lines} in the spectrogram indicate vibrations at fixed frequencies that do not change with thrust. These usually come from frame resonances or loose components. Such resonances can be removed with static notch filters, but because they are fixed at a single frequency, they must be used carefully. For more robust suppression, especially when frequencies shift due to bent props or changing load conditions, a dynamic notch filter is usually the better choice. Static notch filters should only be used when the same resonance appears on all three axes at the same frequency.
+\textbf{Vertical lines} indicate fixed-frequency vibrations from frame resonances or loose components. Dynamic notch filters provide robust suppression, particularly when frequencies shift due to bent propellers or changing load conditions. Testing showed that 3 notches from 100 to 600 Hz improved filtering, though this introduces additional delay.
 
-\textbf{Diagonal lines} show vibrations that change with motor speed, such as propeller noise. Using the RPM Filter, these propeller vibrations can be filtered out quite well. This filter uses real-time RPM telemetry data to place notch filters exactly on the fundamental and harmonic frequencies of each motor. In our case, we kept the RPM filter with the default settings. We used \textbf{three-bladed} propellers, so the filter has been set to \textbf{three harmonics}. As we can see in \autoref{fig:Spectrograms_tuning} under the filtered plots, the RPM filter removes the diagonal lines effectively.
+\textbf{Diagonal lines} show motor-speed-dependent vibrations such as propeller noise. RPM filtering effectively suppresses these by placing notch filters on motor fundamental and harmonic frequencies. With three-bladed propellers, the filter was configured for three harmonics, effectively removing diagonal lines as shown in \autoref{fig:Spectrograms_tuning}.
 
-\textbf{Aliasing}\\
-When sampling a signal that contains frequencies higher than half of your sampling rate, aliasing can occur. This would make high-frequency content appear as lower frequencies, corrupting the measurement data. To avoid this, we applied a PT1 low-pass filter with a cutoff frequency not greater than the sampling frequency divided by two. As we use a 2 kHz logging frequency, we set the cutoff to 800 Hz as a conservative choice. If aliasing occurs on your drone, it appears in the spectrogram as diagonal lines going down as you move to higher frequencies.
+\textbf{Aliasing} occurs when sampling contains frequencies above half the sampling rate. A PT1 low-pass filter with cutoff not exceeding half the sampling rate prevents this. With a 2 kHz logging frequency, the filter was conservatively set to 800 Hz.
 
-\textbf{Dynamic notch filter}\\
-The dynamic notch filter automatically finds and removes mechanical motor noise with the highest amplitude for each axis. The standard setting here is 2 notches from 100 to 600 Hz. Through testing, we found that changing the notch filter count from two to three provided better filtering. As shown in \autoref{fig:Spectrograms_tuning}, the filtered plots no longer contain diagonal lines. However, additional notches also introduce delay, requiring a trade-off between filtering performance and responsiveness.
+\textbf{D-term low-pass filter:} The D-term amplifies high-frequency gyro noise, requiring filtering to prevent excessive motor oscillations and overheating. A PT3 filter with 100 Hz cutoff was selected for its steep roll-off, aggressively suppressing noise while introducing minimal delay. This conservative starting point can be increased during tuning if motor temperatures remain acceptable.
 
-\textbf{D-term low-pass filter}\\
-The D-term in a PID controller amplifies high-frequency gyro noise. Therefore, this filter controls how much noise is fed back into the control loop. If too much noise passes through, the D-term causes rapid micro-oscillations in the motors, leading to overheating and potential hardware failure. For our initial flight, we configured a PT3 (third-order) filter with a cutoff of 100 Hz. We chose this filter because PT3 has a much steeper slope than a standard first- or second-order filter. This allows us to aggressively suppress high-frequency noise while introducing only limited delay at lower frequencies. The 100 Hz cutoff served as a conservative starting point and can be increased during tuning to improve responsiveness, provided that motor temperatures remain acceptable.
-
-\textbf{Yaw low-pass filter}\\
-The yaw low-pass filter suppresses high-frequency noise on the yaw axis. Since yaw typically experiences less vibration than roll and pitch, less aggressive filtering is often sufficient. For our setup, the default Betaflight settings provided satisfactory performance.
+\textbf{Yaw low-pass filter:} This filter suppresses high-frequency yaw noise. Since yaw typically experiences less vibration than roll and pitch, default Betaflight settings typically provide adequate performance.
 
 \subsection*{Gyro PID Tuning}
 
-To tune the PID controllers, our program provides two different approaches: the step response and the Gang of Four. Both methods are based on the estimated plant and controller transfer functions, allowing for a systematic evaluation of the tuning adjustments. The step response is a time-domain analysis that shows how the system reacts to a sudden change in the reference input, while the Gang of Four is a frequency-domain analysis that provides insights into the stability and robustness of the system across a range of frequencies. For beginners, the step response is often more intuitive and easier to interpret, while the Gang of Four offers a more comprehensive view of the system's behaviour, especially for more experienced users.
+The tuning tool provides two different approaches for tuning the PID controllers: the step response and the Gang of Four. Both methods are based on the estimated plant and controller transfer functions, allowing for a systematic evaluation of the tuning adjustments. The step response is a time-domain analysis that shows how the system reacts to a sudden change in the reference input, while the Gang of Four is a frequency-domain analysis that provides insights into the stability and robustness of the system across a range of frequencies. For beginners, the step response is often more intuitive and easier to interpret, while the Gang of Four offers a more comprehensive view of the system's behaviour, especially for more experienced users.
 
-\subsubsection*{Evaluation Step Response}
+\subsubsection*{Plant Model Identification}
 
-The \textbf{step response} plot shows exactly what happens when the pilot moves the stick rapidly. You can see how fast the drone reacts to the command, if it overshoots the target value and how quickly it settles to a steady state. The plot shows three curves, the yellow curve represents the measured response using the active PID values during flight, the blue curve shows the calculated response derived from the plant model and the red curve illustrates the predicted response using the newly tuned PID values implemented in the code.
+The foundation for effective PID tuning is understanding the system dynamics. The angular rate controller forms the innermost control loop and its plant dynamics serve as the fundamental reference for overall system behaviour. \autoref{fig:plant_gyro_tuning} shows the identified frequency response with magnitude, phase and coherence. The magnitude plot exhibits the characteristic $-20\,\text{dB/decade}$ slope at low frequencies, confirming the integrator behaviour expected from rotational dynamics. At higher frequencies, motor dynamics introduce additional phase lag and magnitude roll-off, reflecting the limited actuator bandwidth. The coherence plot indicates measurement quality: high values reflect reliable measurements, while degraded coherence indicates sensor noise and unmodeled effects. For controller design, regions of low coherence suggest limiting high-frequency action through filtering and moderate derivative gains.
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.9\textwidth]{step_response_roll.png}
+	\includegraphics[width=1.0\textwidth]{Plant_Gyro_Tuning.png}
+	\caption{Frequency response of the identified gyro plant model.}
+	\label{fig:plant_gyro_tuning}
+\end{figure}
+
+\subsubsection*{Evaluation Step Response}
+
+The \textbf{step response} plot shows exactly what happens when the pilot moves the stick rapidly. The response characteristics predicted from the plant model in \autoref{fig:plant_gyro_tuning} translate into time-domain behaviour observable in the step response. The plot shows three curves: the yellow curve represents the measured response using the active PID values during flight, the blue curve shows the calculated response derived from the plant model, and the red curve illustrates the predicted response using the newly tuned PID values implemented in the code.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1.0\textwidth]{step_response_roll.png}
 	\caption{Comparison of the measured step response and the calculated responses obtained with the original and newly tuned controller parameters.}
 	\label{fig:step_response_tuning}
 \end{figure}
@@ -1881,34 +1891,71 @@ The \textbf{step response} plot shows exactly what happens when the pilot moves 
 
 \subsubsection*{Evaluation Gang of Four}
 
-The Gang of Four is a standard set of four transfer functions that together fully characterize a feedback control system. These four plots represent the Sensitivity (S), Complementary Sensitivity (T, Bode plot), Controller Effort (SC) and Compliance (SP). By analyzing these plots, we can assess the stability of the drone, its ability to follow commands, its response to external disturbances and the workload on the motors, all in one comprehensive view.
+The Gang of Four is a standard set of four transfer functions that together fully characterize a feedback control system. These four plots represent the Sensitivity (S), Complementary Sensitivity (T), Controller Effort (SC) and Compliance (SP). By analyzing these plots, the stability of the drone, its ability to follow commands, its response to external disturbances and the workload on the motors can be assessed in one comprehensive view. This structured approach enables efficient iterative tuning and systematic evaluation of how PID adjustments affect overall system performance.
 
-\autoref{fig:gangoffour_tuning_gyro} shows the Gang of Four plots for our tuned system.
+\autoref{fig:gangoffour_tuning_gyro} shows the Gang of Four for the tuned system.
 
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=1.0\textwidth]{gang_of_four_roll.png}
-	\caption{Gang of Four transfer functions of the identified system for the original and newly tuned controller parameters. The plots illustrate tracking performance (T), sensitivity (S), controller effort (SC) and disturbance rejection (SP).}
+	\caption{Gang of Four transfer functions of the identified system for the original and newly tuned controller parameters.}
 	\label{fig:gangoffour_tuning_gyro}
 \end{figure}
 
-During our tuning process, we found these plots to be invaluable for diagnosing and improving the drone's performance. While all four plots provide useful information, we focused primarily on three of them:
+The tuning process demonstrated these plots to be invaluable for diagnosing and improving drone performance. While all four plots provide useful information, focus should be placed on three in particular:
+
 \begin{enumerate}
 	\item Sensitivity (S):
 	      This plot shows how the system reacts to noise and reference commands. The peak value is a key indicator of stability. In our experience, a peak below 6 dB is ideal for a well-damped system. Higher peaks suggest the drone might oscillate or become unstable, especially during aggressive maneuvers. We noticed that reducing the peak often required balancing stability with responsiveness, as overly conservative settings could make the drone feel sluggish.
 	\item Controller Effort (SC):
-	      This plot indicates how much work the controller is doing to maintain stability and follow commands. High effort at higher frequencies usually means the system is reacting to sensor noise rather than real disturbances. This can lead to unnecessary motor activity, overheating and wear. During tuning, we found that adjusting the D-term gains and optimizing filters helped reduce high-frequency effort while keeping the drone responsive.
+	      This plot indicates how much work the controller is doing to maintain stability and follow commands. High effort at higher frequencies usually means the system is reacting to sensor noise rather than real disturbances. This can lead to unnecessary motor activity, overheating and wear. Adjusting D-term gains and optimizing filters can reduce high-frequency effort while maintaining responsiveness.
 	\item Compliance (SP):
-	      Compliance measures how much external disturbances, like wind or propwash, affect the drone's motion. Lower compliance means the drone resists disturbances more effectively. We observed that increasing the P-term gains improved disturbance rejection, but setting them too high caused oscillations during rapid throttle changes. Finding the right balance was critical for maintaining both stability and responsiveness.
+	      Compliance measures how much external disturbances, such as wind or propwash, affect drone motion. Lower compliance indicates more effective disturbance resistance. Increasing P-term gains improves disturbance rejection, though excessive gains can cause oscillations during rapid throttle changes. The optimal balance must be found to maintain both stability and responsiveness.
 \end{enumerate}
-
-In our experience, the Gang of Four plots provided a clear and structured way to assess the impact of tuning changes. Adjustments to the PID gains directly revealed their effects on stability, control effort and disturbance rejection. This enabled an efficient iterative tuning process and increased confidence in achieving robust performance across varying conditions.
 
 \subsubsection*{PID Tuning Summary}
 
-Our tuning objective was to achieve a fast step response without overshoot while maintaining good disturbance rejection and stability margins. It is important to note that there is no universally perfect tune. Settings depend heavily on pilot preferences. Racing pilots typically prefer aggressive, responsive tuning for competitive performance, while freestyle pilots may prioritize smoothness and flight feel. We focused on achieving robustness and a step response without overshoot. Robustness is practical in this case because it handles scenarios such as slightly bent propellers, a battery positioned off-center, or additional components such as cameras mounted on the drone. It should also be mentioned that the axes roll and pitch should be tuned as similarly as possible. This is because symmetrical tuning makes the drone more intuitive to pilot. When both axes respond identically to stick inputs, the drone behaves predictably during combined maneuvers, making control feel natural.
+The offline tuning framework is designed to enable PID parameters to be optimized without repeated flight tests. The process is guided by these principles:
 
-The tuning process involved iteratively adjusting PID gains in MATLAB while monitoring both the step response and Gang of Four plots side by side. We found and used an online PID simulator as a guide to build intuition for how P, I and D values affect system behaviour. For the step response, we aimed for a fast rise time with minimal or no overshoot and a smooth curve without oscillations. On the Gang of Four side, we wanted the sensitivity peak to stay below 6 dB for good stability margins, low compliance across the control bandwidth for effective disturbance rejection and reasonable controller effort to avoid amplifying sensor noise. All transfer functions should show smooth, rounded shapes without sharp resonances that indicate problematic dynamics. Once we were satisfied with the curves and their shapes, we could take the P, I and D values for each axis from the command window in MATLAB and set them via the Betaflight configurator to the drone.
+\textbf{Plant Identification}
+
+Each tuning iteration beginns by identifying the plant transfer function from a chirp flight conducted at the current parameters. This measurement captures how the drone responds to control inputs under the existing tuning, including environmental conditions present during that flight.
+
+\textbf{Offline Prediction}
+
+Once the plant has been identified, candidate tuning parameters can be evaluated offline without additional flights. Two complementary analysis tools are employed:
+
+\begin{itemize}
+    \item \textbf{Step Response:} Time-domain analysis showing how the drone responds to a stick command. Desirable characteristics include adequate rise time, minimal overshoot and smooth curves without ringing. The analytical prediction can be compared with the measured baseline response to validate the model quality.
+    
+    \item \textbf{Gang of Four:} Frequency-domain analysis displaying four transfer functions that fully characterize the closed-loop system. The Sensitivity peak indicates stability margins and should remain within acceptable bounds. Compliance reveals disturbance rejection capability. Controller Effort exposes whether high-frequency noise is being amplified. These plots reveal tradeoffs between responsiveness and robustness across the control bandwidth.
+\end{itemize}
+
+\textbf{In-Flight Validation}
+
+Once the predicted response is deemed acceptable, the new parameters are applied to the flight controller and validated through actual flight testing. Aggressive maneuvers, wind disturbances and motor thermal behavior should all be assessed to ensure the tuning remains stable and responsive under practical conditions.
+
+\newpage
+
+\textbf{Tuning Philosophy}
+
+No universally optimal tune exists. Different applications should reflect different operational priorities: performance-oriented applications may demand aggressive response, while stability-focused platforms should prioritize robustness. Throughout this work, emphasis was placed on robustness and disturbance rejection, a philosophy that accommodates practical imperfections including bent propellers and asymmetric mass distribution. This conservative approach proved more valuable than pursuing peak responsiveness.
+
+For coherent handling feel, particularly during combined maneuvers, roll and pitch axes should be tuned symmetrically. Asymmetric tuning, while sometimes beneficial, can introduce unintuitive cross-coupling that degrades predictability.
+
+\textbf{Incremental Workflow}
+
+\begin{enumerate}
+    \item A baseline flight is established and the plant is identified at current settings
+    \item The step response and Gang of Four are analyzed to assess current behaviour
+    \item One parameter is adjusted at a time by a small increment
+    \item The response is predicted offline and key metrics are verified to remain within acceptable ranges
+    \item The new parameters are validated through flight testing
+    \item \textbf{Before making substantial changes, a new chirp flight is performed to re-identify the plant}
+    \item The process is repeated from step 2
+\end{enumerate}
+
+This iterative approach ensures that the system remains within the linear region around the identified plant, thereby maintaining prediction reliability.
 
 \newpage
 
