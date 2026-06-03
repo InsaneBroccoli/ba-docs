@@ -1979,7 +1979,10 @@ This extended validation will provide a more robust assessment of the Python imp
 The systematic transfer and validation process established so far provides a solid foundation for completing the migration and ensuring consistency between the MATLAB and Python implementations in future work.
 
 \chapter{Results}
+\label{ch:Results}
 This chapter presents the results obtained from the application of the proposed offline tuning framework. The outcomes of the controller tuning procedures are shown for the different control loops, including the angular rate, angle, altitude and position controllers. The results are presented objectively without interpretation, focusing on the observed system behaviour and the performance of the tuned controllers. A detailed evaluation and discussion of these results are provided in the subsequent chapter.
+
+Across all four loops the same reporting conventions apply. Of the Gang-of-Four transfer functions, only the closed-loop tracking \(T\) is directly identifiable from the chirp input/output pair, while \(S\), \(SC\) and \(SP\) are computed from the identified plant and the controller model and are therefore analytical; of these, only the sensitivity peak carries a direct robustness interpretation, so it is the only peak reported numerically, with \SI{6}{\decibel} taken throughout as the reference robustness limit. Each analytical prediction applies a given case's controller to the plant identified from a base flight (the lower-gain, default, or baseline case) and, where a measured counterpart exists, is compared against the flight measured at that case. Rise time \(t_r\) is taken between \SI{10}{\percent} and \SI{90}{\percent} of the steady-state value.
 
 \section{Gyro Controller}
 
@@ -2004,9 +2007,46 @@ The rate (gyro) loop was identified by injecting an exponential chirp into the r
 
 The chirp was swept exponentially from \SI{0.2}{\hertz} to \SI{600}{\hertz} over a \SI{30}{\second} sweep, repeated three times per flight (about \SI{90}{\second} in total) and averaged. The frequency response was estimated with Welch's method using a Hann window of \SI{2.5}{\second} length and \SI{90}{\percent} overlap, giving a frequency resolution of \(\Delta f \approx \SI{0.4}{\hertz}\).
 
+\subsection*{Closed-Loop Frequency Response}
+
+\begin{figure}[H]
+    \centering
+    % TODO: overwrite the Stock_Photo placeholder at Figures/gyro/gyro_gang_of_four.png
+    % with the real Gang of Four figure.
+    \includegraphics[width=1.0\linewidth]{gyro/gyro_gang_of_four.png}
+    \caption{Gang of Four magnitude responses for the rate loop, moderate versus tuned. Tracking \(T\), Sensitivity \(S\), Controller Effort \(SC\) and Compliance \(SP\) are shown. The analytical curves use the named controller applied to the moderate-flight plant.}
+    \label{fig:gyro_gof}
+\end{figure}
+
+The rate loop is excited and identified across a broad, coherent band, so the measured tracking \(T\) in \autoref{fig:gyro_gof} is reliable over the displayed range. The analytical sensitivity peaks, evaluated within the displayed band with each controller applied to the moderate-flight plant, are listed in \autoref{tab:gyro_gof_S}.
+
+\begin{table}[H]
+    \centering
+    \caption{Analytical sensitivity peak magnitudes \(|S|\) for the rate loop and the frequencies at which they occur. All values use the named-case controller applied to the moderate-flight plant.}
+    \label{tab:gyro_gof_S}
+    % TODO: replace each -- with the sensitivity-peak magnitude [dB] and its
+    % frequency [Hz] for that case, read from the Gang of Four analysis.
+    \begin{tabular}{lrr}
+        \toprule
+        Case     & peak [\si{\decibel}] & \(f\) [\si{\hertz}] \\
+        \midrule
+        tuned    & -- & -- \\
+        moderate & -- & -- \\
+        bad      & -- & -- \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+% TODO (optional, once the peak values are filled in): expand this paragraph as
+% in the althold/poshold sections -- state the per-case sensitivity peaks from
+% \autoref{tab:gyro_gof_S}, note whether the tuned case stays below the
+% \SI{6}{\decibel} robustness limit, and relate the trend to the gain changes
+% and the rise times in \autoref{tab:gyro_step}.
+The sensitivity peaks in \autoref{tab:gyro_gof_S} characterise the robustness margin of each tuning; a peak approaching the \SI{6}{\decibel} limit indicates reduced margin.
+
 \subsection*{Step Response}
 
-For each step, the closed-loop step response at the higher tuning was predicted from the identified plant of the lower (base) tuning, and compared with the response measured at the higher tuning. Two single-increment steps were evaluated, bad \(\rightarrow\) moderate and moderate \(\rightarrow\) tuned, shown in \autoref{fig:gyro_step_big} and \autoref{fig:gyro_step_small}. The per-step rise time \(t_r\) (between \SI{10}{\percent} and \SI{90}{\percent} of the steady-state value) and overshoot are listed in \autoref{tab:gyro_step}.
+Two single-increment steps were evaluated, bad \(\rightarrow\) moderate and moderate \(\rightarrow\) tuned, shown in \autoref{fig:gyro_step_big} and \autoref{fig:gyro_step_small}. The per-step rise time \(t_r\) and overshoot are listed in \autoref{tab:gyro_step}.
 
 \begin{figure}[H]
     \centering
@@ -2068,9 +2108,45 @@ The angle loop was identified by injecting an exponential chirp into the angle s
 
 The chirp was swept exponentially from \SI{0.2}{\hertz} to \SI{600}{\hertz} over a \SI{30}{\second} sweep, repeated three times per flight (about \SI{90}{\second} in total) and averaged. The frequency response was estimated with Welch's method using a Hann window of \SI{2}{\second} length and \SI{90}{\percent} overlap, giving a frequency resolution of \(\Delta f \approx \SI{0.5}{\hertz}\).
 
+\subsection*{Closed-Loop Frequency Response}
+
+\begin{figure}[H]
+    \centering
+    % TODO: overwrite the Stock_Photo placeholder at Figures/angle/angle_gang_of_four.png
+    % with the real Gang of Four figure.
+    \includegraphics[width=1.0\linewidth]{angle/angle_gang_of_four.png}
+    \caption{Gang of Four magnitude responses for the angle loop, \(P = 80\) versus \(P = 100\). Tracking \(T\), Sensitivity \(S\), Controller Effort \(SC\) and Compliance \(SP\) are shown. The analytical curves use the named controller applied to the \(P = 80\)-flight plant.}
+    \label{fig:angle_gof}
+\end{figure}
+
+Like the rate loop, the angle loop is excited across a broad, coherent band, so the measured tracking \(T\) in \autoref{fig:angle_gof} is reliable over the displayed range; the analytical \(S\), \(SC\) and \(SP\) here additionally incorporate the identified inner rate loop. The analytical sensitivity peaks for the three flown gains, each applied to the \(P = 80\)-flight plant, are listed in \autoref{tab:angle_gof_S}.
+
+\begin{table}[H]
+    \centering
+    \caption{Analytical sensitivity peak magnitudes \(|S|\) for the angle loop and the frequencies at which they occur. All values use the named-case controller applied to the \(P = 80\)-flight plant.}
+    \label{tab:angle_gof_S}
+    % TODO: replace each -- with the sensitivity-peak magnitude [dB] and its
+    % frequency [Hz] for that gain, read from the Gang of Four analysis.
+    \begin{tabular}{lrr}
+        \toprule
+        Case        & peak [\si{\decibel}] & \(f\) [\si{\hertz}] \\
+        \midrule
+        \(P = 100\) & -- & -- \\
+        \(P = 80\)  & -- & -- \\
+        \(P = 50\)  & -- & -- \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+% TODO (optional, once the peak values are filled in): report the per-gain
+% sensitivity peaks from \autoref{tab:angle_gof_S}, note whether the higher gains
+% approach the \SI{6}{\decibel} robustness limit, and relate this to the rise
+% times in \autoref{tab:angle_step}.
+The sensitivity peaks in \autoref{tab:angle_gof_S} characterise the robustness margin of each gain; a peak approaching the \SI{6}{\decibel} limit indicates reduced margin.
+
 \subsection*{Step Response}
 
-For each gain step, the identified plant of the lower-gain flight was used to predict the closed-loop step response at the next gain, which was then compared with the response measured at that gain. Two single-increment steps were evaluated, \(P = 50 \rightarrow 80\) and \(P = 80 \rightarrow 100\). \autoref{fig:angle_step} shows the second step; the per-case rise times are listed in \autoref{tab:angle_step}. Rise time \(t_r\) is measured between \SI{10}{\percent} and \SI{90}{\percent} of the steady-state value.
+Two single-increment steps were evaluated, \(P = 50 \rightarrow 80\) and \(P = 80 \rightarrow 100\). \autoref{fig:angle_step} shows the second step; the per-case rise times are listed in \autoref{tab:angle_step}.
 
 \begin{figure}[H]
     \centering
@@ -2129,7 +2205,7 @@ The althold loop runs at \SI{100}{\hertz}, decimated from the \SI{8}{\kilo\hertz
     \label{fig:althold_gof}
 \end{figure}
 
-Of the four Gang-of-Four transfer functions shown in \autoref{fig:althold_gof}, only the closed-loop tracking \(T\) is directly identifiable from the chirp input/output pair; \(S\), \(SC\) and \(SP\) are computed from the identified plant combined with the controller model and are therefore analytical only. Of these, the sensitivity peak is the scalar with a direct robustness interpretation, and it is the only peak reported numerically here. The analytical sensitivity peaks, extracted within the displayed band \(f \leq \SI{10}{\hertz}\) using the named controller applied to the default-flight plant, are listed in \autoref{tab:althold_gof_S}.
+The analytical sensitivity peaks, extracted within the displayed band \(f \leq \SI{10}{\hertz}\) using the named controller applied to the default-flight plant, are listed in \autoref{tab:althold_gof_S}.
 
 \begin{table}[H]
     \centering
@@ -2146,7 +2222,7 @@ Of the four Gang-of-Four transfer functions shown in \autoref{fig:althold_gof}, 
     \end{tabular}
 \end{table}
 
-The analytical sensitivity peak increases with the controller gain: it is highest for the tuned case (\SI{+6.43}{\decibel}, close to the \SI{6}{\decibel} value commonly taken as a robustness limit) and lower for the medium (\SI{+4.82}{\decibel}) and bad (\SI{+3.99}{\decibel}) cases, the latter having the lowest gains. This is consistent with the more aggressive tune trading robustness margin for a faster response (cf. the rise times in \autoref{tab:althold_step}). In contrast to the tracking and compliance responses, these sensitivity peaks fall within or near the more coherent part of the band (\SIrange{0.27}{0.40}{\hertz}), so they are less affected by the low-coherence behaviour discussed in the following chapter.
+The analytical sensitivity peak increases with the controller gain: it is highest for the tuned case (\SI{+6.43}{\decibel}, close to the \SI{6}{\decibel} limit) and lower for the medium (\SI{+4.82}{\decibel}) and bad (\SI{+3.99}{\decibel}) cases, the latter having the lowest gains. This is consistent with the more aggressive tune trading robustness margin for a faster response (cf. the rise times in \autoref{tab:althold_step}). In contrast to the tracking and compliance responses, these sensitivity peaks fall within or near the more coherent part of the band (\SIrange{0.27}{0.40}{\hertz}), so they are less affected by the low-coherence behaviour discussed in the following chapter.
 
 \subsection*{Step Response}
 
@@ -2157,7 +2233,7 @@ The analytical sensitivity peak increases with the controller gain: it is highes
     \label{fig:althold_step}
 \end{figure}
 
-Per-case step-response metrics are listed in \autoref{tab:althold_step}. Rise time \(t_r\) is measured between \SI{10}{\percent} and \SI{90}{\percent} of the steady-state value.
+Per-case step-response metrics are listed in \autoref{tab:althold_step}.
 
 \begin{table}[H]
     \centering
@@ -2211,7 +2287,7 @@ The chirp was swept exponentially from \SI{0.05}{\hertz} to \SI{3}{\hertz} over 
     \label{fig:poshold_gof}
 \end{figure}
 
-The analytical and measured tracking responses are compared in \autoref{fig:poshold_gof}. Within the excited band \(f \leq \SI{3}{\hertz}\), the analytical prediction for the proposed tuning peaks near \SI{0.20}{\hertz} and stays within about \SI{0.7}{\decibel} of the measured proposed response there, while the measured baseline peaks lower; below the coherent band (roughly \SIrange{0.27}{3}{\hertz}) the comparison is dominated by wind and GPS noise. As in the altitude-hold loop, the sensitivity peak is the only one of the four transfer functions with a direct robustness interpretation, and it is the only peak reported numerically here; the analytical sensitivity peaks are listed in \autoref{tab:poshold_gof_S}.
+The analytical and measured tracking responses are compared in \autoref{fig:poshold_gof}. Within the excited band \(f \leq \SI{3}{\hertz}\), the analytical prediction for the proposed tuning peaks near \SI{0.20}{\hertz} and stays within about \SI{0.7}{\decibel} of the measured proposed response there, while the measured baseline peaks lower; below the coherent band (roughly \SIrange{0.27}{3}{\hertz}) the comparison is dominated by wind and GPS noise. The analytical sensitivity peaks are listed in \autoref{tab:poshold_gof_S}.
 
 \begin{table}[H]
     \centering
@@ -2227,7 +2303,7 @@ The analytical and measured tracking responses are compared in \autoref{fig:posh
     \end{tabular}
 \end{table}
 
-The proposed controller reaches a sensitivity peak of \SI{+5.35}{\decibel} on the baseline-flight plant and \SI{+4.71}{\decibel} on the proposed-flight plant, both below the \SI{6}{\decibel} value commonly taken as a robustness limit and falling within the coherent band. The controller effort \(SC\) stays below \SI{-8}{\decibel} within the coherent band, indicating modest actuation demand on the inner angle loop. The compliance \(SP\) peak falls at the lowest Welch bin, where the coherence is very low, and is interpreted as an artefact rather than a physical resonance.
+The proposed controller reaches a sensitivity peak of \SI{+5.35}{\decibel} on the baseline-flight plant and \SI{+4.71}{\decibel} on the proposed-flight plant, both below the \SI{6}{\decibel} limit and falling within the coherent band. The controller effort \(SC\) stays below \SI{-8}{\decibel} within the coherent band, indicating modest actuation demand on the inner angle loop. The compliance \(SP\) peak falls at the lowest Welch bin, where the coherence is very low, and is interpreted as an artefact rather than a physical resonance.
 
 \subsection*{Step Response}
 
@@ -2238,7 +2314,7 @@ The proposed controller reaches a sensitivity peak of \SI{+5.35}{\decibel} on th
     \label{fig:poshold_step}
 \end{figure}
 
-Per-tuning step-response metrics are listed in \autoref{tab:poshold_step}. Rise time \(t_r\) is measured between \SI{10}{\percent} and \SI{90}{\percent} of the steady-state value; the \SI{10}{\hertz} GPS rate limits the time resolution to \SI{0.1}{\second}.
+Per-tuning step-response metrics are listed in \autoref{tab:poshold_step}; the \SI{10}{\hertz} GPS rate limits the time resolution to \SI{0.1}{\second}.
 
 \begin{table}[H]
     \centering
