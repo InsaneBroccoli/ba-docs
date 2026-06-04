@@ -235,18 +235,18 @@ The quadcopter's orientation is described using a body-fixed coordinate system w
 
 \begin{itemize}
     \item \textbf{Roll} (\(\phi\)): rotation around the forward-pointing \(x\)-axis
-    \item \textbf{Pitch} (\(\theta\)): rotation around the rightward-pointing \(y\)-axis
-    \item \textbf{Yaw} (\(\psi\)): rotation around the downward-pointing \(z\)-axis
+    \item \textbf{Pitch} (\(\theta\)): rotation around the leftward-pointing \(y\)-axis
+    \item \textbf{Yaw} (\(\psi\)): rotation around the upward-pointing \(z\)-axis
 \end{itemize}
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.52\linewidth]{body_axes.png}
-    \caption{Body-fixed coordinate system and rotational axes of a quadcopter. \parencite{autonomous_robots} }
+    \includegraphics[width=0.5\linewidth]{body_axes.png}
+    \caption{Body-fixed coordinate system and rotational axes of a quadcopter. \parencite{betaflight_website} }
     \label{fig:body_axes}
 \end{figure}
 
-All motion is controlled by adjusting the rotational speeds of the four motors, which generate the necessary forces and torques. The motor configuration and control strategy are described in the following sections \parencite{autonomous_robots, quanIntroductionMulticopterDesign2017, mahonyMultirotorAerialVehicles2012}.
+All motion is controlled by adjusting the rotational speeds of the four motors, which generate the necessary forces and torques. The motor configuration and control strategy are described in the following sections \parencite{quanIntroductionMulticopterDesign2017, mahonyMultirotorAerialVehicles2012, autonomous_robots}.
 
 \newpage
 
