@@ -3,8 +3,8 @@ clc;
 clear variables;
 close all;
 
-addpath('/home/janick-dort/Dokumente/Studium_ZHAW/BA/bf_controller_tuning/lib/');
-addpath(genpath('/home/janick-dort/Dokumente/Studium_ZHAW/BA/bf_controller_tuning'));
+% addpath('/home/janick-dort/Dokumente/Studium_ZHAW/BA/bf_controller_tuning/lib/');
+% addpath(genpath('/home/janick-dort/Dokumente/Studium_ZHAW/BA/bf_controller_tuning'));
 
 addpath('../bf_controller_tuning/lib/');
 
@@ -22,15 +22,15 @@ opt.PhaseWrapping = 'on';
 
 %% File paths
 
-log_folder    = 'logs';
-flight_folder = '20260601';
+log_folder    = '../bf_controller_tuning/logs/';
+flight_folder = 'angle';
 
-log_name1 = 'P_50_flipmini.TXT.csv'; % default
-log_name2 = 'P_80_flipmini.TXT.csv'; % tuned
-log_name3 = 'P_100_flipmini.TXT.csv'; % more tuned
+log_name1 = 'P_50_flipmini.csv'; % default
+log_name2 = 'P_80_flipmini.csv'; % tuned
+log_name3 = 'P_100_flipmini.csv'; % more tuned
 
-base = 1;
-compare = 3;
+base = 2;
+compare = 1;
 switch base
   case 1
     file_path1 = fullfile(log_folder, flight_folder, log_name1);
@@ -424,4 +424,44 @@ for k = 1:size(step_resp_meas, 2)
     fprintf('     %-16s  t_rise=%.3f s  t_settle=%.3f s  overshoot=%.1f %%\n', ...
         labels_step{k}, t_rise, t_settle, overshoot_pct);
 end
+
+% --- Gang of Four peak magnitudes (linear magnitude evaluated at omega_bode) ---
+% Mirrors the althold / poshold GoF metric block. Restrict the peak search to
+% the excited band: above ~100 Hz the FRD is dominated by noise and would
+% otherwise yield spurious high-frequency peaks beyond the chirp excitation.
+% GoF plot curves (figure 11): calculated Flight1 = CL_ana1, calculated
+% Flight2 = CL_new2; measured Flight1 = T_ax1, measured Flight2 = T_ax2.
+f_peak_max = 100;
+mask       = f_bode <= f_peak_max;
+fb         = f_bode(mask);
+
+ev      = @(sys) abs(squeeze(freqresp(sys, omega_bode(mask))));
+peak_db = @(mag) 20*log10(max(mag));
+peak_f  = @(mag) fb(find(mag == max(mag), 1));
+
+mag_T_calc1 = ev(CL_ana1.T);   mag_T_calc2 = ev(CL_new2.T);
+mag_S_calc1 = ev(CL_ana1.S);   mag_S_calc2 = ev(CL_new2.S);
+mag_SC_c1   = ev(CL_ana1.SC);  mag_SC_c2   = ev(CL_new2.SC);
+mag_SP_c1   = ev(CL_ana1.SP);  mag_SP_c2   = ev(CL_new2.SP);
+
+T_meas1_full = abs(squeeze(T_ax1.ResponseData));
+T_meas2_full = abs(squeeze(T_ax2.ResponseData));
+mag_T_meas1  = T_meas1_full(mask);
+mag_T_meas2  = T_meas2_full(mask);
+
+lbl_base    = sprintf('P=%d', gain_base);
+lbl_compare = sprintf('P=%d', gain_compare);
+
+fprintf('  -- Gang of Four peak magnitudes (peak search restricted to f <= %.1f Hz) --\n', f_peak_max);
+fprintf('     T  calc %-8s peak %+5.2f dB @ %.3f Hz\n', lbl_base,    peak_db(mag_T_calc1), peak_f(mag_T_calc1));
+fprintf('     T  calc %-8s peak %+5.2f dB @ %.3f Hz\n', lbl_compare, peak_db(mag_T_calc2), peak_f(mag_T_calc2));
+fprintf('     T  meas %-8s peak %+5.2f dB @ %.3f Hz\n', lbl_base,    peak_db(mag_T_meas1), peak_f(mag_T_meas1));
+fprintf('     T  meas %-8s peak %+5.2f dB @ %.3f Hz\n', lbl_compare, peak_db(mag_T_meas2), peak_f(mag_T_meas2));
+fprintf('     S  calc %-8s peak %+5.2f dB @ %.3f Hz\n', lbl_base,    peak_db(mag_S_calc1), peak_f(mag_S_calc1));
+fprintf('     S  calc %-8s peak %+5.2f dB @ %.3f Hz\n', lbl_compare, peak_db(mag_S_calc2), peak_f(mag_S_calc2));
+fprintf('     SC calc %-8s peak %+5.2f dB @ %.3f Hz\n', lbl_base,    peak_db(mag_SC_c1),   peak_f(mag_SC_c1));
+fprintf('     SC calc %-8s peak %+5.2f dB @ %.3f Hz\n', lbl_compare, peak_db(mag_SC_c2),   peak_f(mag_SC_c2));
+fprintf('     SP calc %-8s peak %+5.2f dB @ %.3f Hz\n', lbl_base,    peak_db(mag_SP_c1),   peak_f(mag_SP_c1));
+fprintf('     SP calc %-8s peak %+5.2f dB @ %.3f Hz\n', lbl_compare, peak_db(mag_SP_c2),   peak_f(mag_SP_c2));
+
 fprintf('========================================\n\n');

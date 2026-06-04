@@ -3,8 +3,8 @@ clc;
 clear variables;
 close all;
 
-addpath('/home/janick-dort/Dokumente/Studium_ZHAW/BA/bf_controller_tuning/lib/');
-addpath(genpath('/home/janick-dort/Dokumente/Studium_ZHAW/BA/bf_controller_tuning'));
+% addpath('/home/janick-dort/Dokumente/Studium_ZHAW/BA/bf_controller_tuning/lib/');
+% addpath(genpath('/home/janick-dort/Dokumente/Studium_ZHAW/BA/bf_controller_tuning'));
 
 addpath('../bf_controller_tuning/lib/');
 
@@ -23,16 +23,16 @@ opt.PhaseWrapping = 'on';
 do_compensate_iterm = true;
 
 %% File paths
-log_folder = 'logs';
-flight_folder = '20260601';
+log_folder = '../bf_controller_tuning/logs';
+flight_folder = 'gyro';
 
 % Each gyro log (path relative to log_folder) with the gains it was flown at:
-log_name1 = 'Tuned_flipmini.TXT.csv';                       % tuned     P=46, I=74, D=30
-log_name2 = 'Moderate_flipmini.TXT.csv';   % moderate  P=46, I=66, D=32
-log_name3 = 'Bad_flipmini.TXT.csv';  % bad       P=30, I=60, D=30
+log_name1 = 'Tuned_flipmini.csv';                       % tuned     P=46, I=74, D=30
+log_name2 = 'Moderate_flipmini.csv';   % moderate  P=46, I=66, D=32
+log_name3 = 'Bad_flipmini.csv';  % bad       P=30, I=60, D=30
 
-base    = 3;   % flight whose plant is identified (the baseline)
-compare = 2;   % measured target flight to predict and compare against
+base    = 2;   % flight whose plant is identified (the baseline)
+compare = 3;   % measured target flight to predict and compare against
 %   case 1 = tuned, 2 = moderate, 3 = bad
 
 switch base
@@ -427,4 +427,41 @@ for k = 1:size(step_resp, 2)
     fprintf('     %-20s  t_rise=%.3f s  t_settle=%.3f s  overshoot=%.1f %%\n', ...
         labels_step{k}, t_rise, t_settle, overshoot_pct);
 end
+
+% --- Gang of Four peak magnitudes (linear magnitude evaluated at omega_bode) ---
+% Mirrors the althold / poshold GoF metric block. Restrict the peak search to
+% the excited band: above ~100 Hz the FRD is dominated by noise / notch
+% artifacts and would otherwise yield spurious high-frequency peaks. GoF plot
+% curves (figure 11): calculated Flight1 = CL_new1, calculated Flight2 =
+% CL_new2; measured Flight1 = T1, measured Flight2 = T2.
+f_peak_max = 100;
+mask       = f_bode <= f_peak_max;
+fb         = f_bode(mask);
+
+ev      = @(sys) abs(squeeze(freqresp(sys, omega_bode(mask))));
+peak_db = @(mag) 20*log10(max(mag));
+peak_f  = @(mag) fb(find(mag == max(mag), 1));
+
+mag_T_calc1 = ev(CL_new1.T);   mag_T_calc2 = ev(CL_new2.T);
+mag_S_calc1 = ev(CL_new1.S);   mag_S_calc2 = ev(CL_new2.S);
+mag_SC_c1   = ev(CL_new1.SC);  mag_SC_c2   = ev(CL_new2.SC);
+mag_SP_c1   = ev(CL_new1.SP);  mag_SP_c2   = ev(CL_new2.SP);
+
+T_meas1_full = abs(squeeze(T1.ResponseData));
+T_meas2_full = abs(squeeze(T2.ResponseData));
+mag_T_meas1  = T_meas1_full(mask);
+mag_T_meas2  = T_meas2_full(mask);
+
+fprintf('  -- Gang of Four peak magnitudes (peak search restricted to f <= %.1f Hz) --\n', f_peak_max);
+fprintf('     T  calc %-8s peak %+5.2f dB @ %.3f Hz\n', name_base,    peak_db(mag_T_calc1), peak_f(mag_T_calc1));
+fprintf('     T  calc %-8s peak %+5.2f dB @ %.3f Hz\n', name_compare, peak_db(mag_T_calc2), peak_f(mag_T_calc2));
+fprintf('     T  meas %-8s peak %+5.2f dB @ %.3f Hz\n', name_base,    peak_db(mag_T_meas1), peak_f(mag_T_meas1));
+fprintf('     T  meas %-8s peak %+5.2f dB @ %.3f Hz\n', name_compare, peak_db(mag_T_meas2), peak_f(mag_T_meas2));
+fprintf('     S  calc %-8s peak %+5.2f dB @ %.3f Hz\n', name_base,    peak_db(mag_S_calc1), peak_f(mag_S_calc1));
+fprintf('     S  calc %-8s peak %+5.2f dB @ %.3f Hz\n', name_compare, peak_db(mag_S_calc2), peak_f(mag_S_calc2));
+fprintf('     SC calc %-8s peak %+5.2f dB @ %.3f Hz\n', name_base,    peak_db(mag_SC_c1),   peak_f(mag_SC_c1));
+fprintf('     SC calc %-8s peak %+5.2f dB @ %.3f Hz\n', name_compare, peak_db(mag_SC_c2),   peak_f(mag_SC_c2));
+fprintf('     SP calc %-8s peak %+5.2f dB @ %.3f Hz\n', name_base,    peak_db(mag_SP_c1),   peak_f(mag_SP_c1));
+fprintf('     SP calc %-8s peak %+5.2f dB @ %.3f Hz\n', name_compare, peak_db(mag_SP_c2),   peak_f(mag_SP_c2));
+
 fprintf('========================================\n\n');

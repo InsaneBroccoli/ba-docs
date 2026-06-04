@@ -2113,25 +2113,18 @@ The rate loop is excited and identified across a broad, coherent band, so the me
     \centering
     \caption{Analytical sensitivity peak magnitudes \(|S|\) for the rate loop and the frequencies at which they occur. All values use the named-case controller applied to the moderate-flight plant.}
     \label{tab:gyro_gof_S}
-    % TODO: replace each -- with the sensitivity-peak magnitude [dB] and its
-    % frequency [Hz] for that case, read from the Gang of Four analysis.
     \begin{tabular}{lrr}
         \toprule
         Case     & peak [\si{\decibel}] & \(f\) [\si{\hertz}] \\
         \midrule
-        tuned    & -- & -- \\
-        moderate & -- & -- \\
-        bad      & -- & -- \\
+        tuned    & \(+6.19\) & 42.0 \\
+        moderate & \(+6.53\) & 42.0 \\
+        bad      & \(+5.23\) & 42.0 \\
         \bottomrule
     \end{tabular}
 \end{table}
 
-% TODO (optional, once the peak values are filled in): expand this paragraph as
-% in the althold/poshold sections -- state the per-case sensitivity peaks from
-% \autoref{tab:gyro_gof_S}, note whether the tuned case stays below the
-% \SI{6}{\decibel} robustness limit, and relate the trend to the gain changes
-% and the rise times in \autoref{tab:gyro_step}.
-The sensitivity peaks in \autoref{tab:gyro_gof_S} characterise the robustness margin of each tuning; a peak approaching the \SI{6}{\decibel} limit indicates reduced margin.
+The analytical sensitivity peaks all occur near \SI{42}{\hertz}: \SI{+5.23}{\decibel} for the bad case, \SI{+6.53}{\decibel} for the moderate case and \SI{+6.19}{\decibel} for the tuned case, the latter two lying marginally above the \SI{6}{\decibel} limit. The lowest-gain bad case retains the largest margin, while the two \(P = 46\) cases (moderate and tuned) sit close together just above the limit. These peaks fall within the broad coherent band of the rate-loop identification, so they are not affected by low-coherence behaviour.
 
 \subsection*{Step Response}
 
@@ -2214,24 +2207,18 @@ Like the rate loop, the angle loop is excited across a broad, coherent band, so 
     \centering
     \caption{Analytical sensitivity peak magnitudes \(|S|\) for the angle loop and the frequencies at which they occur. All values use the named-case controller applied to the \(P = 80\)-flight plant.}
     \label{tab:angle_gof_S}
-    % TODO: replace each -- with the sensitivity-peak magnitude [dB] and its
-    % frequency [Hz] for that gain, read from the Gang of Four analysis.
     \begin{tabular}{lrr}
         \toprule
         Case        & peak [\si{\decibel}] & \(f\) [\si{\hertz}] \\
         \midrule
-        \(P = 100\) & -- & -- \\
-        \(P = 80\)  & -- & -- \\
-        \(P = 50\)  & -- & -- \\
+        \(P = 100\) & \(+1.37\) & 6.0 \\
+        \(P = 80\)  & \(+1.11\) & 6.0 \\
+        \(P = 50\)  & \(+0.71\) & 6.0 \\
         \bottomrule
     \end{tabular}
 \end{table}
 
-% TODO (optional, once the peak values are filled in): report the per-gain
-% sensitivity peaks from \autoref{tab:angle_gof_S}, note whether the higher gains
-% approach the \SI{6}{\decibel} robustness limit, and relate this to the rise
-% times in \autoref{tab:angle_step}.
-The sensitivity peaks in \autoref{tab:angle_gof_S} characterise the robustness margin of each gain; a peak approaching the \SI{6}{\decibel} limit indicates reduced margin.
+The analytical sensitivity peaks stay well below the \SI{6}{\decibel} limit for all three gains and increase with gain: \SI{+0.71}{\decibel} at \(P = 50\), \SI{+1.11}{\decibel} at \(P = 80\) and \SI{+1.37}{\decibel} at \(P = 100\), each near \SI{6}{\hertz}. This is consistent with the more aggressive gain trading a small amount of robustness margin for a faster response (cf. the rise times in \autoref{tab:angle_step}). The peaks fall within the coherent band of the angle-loop identification.
 
 \subsection*{Step Response}
 
