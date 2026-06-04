@@ -1079,7 +1079,7 @@ The offline tuning framework for the gyro controller was originally developed du
 
 \subsection*{Betaflight Firmware}
 
-During a recent Betaflight release, a new chirp feature, developed by Michael Peter, was added to the firmware. This feature allows a chirp signal to be injected directly into the control loop during flight. It forms the basis for the offline tuning method used in this work.
+A chirp feature, developed by Michael Peter, was added to the Betaflight firmware. This feature allows a chirp signal to be injected directly into the control loop during flight. It forms the basis for the offline tuning method used in this work.
 
 The main idea of this approach is to excite the control loop over a wide frequency range and use the recorded flight data to estimate the transfer functions of the different control loop components. Compared to normal flight manoeuvres, the chirp signal provides a more controlled and systematic excitation of the system, which improves the quality of the estimated frequency responses and the controller analysis.
 
@@ -1149,13 +1149,13 @@ where \( V(\omega) \) is the Fourier transform of the signal after the PI contro
 With these transfer functions, the plant transfer function can be estimated as
 
 \begin{equation}
-    G_{\text{yv}}(\omega) = \frac{T_{\text{Gyro,meas}}(\omega)}{G_{\text{uw}}(\omega)}
+    G_{\text{yu}}(\omega) = \frac{T_{\text{Gyro,meas}}(\omega)}{G_{\text{uw}}(\omega)}
 \end{equation}
 
 In this estimation, the influence of the gyro filter is still included in the estimated plant dynamics. Therefore, the estimated plant transfer function is divided by the gyro filter transfer function to obtain the real plant dynamics:
 
 \begin{equation}
-    P_{\text{Gyro}}(\omega) = \frac{G_{\text{yv}}(\omega)}{G_{\text{FilterGyro}}(\omega)}
+    P_{\text{Gyro}}(\omega) = \frac{G_{\text{yu}}(\omega)}{G_{\text{FilterGyro}}(\omega)}
 \end{equation}
 
 The transfer function of the PI controller can be estimated as
@@ -1176,7 +1176,7 @@ The estimation of the D-term was especially useful during the development of the
 
 \newpage
 
-\subsubsection*{Calculation of the Tuning Responses}
+\subsubsection*{Implementation of the Tuning Method}
 
 Based on the estimated plant transfer function obtained from the flight measurements, the influence of different PID and filter parameters on the control loop behaviour can be analysed offline. By combining the measured plant dynamics with analytical controller models, new closed-loop transfer functions can be calculated without performing additional flight tests.
 
@@ -1269,11 +1269,8 @@ In contrast, Acro mode provides full manual control. In this mode, stick inputs 
 
 An offline tuning method for the angular rate controller was already available from previous project work and serves as the basis for the present implementation. Since the angle controller is built on top of the angular rate controller, the existing approach can be extended to Angle mode with only minor modifications. This enables the systematic tuning of the angle control loop while preserving the intuitive handling characteristics of Angle mode.
 
-
-This extension allows a consistent tuning methodology across different flight modes, improving overall system performance and usability.
-
 \subsection*{Betaflight Firmware}
-This chapter describes the implementation of the Betaflight firmware and the modifications required for the proposed offline tuning approach.
+This section describes the implementation of the Betaflight firmware and the modifications required for the proposed offline tuning approach.
 
 The main focus lies on the Angle mode controller. Compared to the standard Acro mode, Angle mode adds an additional outer control loop for attitude stabilization. This results in a cascaded control structure and changes the overall system dynamics compared to the normal rate-controlled flight mode.
 
@@ -1289,9 +1286,9 @@ In Angle mode, the angular rate controller is extended by an additional outer an
 
 The outer angle loop operates at a slower dynamic compared to the inner rate loop. Its task is to generate stable angular rate setpoints that move the drone toward the desired orientation. The inner angular rate controller then reacts much faster and stabilizes the rotational motion of the quadcopter.
 
-The cascaded architecture separates attitude control from angular rate stabilization. While the outer loop ensures convergence toward the desired orientation, the inner loop provides fast dynamic stabilization by regulating the angular velocity. As a result, the system achieves improved disturbance rejection and more intuitive handling characteristics, since the pilot directly commands an angle rather than a rotational rate.
+The cascaded architecture separates attitude control from angular rate stabilization. While the outer loop drives the drone toward the desired orientation, the inner loop provides fast stabilization by regulating the angular velocity. The pilot therefore commands an angle rather than a rotational rate.
 
-This behaviour makes Angle mode especially suitable for beginner pilots and for applications where stable and predictable flight behaviour is required. In contrast to Acro mode, the drone automatically returns to the commanded orientation when the stick input is centered.
+In contrast to Acro mode, the drone automatically returns to the commanded orientation when the stick input is centered.
 
 The Angle mode controller therefore consists of two cascaded loops:
 \begin{itemize}
@@ -1346,7 +1343,7 @@ The excitation signal is selected depending on the corresponding \texttt{levelMo
 
 To improve the signal-to-noise ratio, a new parameter called \texttt{chirp\_repeat} was added. This allows the same chirp sweep to be repeated multiple times before the sequencer advances to the next axis. A settling time of 750\,ms is inserted between repetitions. The parameter is limited to a maximum value of 9 so that the repeat counter can still be displayed in the OSD.
 
-A lag filter is applied to the chirp signal before injection. The filter was already available in the upstream implementation and is configured through the \texttt{chirp\_lag\_freq\_hz} and \texttt{chirp\_lead\_freq\_hz} parameters. To avoid transients from previous measurements, an additional \texttt{phaseCompReset} function was introduced. The filter state is reset whenever \texttt{CHIRP\_MODE} is activated, a new axis is selected or a new repetition starts.
+A lag filter is applied to the chirp signal before injection. This filtering is already part of the upstream implementation and is configured through the \texttt{chirp\_lag\_freq\_hz} and \texttt{chirp\_lead\_freq\_hz} parameters. The only change made here is a \texttt{phaseCompReset} function, added as a precaution to clear the filter state and prevent transients from a previous measurement from carrying over. The reset is triggered whenever \texttt{CHIRP\_MODE} is activated, a new axis is selected or a new repetition starts.
 
 The internal signals required for the offline tuning tool are recorded through the existing \texttt{DEBUG\_CHIRP} channels. Besides the chirp phase, active axis, instantaneous frequency and excitation signal, the target and measured angle are also logged. These values are stored by the existing Blackbox system when \texttt{debug\_mode} is set to \texttt{CHIRP}, requiring no modifications to the Blackbox implementation itself.
 
@@ -1440,13 +1437,13 @@ These expressions allow the computation of all relevant performance metrics such
 
 The altitude hold control loop maintains a constant altitude by adjusting the throttle based on the measured vertical position. The altitude estimation is mainly based on GPS measurements fused with IMU sensor data to estimate the current vertical position and motion of the drone.
 
-During the development of the tuning tool, major changes were made to the Betaflight firmware affecting the altitude hold functionality and control loop. Therefore, only a proof of concept based on the firmware version from March 2025 was implemented. As a result, the modified firmware will not be merged into the Betaflight codebase and the tuning tool will not be implemented in Python for community use.
+During the development of the tuning tool, major changes were made to the Betaflight firmware affecting the altitude hold functionality and control loop. Therefore, only a proof of concept based on the firmware version from February 2026 was implemented. As a result, the modified firmware will not be merged into the Betaflight codebase and the tuning tool will not be implemented in Python for community use.
 
-This chapter presents the firmware modifications required for applying the tuning method to the altitude hold controller. It also describes the control loop calculation and the tuning process, including the evaluation of the step response and the Gang of Four. Furthermore, the chapter is intended to support future developers once the ongoing firmware changes are completed and the altitude hold controller has stabilized.
+This section presents the firmware modifications required for applying the tuning method to the altitude hold controller. It also describes the control loop calculation and the tuning process, including the evaluation of the step response and the Gang of Four. Furthermore, the section is intended to support future developers once the ongoing firmware changes are completed and the altitude hold controller has stabilized.
 
 
 \subsection*{Altitude Hold Control Loop}
-In the altitude hold mode, an additional control loop gets activated. It controls the thrust part of the motors as described in the motor mixing chapter. Therefore, the drone is able to fly at a constant altitude without the pilot having to adjust the throttle stick. The altitude hold control loop is not cascaded as you can see in the \autoref{fig:altitude_hold_control_loop}.
+In the altitude hold mode, an additional control loop gets activated. It controls the thrust part of the motors as described in the motor mixing chapter. Therefore, the drone is able to fly at a constant altitude without the pilot having to adjust the throttle stick. The altitude hold control loop is not cascaded, as shown in \autoref{fig:altitude_hold_control_loop}.
 
 \begin{figure}[H]
     \centering
@@ -1456,9 +1453,9 @@ In the altitude hold mode, an additional control loop gets activated. It control
 \end{figure}
 
 
-\autoref{fig:altitude_hold_control_loop} shows the complete altitude control loop in the altitude hold mode. The reference input w which mostly is zero because the drone set the selected altitude to zero. The resulting signal is fed into a PI controller, which generates the main control action.
+\autoref{fig:altitude_hold_control_loop} shows the complete altitude control loop in the altitude hold mode. The reference input $w$ is mostly zero, since the controller regulates the deviation from the captured hover altitude rather than an absolute altitude. This error signal is fed into a PI controller, which generates the main control action.
 
-The output of the PI controller is then added with a feedback signal in which the D-Term is within. This feedback signal is there to compensate the I-term, which stops the drone form overshooting the target altitude. The resulting signal is then fed into the plant, which consists of the drone dynamics, the motors and the tilt multiplier. The tilt multiplier is a factor that scales the thrust based on the current tilt angle of the drone. This is necessary because the vertical component of the thrust decreases as the drone tilts and the control loop needs to compensate for this effect to maintain a stable altitude.
+The output of the PI controller is then combined with a feedback signal containing the D-term. This feedback signal compensates the I-term, which stops the drone from overshooting the target altitude. The resulting signal is then fed into the plant, which consists of the drone dynamics, the motors and the tilt multiplier. The tilt multiplier is a factor that scales the thrust based on the current tilt angle of the drone. This is necessary because the vertical component of the thrust decreases as the drone tilts and the control loop needs to compensate for this effect to maintain a stable altitude.
 
 In the feedback path which includes the D-term, a D-Boost is implemented. During normal altitude hold operation, a rather small D-term is preferred in order to avoid unnecessary noise amplification and throttle oscillations while maintaining a constant altitude. During fast vertical movements of the drone, however, the D-Boost increases the D-term gain dynamically. This helps to improve the damping and transient behaviour of the altitude hold control loop, especially during rapid altitude changes. The D-Boost is calculated based on the estimated vertical velocity. For the measurements performed in this work, the D-Boost was disabled in order to obtain a system behaviour which is as linear as possible for the frequency-domain system identification.
 
@@ -1522,7 +1519,7 @@ where \( U(\omega) \) is the Fourier transform of the controller output signal. 
 To estimate the D-term of the controller, the transfer function from the reference input to the shared output of the PI controller and the D-term is additionally required. This transfer function is denoted as \( G_{\text{vw}} \):
 
 \begin{equation}
-    G_{\text{ur}}(\omega) = \frac{U(\omega)}{W(\omega)}
+    G_{\text{vw}}(\omega) = \frac{V(\omega)}{W(\omega)}
 \end{equation}
 
 where \( V(\omega) \) is the Fourier transform of the signal after the PI controller and before the D-term feedback path. This additional transfer function is required because the D-term is implemented in the feedback path of the control loop and therefore cannot directly be separated from the remaining controller dynamics.
@@ -1586,17 +1583,17 @@ SP_{\text{AltHold}}(\omega) = \frac{P_{\text{AltHold}}(\omega)}
 {1 + P_{\text{AltHold}}(\omega)(C_{\text{PI}}(\omega) + C_\text{d}(\omega))}
 \end{equation}
 
-These metrics allows us to evaluate the performance of the new controller parameters and make informed decisions about further adjustments to optimize the altitude hold control loop for improved stability, responsiveness and disturbance rejection. More details about that can be found in the next section, where the results of the tuning process are evaluated based on the step response and the Gang of Four plots.
+These metrics allow the performance of the new controller parameters to be evaluated and informed decisions to be made about further adjustments to optimize the altitude hold control loop for improved stability, responsiveness and disturbance rejection. Further details are provided in the next section, where the results of the tuning process are evaluated based on the step response and the Gang of Four plots.
 
 \newpage
 
 \section{Position Hold Controller}
 
-Position Hold is an autonomous flight mode that allows the aircraft to maintain its current position without continuous pilot intervention. The flight controller continuously evaluates the position of the aircraft and generates corrective commands to counteract disturbances such as wind or drift. Similar to the previously discussed flight modes, the controller is integrated into the existing control architecture and uses GPS measurements as feedback. The following sections explain the underlying control structure, coordinate transformation and required sensors in more detail.
+Position Hold is an autonomous flight mode that allows the drone to maintain its current position without continuous pilot intervention. The flight controller continuously evaluates the position of the drone and generates corrective commands to counteract disturbances such as wind or drift. Similar to the previously discussed flight modes, the controller is integrated into the existing control architecture and uses GPS measurements as feedback. The following sections explain the underlying control structure, coordinate transformation and required sensors in more detail.
 
-\subsubsection*{Position Hold Control Loop}
+\subsection*{Position Hold Control Loop}
 
-The Position Hold controller represents the outermost control layer in the flight control architecture. Its objective is to maintain the aircraft at a desired geographic location by continuously evaluating the position error and generating corrective attitude commands. These commands are forwarded to the existing angle controller, resulting in a cascaded control structure.
+The Position Hold controller represents the outermost control layer in the flight control architecture. Its objective is to maintain the drone at a desired geographic location by continuously evaluating the position error and generating corrective attitude commands. These commands are forwarded to the existing angle controller, resulting in a cascaded control structure.
 
 \begin{figure}[H]
     \centering
@@ -1605,7 +1602,7 @@ The Position Hold controller represents the outermost control layer in the fligh
     \label{fig:Position_hold_control_loop}
 \end{figure}
 
-Figure \ref{fig:Position_hold_control_loop} illustrates the signal flow of the Position Hold controller. The control loop begins with the GPS position estimate, which is compared with the target hold position to generate position errors in the North-East plane. Based on these errors, the controller calculates corrective commands using proportional, integral, derivative and acceleration feedback terms.
+\autoref{fig:Position_hold_control_loop} illustrates the signal flow of the Position Hold controller. The control loop begins with the GPS position estimate, which is compared with the target hold position to generate position errors in the North-East plane. Based on these errors, the controller calculates corrective commands using proportional, integral, derivative and acceleration feedback terms.
 
 For each axis, the controller output is given by
 
@@ -1623,7 +1620,7 @@ K_a \ddot d_{\text{axis}}
 
 where \(d_{\text{axis}}\) denotes the position error. The velocity term is estimated from successive position measurements, while the acceleration term is obtained by differentiating the velocity estimate. Since GPS measurements are inherently noisy, both signals are filtered before being used by the controller.
 
-The controller calculations are performed in the Earth-Fixed frame, where the position errors are expressed in the North-East directions. However, the inner angle controller requires roll and pitch commands in the aircraft Body Frame. Therefore, the resulting control vector is rotated according to the current yaw angle before being passed to the inner control loop.
+The controller calculations are performed in the Earth-Fixed frame, where the position errors are expressed in the North-East directions. However, the inner angle controller requires roll and pitch commands in the body frame. Therefore, the resulting control vector is rotated according to the current yaw angle before being passed to the inner control loop.
 
 The resulting body-frame commands are then used as attitude references for the angle controller, which generates the corresponding angular rate commands for the underlying rate controller.
 
@@ -1636,9 +1633,9 @@ Unlike the inner attitude controller, which operates at a fixed update rate of 1
 
 To improve both position capture and stationary hovering performance, the controller operates in two distinct phases: the \textbf{stopping phase} and the \textbf{holding phase}.
 
-The stopping phase is activated whenever the pilot deflects the control sticks while Position Hold is enabled. During this phase, only the proportional, derivative and acceleration terms contribute to the control output, while accumulation of the integral term is suppressed. Any previously accumulated integral contribution is gradually leaked away to prevent windup when the aircraft is brought back to the target position. To improve braking performance, the derivative contribution is multiplied by a factor of 1.6.
+The stopping phase is activated whenever the pilot deflects the control sticks while Position Hold is enabled. During this phase, only the proportional, derivative and acceleration terms contribute to the control output, while accumulation of the integral term is suppressed. Any previously accumulated integral contribution is gradually leaked away to prevent windup when the drone is brought back to the target position. To improve braking performance, the derivative contribution is multiplied by a factor of 1.6.
 
-The controller continuously monitors both the raw velocity estimate and its filtered counterpart. When their signs differ, indicating a reversal of motion, the aircraft is considered stopped on that axis and the controller transitions into the holding phase. During initialization, the controller always enters the stopping phase first. However, if the control sticks remain centered, the transition into the holding phase occurs immediately and the derivative boost is never applied.
+The controller continuously monitors both the raw velocity estimate and its filtered counterpart. When their signs differ, indicating a reversal of motion, the drone is considered stopped on that axis and the controller transitions into the holding phase. During initialization, the controller always enters the stopping phase first. However, if the control sticks remain centered, the transition into the holding phase occurs immediately and the derivative boost is never applied.
 
 During the holding phase, all four feedback terms contribute to the control output. The integral term becomes active and accumulates position error over time, allowing steady-state position errors to be eliminated.
 
@@ -1666,7 +1663,7 @@ After the proportional and integral contributions have been added, the complete 
 
 Since the Position Hold controller operates only at the GPS update rate, typically below 10 Hz, while the inner angle controller runs at 100 Hz, a PT3 upsampling filter is used to interpolate the generated attitude commands to the higher controller rate. This provides smooth attitude references for the inner angle controller despite the low GPS update rate.
 
-Finally, a sanity check continuously monitors the distance between the aircraft and the target position. The allowable distance is scaled dynamically with ground speed and corresponds to twice the distance the aircraft would travel within two seconds, with a minimum threshold of 10 meters. If this limit is exceeded, indicating a GPS anomaly or loss of position control, Position Hold is automatically disengaged and control is returned to the pilot.
+Finally, a sanity check continuously monitors the distance between the drone and the target position. The allowable distance is scaled dynamically with ground speed and corresponds to twice the distance the drone would travel within two seconds, with a minimum threshold of 10 meters. If this limit is exceeded, indicating a GPS anomaly or loss of position control, Position Hold is automatically disengaged and control is returned to the pilot.
 
 \subsubsection*{Firmware Modifications}
 
@@ -1699,7 +1696,7 @@ CLI commands were added to configure all chirp parameters including start and en
 
 \subsection*{Control Loop Calculation}
 
-With the injected chirp signal and the recorded flight data, the frequency response of the Position Hold control loop can be estimated. The estimation follows the procedure described in the theory chapter, including signal preprocessing, filtering and spectral averaging. The resulting transfer function represents the complete closed-loop behaviour of the Position Hold system, including both the controller and the aircraft dynamics.
+With the injected chirp signal and the recorded flight data, the frequency response of the Position Hold control loop can be estimated. The estimation follows the procedure described in the theory chapter, including signal preprocessing, filtering and spectral averaging. The resulting transfer function represents the complete closed-loop behaviour of the Position Hold system, including both the controller and the drone dynamics.
 
 The estimated transfer functions provide insight into the dynamic behaviour of the system and allow key characteristics such as bandwidth, phase behaviour and stability margins to be evaluated. These results form the basis for the subsequent tuning and validation process.
 
@@ -1707,7 +1704,7 @@ The estimated transfer functions provide insight into the dynamic behaviour of t
 
 In Position Hold mode, the chirp signal is injected directly into the target position in the Earth-fixed frame. This differs from Angle and Altitude Hold modes, where the excitation is applied to attitude or throttle commands. The Position Hold controller operates on the position error rather than the absolute position itself. Consequently, the position error is the most relevant signal for system identification and is therefore logged directly from the firmware.
 
-At the beginning of the measurement, the aircraft is assumed to be hovering at the target position. Under this condition, the position error is initially zero. Once the chirp injection starts, the target position is periodically displaced by the injected signal, causing the controller to generate corrective attitude commands in order to follow the moving reference.
+At the beginning of the measurement, the drone is assumed to be hovering at the target position. Under this condition, the position error is initially zero. Once the chirp injection starts, the target position is periodically displaced by the injected signal, causing the controller to generate corrective attitude commands in order to follow the moving reference.
 
 \newpage
 
@@ -1717,9 +1714,9 @@ Since the injected chirp signal directly defines the target position offset, the
     x_\text{ref} = u_c,
 \end{equation}
 
-where \(x_\text{ref}\) denotes the target position and \(u_c\) the injected chirp signal. During flight, the aircraft does not perfectly follow this reference, resulting in a position error \(e\). 
+where \(x_\text{ref}\) denotes the target position and \(u_c\) the injected chirp signal. During flight, the drone does not perfectly follow this reference, resulting in a position error \(e\). 
 
-The actual aircraft position can therefore be reconstructed from the measured position error as
+The actual drone position can therefore be reconstructed from the measured position error as
 
 \begin{equation}
     x = x_\text{ref} - e = u_c - e.
@@ -1727,7 +1724,7 @@ The actual aircraft position can therefore be reconstructed from the measured po
 
 This approach avoids the use of absolute GPS coordinates and directly utilizes the same signals that are used internally by the Position Hold controller. As a result, the identified transfer functions correspond closely to the actual firmware implementation.
 
-Using the rotating-frame filtering approach described in \autoref{sec:System Identification Using Chirp Signals}, the closed-loop transfer function from the target position to the actual aircraft position is estimated as
+Using the rotating-frame filtering approach described in \autoref{sec:System Identification Using Chirp Signals}, the closed-loop transfer function from the target position to the actual drone position is estimated as
 
 \begin{equation}
     T_\text{pos}(\omega)
@@ -1763,7 +1760,7 @@ The first transfer function describes the closed-loop behaviour of the Position 
 
 \subsubsection*{Implementation of the Tuning Method}
 
-The calculation of the tuning parameters for the Position Hold control loop follows the same approach as for the previously described control loops. For the Position Hold evaluation, the injected chirp signal is applied directly to the horizontal position setpoint, while the resulting aircraft position is reconstructed from the logged position error.
+The calculation of the tuning parameters for the Position Hold control loop follows the same approach as for the previously described control loops. For the Position Hold evaluation, the injected chirp signal is applied directly to the horizontal position setpoint, while the resulting drone position is reconstructed from the logged position error.
 
 The relevant components are the estimated plant \(P_{\text{PosHold}}\), which was obtained from the measured data, and the updated controller \(C_{\text{PID,Pos}}\) using the newly calculated tuning parameters.
 
@@ -1807,11 +1804,11 @@ SP_{\text{Pos}}(\omega) =
 
 \section{Drone Tuning}
 
-The different control loops of the drone use different controller structures. However, the tuning methodology is largely the same for all of them. Therefore, this chapter focuses on the gyro controller. Once the tuning process is understood, the same approach can be applied to the remaining control loops.
+In the preceding sections, the estimated plant and the Gang-of-Four transfer functions were derived for each control loop. Building on these, the present section describes how the controller parameters are actually selected in practice. The different control loops of the drone use different controller structures. However, the tuning methodology is largely the same for all of them. Therefore, this section focuses on the gyro controller. Once the tuning process is understood, the same approach can be applied to the remaining control loops.
 
 The objective of the tuning process is to achieve a fast and responsive drone while maintaining sufficient stability and robustness. This is accomplished by combining time-domain and frequency-domain analysis methods.
 
-This chapter also describes the filter tuning process using spectra and spectrograms. Since these filters are only used in the gyro loop, this part is limited to the gyro controller.
+This section also describes the filter tuning process using spectra and spectrograms. Since these filters are only used in the gyro loop, this part is limited to the gyro controller.
 
 The filtering algorithms themselves were developed as part of the Project Thesis and are therefore not discussed in detail in this thesis. Instead, the focus is placed on their practical application and the resulting tuning process.
 
@@ -1947,7 +1944,7 @@ No universally optimal tune exists. Throughout this work, emphasis was placed on
 
 \section{Software Implementation and Structure}
 
-This chapter describes the software architecture and implementation of the developed Drone Tuning Tool. The focus lies on the overall modular structure of the project, the migration of the existing MATLAB implementation to Python and the validation process used to ensure consistency between both environments.
+This section describes the software architecture and implementation of the developed Drone Tuning Tool. The focus lies on the overall modular structure of the project, the migration of the existing MATLAB implementation to Python and the validation process used to ensure consistency between both environments.
 
 First, the final software structure and design philosophy are presented, highlighting the object-oriented and modular approach used throughout the project. Subsequently, the selection of Python libraries and the reasoning behind the migration from MATLAB to Python are discussed. Finally, the process of transferring and validating the MATLAB library functions in Python is explained, including the applied testing methodology and the current implementation status.
 
@@ -1962,7 +1959,7 @@ As already outlined in the project thesis, the tuning tool was implemented using
 	.4 flight\_analyzer.
 	.4 flight\_data.
 	.4 gyro\_ctrl\_tuning.
-	.4 plot\_utils.m.
+	.4 plot\_utils.
     .4 angle\_ctrl\_tuning.
 }
 
@@ -1974,9 +1971,9 @@ Across all controller tuning implementations, the same signal-processing and ana
 
 \subsection*{Conversion from MATLAB to Python}
 
-To make the project more accessible to the FPV community, we decided to migrate the existing MATLAB codebase to Python.
+To make the project more accessible to the FPV community, the existing MATLAB codebase was migrated to Python.
 The first step was to select suitable Python libraries that offer similar functionality to MATLAB while maintaining code efficiency and readability.
-After evaluating several options, we chose the following libraries:
+After evaluating several options, the following libraries were selected:
 \begin{itemize}
 	\item \textbf{NumPy}: For numerical operations and array manipulations, analogous to MATLAB's matrix operations.
 	\item \textbf{SciPy}: For scientific computing tasks, including signal processing functions comparable to MATLAB's capabilities.
@@ -1984,8 +1981,8 @@ After evaluating several options, we chose the following libraries:
 	\item \textbf{Pandas}: For data manipulation and analysis, useful for handling tabular data as in MATLAB tables.
 	\item \textbf{Control Systems Library (control)}: For control system analysis and design, offering functions equivalent to MATLAB's Control System Toolbox.
 \end{itemize}
-We selected Python version 3.12, as it is well-supported and compatible with the required libraries.
-To validate these choices, we developed a prototype script that implements the core functionalities needed for the Drone Tuning Tool.
+Python version 3.12 was selected, as it is well-supported and compatible with the required libraries.
+To validate these choices, a prototype script was developed that implements the core functionalities needed for the Drone Tuning Tool.
 The script loads flight log data from CSV files, parses and caches the data efficiently and extracts relevant signals such as setpoints and gyro measurements.
 NumPy and Pandas are used for numerical and tabular data handling, while SciPy provides signal processing utilities for windowing and frequency analysis.
 The Control Systems Library is employed to estimate the system's frequency response and step response from flight data, replicating MATLAB's identification routines.
@@ -1993,16 +1990,16 @@ Matplotlib is used for visualizing raw signals, chirp responses and system chara
 The modular structure, including custom data classes and caching, ensures fast and reproducible analysis.
 This approach demonstrates that Python and its scientific libraries are suitable replacements for MATLAB in the drone tuning workflow.
 While Pandas is not strictly necessary for the prototype, it simplifies data handling and improves code readability.
-However, to minimize dependencies and ensure cross-platform compatibility, we may consider removing Pandas in the final implementation.
+However, to minimize dependencies and ensure cross-platform compatibility, Pandas may be removed in the final implementation.
 The flexibility of Python also allows for easier integration with other tools and automation of data processing tasks, which is beneficial for large-scale log analysis.
 
 
 \subsection*{Transferring the MATLAB Library to Python}
 
 The core functionality of the Drone Tuning Tool resides in its library functions.
-To ensure that the Python implementation is both reliable and consistent with the original MATLAB code, we systematically transferred each library function from MATLAB to Python.
-For functions with simple numerical outputs, we used \texttt{np.testing.assert\_allclose} with appropriate absolute and relative tolerances, saving the function inputs and outputs from MATLAB and comparing them with the Python implementation.
-For more complex functions, such as those involving state-space outputs, we developed dedicated test scripts to compare the behaviour of the MATLAB and Python versions across a range of scenarios.
+To ensure that the Python implementation is both reliable and consistent with the original MATLAB code, each library function was systematically transferred from MATLAB to Python.
+For functions with simple numerical outputs, \texttt{np.testing.assert\_allclose} was used with appropriate absolute and relative tolerances; the function inputs and outputs were saved from MATLAB and compared with the Python implementation.
+For more complex functions, such as those involving state-space outputs, dedicated test scripts were developed to compare the behaviour of the MATLAB and Python versions across a range of scenarios.
 
 The initial validation process was conducted using flight data from a single test flight.
 While several core functions successfully passed the comparison tests with the MATLAB reference implementation, some functions still require further refinement.
