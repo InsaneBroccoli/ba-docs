@@ -1,5 +1,6 @@
 .env
 backups/
+books/
 
 # Matlab
 *.mat

@@ -189,13 +189,13 @@ This chapter provides the theoretical background for the methods used in this th
 
 \section{Drone Types and Sensors}
 
-Unmanned Aerial Vehicles (UAVs) can generally be classified into different categories, such as fixed-wing, rotary-wing and hybrid systems. This work focuses on multirotor Drones, a subgroup of rotary-wing platforms, which generate lift through multiple rotors.
+Unmanned Aerial Vehicles (UAVs) can generally be classified into different categories, such as fixed-wing, rotary-wing and hybrid systems. This work focuses on multirotor drones, a subgroup of rotary-wing platforms, which generate lift through multiple rotors \parencite{quanIntroductionMulticopterDesign2017, UAV_hardware}.
 
 Among multirotor UAVs, the most common configurations are quadcopters, hexacopters and octocopters, which differ in the number of rotors (see \autoref{fig:multirotor_types}). Quadcopters use four rotors and represent the simplest fully controllable multirotor configuration. Due to their comparatively low mechanical complexity, good maneuverability and widespread use in research and practical applications, they are particularly relevant for modeling and control tasks.
 
 Hexacopters and octocopters extend this concept by using six or eight rotors. These configurations offer increased thrust, improved fault tolerance and higher payload capacity, but they also involve greater weight, higher energy consumption and more complex control allocation.
 
-Since this work is focused with the analysis and modeling of quadcopters, the quadcopter configuration is used as the reference platform throughout the remainder of this chapter.
+Since this work is concerned with the analysis and modeling of quadcopters, the quadcopter configuration is used as the reference platform throughout the remainder of this chapter.
 
 \begin{figure}[htbp]
     \centering
@@ -206,17 +206,17 @@ Since this work is focused with the analysis and modeling of quadcopters, the qu
 
 \subsection*{Sensors}
 
-A quadcopter relies on a variety of sensors to measure its state and environment. The most common sensors include and the most important for this work are:
+A quadcopter relies on a variety of sensors to measure its state and environment. The most common sensors, and the most important for this work, are the following \parencite{UAV_hardware, quanIntroductionMulticopterDesign2017}:
 
 \begin{itemize}
     \item \textbf{Inertial Measurement Unit (IMU):} The IMU consists of accelerometers and gyroscopes that measure linear acceleration and angular velocity. These measurements are used to estimate the drone's orientation and motion.
     \item \textbf{GPS:} GPS provides position and velocity measurements in a global Earth-fixed reference frame, which are mainly used for navigation and position control.
-    \item \textbf{Electronic Speed Controllers (ESC's):} ESC's control the rotational speed of the motors and provide feedback for motor control.
+    \item \textbf{Electronic Speed Controllers (ESCs):} ESCs control the rotational speed of the motors and provide feedback for motor control.
     \item \textbf{Magnetometer:} A magnetometer measures the Earth's magnetic field and is used to estimate the heading of the drone.
     \item \textbf{Barometer:} A barometer measures atmospheric pressure, which can be used to estimate altitude.
 \end{itemize}
 
-These sensors provide the measurements needed for offline tuning. Depending on the application, additional sensors such as cameras or distance sensors may be used. In practice, measurements from multiple sensors are often combined through sensor fusion to obtain a more accurate estimate of the drone’s state. Sensor data form the basis for stabilization, navigation and control.
+These sensors provide the measurements needed for offline tuning. Depending on the application, additional sensors such as cameras or distance sensors may be used. In practice, measurements from multiple sensors are often combined through sensor fusion to obtain a more accurate estimate of the drone’s state. Sensor data form the basis for stabilization, navigation and control \parencite{quanIntroductionMulticopterDesign2017}.
 
 \newpage
 
@@ -247,7 +247,7 @@ The quadcopter's orientation is described using a body-fixed coordinate system w
     \label{fig:body_axes}
 \end{figure}
 
-All motion is controlled by adjusting the rotational speeds of the four motors, which generate the necessary forces and torques. The motor configuration and control strategy are described in the following sections \parencite{autonomous_robots}.
+All motion is controlled by adjusting the rotational speeds of the four motors, which generate the necessary forces and torques. The motor configuration and control strategy are described in the following sections \parencite{autonomous_robots, quanIntroductionMulticopterDesign2017, mahonyMultirotorAerialVehicles2012}.
 
 \newpage
 
@@ -255,7 +255,7 @@ All motion is controlled by adjusting the rotational speeds of the four motors, 
 
 As already mentioned, a quadcopter generates all forces and torques through the thrust produced by the propellers. Therefore, the control of the drone is achieved by adjusting the speed of each motor, which in turn changes the thrust and the resulting forces and torques.
 
-Rolling the drone is achieved by increasing the speed of two motors on one side and decreasing the speed of the opposite motors. For example, to roll the drone to the left, the speeds of the right motors is increased while the speeds of the left motors is decreased. This creates a torque around the \(x\)-axis, causing the drone to tilt, as illustrated in \autoref{fig:roll_pitch}. The same principle also applies to pitch control, where the front and rear motors are adjusted to create a torque around the \(y\)-axis.
+Rolling the drone is achieved by increasing the speed of two motors on one side and decreasing the speed of the opposite motors. For example, to roll the drone to the left, the speeds of the right motors are increased while the speeds of the left motors are decreased. This creates a torque around the \(x\)-axis, causing the drone to tilt, as illustrated in \autoref{fig:roll_pitch}. The same principle also applies to pitch control, where the front and rear motors are adjusted to create a torque around the \(y\)-axis.
 
 \begin{figure}[H]
     \centering
@@ -287,7 +287,7 @@ Combining these principles, all motions are controlled through the four motor sp
     M_4 &= T + \phi - \theta + \psi,
 \end{align}
 
-where \(M_i\) represents the speed command for the \(i\)-th motor, \(T\) is the throttle command and \(\phi\), \(\theta\) and \(\psi\) are the desired roll, pitch and yaw commands, respectively. The specific coefficients in these equations depend on the configuration of the drone and the direction of rotation of the motors \parencite{Drone_Control}.
+where \(M_i\) represents the speed command for the \(i\)-th motor, \(T\) is the throttle command and \(\phi\), \(\theta\) and \(\psi\) are the desired roll, pitch and yaw commands, respectively. The specific coefficients in these equations depend on the configuration of the drone and the direction of rotation of the motors \parencite{quanIntroductionMulticopterDesign2017, mahonyMultirotorAerialVehicles2012}.
 
 \subsection*{Flight Control}
 
@@ -295,7 +295,7 @@ With the principles of force and torque generation in mind, the flight control s
 
 The general structure of the flight control system is illustrated in \autoref{fig:control_loop}. It shows how the desired maneuver (setpoint) is processed by the controller, which computes motor commands to influence the drone. The resulting motion is measured by sensors and fed back into the system, forming a closed control loop.
 
-The flight control system consists of multiple control loops that regulate the drone's behaviour. These control loops are the primary subject of this work and will be analysed and tuned in the following sections \parencite{Drone_Control}.
+The flight control system consists of multiple control loops that regulate the drone's behaviour. These control loops are the primary subject of this work and will be analysed and tuned in the following sections \parencite{quanIntroductionMulticopterDesign2017}.
 
 \begin{figure}[htbp]
     \centering
@@ -395,7 +395,7 @@ These expressions define the phase trajectory \( \varphi(t) \) used both in the 
 
 In some control loops, the chirp signal is conditioned by a first-order lag filter before being injected into the control loop. The controller effort magnitude tends to increase towards higher frequencies, which may lead to excessive motor response during the high-frequency portion of the sweep and can compromise the quality of the system identification data. The shaping filter therefore attenuates the high-frequency components of the chirp signal prior to injection, resulting in a more uniform excitation across the frequency range.
 
-In default, the filter is implemented as a first-order lead--lag element with a pole at \( f_p = 3\,\mathrm{Hz} \) and a zero at \( f_z = 30\,\mathrm{Hz} \), corresponding to the transfer function
+By default, the filter is implemented as a first-order lead--lag element with a pole at \( f_p = 3\,\mathrm{Hz} \) and a zero at \( f_z = 30\,\mathrm{Hz} \), corresponding to the transfer function
 
 \begin{equation}
     H(s) = \frac{1 + s/\omega_z}{1 + s/\omega_p},
@@ -508,7 +508,7 @@ After filtering, the signal is shifted back to its original frequency range. Thi
 
 This step reverses the initial frequency rotation and reconstructs a filtered version of the original signal. By reducing the noise before the spectral estimation, the signal-to-noise ratio is improved, leading to more reliable results \parencite{signal_processing}.
 
-A second-order Butterworth low-pass filter with a cutoff frequency of $10\,\text{Hz}$ is used. The effect of the filtering approach is illustrated in \autoref{fig:time_filtered}. At higher chirp frequencies, noise dominates the unfiltered signal, while the filtered signal closely follows the nderlying system response. A slight amplitude reduction at higher frequencies can be observed, consistent with the low-pass behaviour.
+A second-order Butterworth low-pass filter with a cutoff frequency of $10\,\text{Hz}$ is used. The effect of the filtering approach is illustrated in \autoref{fig:time_filtered}. At higher chirp frequencies, noise dominates the unfiltered signal, while the filtered signal closely follows the underlying system response. A slight amplitude reduction at higher frequencies can be observed, consistent with the low-pass behaviour.
 
 \begin{figure}[H]
     \centering
@@ -560,7 +560,7 @@ In practice, the spectral densities are estimated from finite measurement record
 
 \subsubsection*{Spectral Estimation Using Welch’s Method}
 
-To obtain reliable estimates of the spectral densities, Welch’s method is applied. As discussed in the previous section, direct computation from finite data is sensitive to noise. Therefore, averaging techniques are required to approximate the expected values of the spectral quantities \parencite{System_Identification}. 
+To obtain reliable estimates of the spectral densities, Welch’s method is applied. As discussed in the previous section, direct computation from finite data is sensitive to noise. Therefore, averaging techniques are required to approximate the expected values of the spectral quantities \parencite{welchUseFastFourier1967, System_Identification}. 
 
 The spectral densities describe how the signal energy is distributed over frequency and form the basis for estimating the frequency responses \parencite{System_Identification}.
 
@@ -593,7 +593,7 @@ Welch’s method reduces the variance of the estimates by averaging over all seg
     \hat{S}_{yu}(\omega) = \frac{1}{K} \sum_{k=1}^{K} P_{yu,k}(\omega), 
 \end{equation}
 
-Using these quantities, the frequency responses estimate is computed as
+Using these quantities, the frequency response estimate is computed as
 
 \begin{equation}
     \hat{G}(\omega) = \frac{\hat{S}_{yu}(\omega)}{\hat{S}_{uu}(\omega)}.
@@ -608,9 +608,9 @@ In our example, the spectral densities are estimated using Welch’s method with
     \label{fig:transfer_estimation_filtered}
 \end{figure}
 
-The estimated frequency responses is shown in \autoref{fig:transfer_estimation_filtered}. The estimated magnitude and phase closely follow the true system response over a wide frequency range. Compared to the direct estimation approach, the usable frequency range is significantly extended.
+The estimated frequency response is shown in \autoref{fig:transfer_estimation_filtered}. The estimated magnitude and phase closely follow the true system response over a wide frequency range. Compared to the direct estimation approach, the usable frequency range is significantly extended.
 
-The quality of the frequency responses estimate can be evaluated using the coherence. As already mentioned, coherence values close to one indicate a reliable frequency responses estimate. The coherence is defined as
+The quality of the frequency response estimate can be evaluated using the coherence. As already mentioned, coherence values close to one indicate a reliable frequency response estimate. The coherence is defined as
 
 $$
 \gamma^2(\omega) = \frac{|S_{yu}(\omega)|^2}{S_{uu}(\omega)\, S_{yy}(\omega)},
@@ -819,7 +819,7 @@ By comparing the experimentally identified system behaviour with these theoretic
 
 As the basis of the overall system, the transfer function of the motor dynamics must be determined. Since the internal implementation of the BLHeli32 ESC firmware is proprietary and not publicly available, the exact dynamics of the motor--ESC system are unknown. The following model therefore does not represent the real system exactly but serves as a simplified approximation of the dominant motor dynamics.
 
-The motor--propeller system is modeled using the well-established electromechanical model of a DC motor, which can also be applied to brushless DC (BLDC) motors in an equivalent form. The model consists of one electrical and one mechanical differential equation.
+The motor--propeller system is modeled using the well-established electromechanical model of a DC motor, which can also be applied to brushless DC (BLDC) motors in an equivalent form \parencite{quanIntroductionMulticopterDesign2017}. The model consists of one electrical and one mechanical differential equation.
 
 The electrical behaviour of the motor is described by
 \begin{equation}
@@ -860,7 +860,7 @@ Based on the motor dynamics described in the previous section, the plant of the 
     T = C_T \rho n^2 D^4,
 \end{equation}
 
-where $C_T$ is the thrust coefficient, $\rho$ the air density, $n$ the rotational speed and $D$ the propeller diameter.
+where $C_T$ is the thrust coefficient, $\rho$ the air density, $n$ the rotational speed and $D$ the propeller diameter \parencite{quanIntroductionMulticopterDesign2017}.
 
 Differential thrust between opposing motors generates a torque that causes the drone to rotate about its axes. The resulting torque is proportional to the thrust difference and the distance from the center of mass to the motor, denoted by $l$ and can be expressed as
 
@@ -918,7 +918,7 @@ This shows that the angle is obtained by integrating the angular rate, correspon
     P_{\text{Angle}}(s) = \frac{\theta(s)}{\omega(s)} = \frac{1}{s}.
 \end{equation}
 
-Through these calculations, we know that we can expect a Bode plot of the angle plant with a slope of -20 dB/decade and a phase shift of -90 degrees, which are characteristic features of an ideal integrator.
+Through these calculations, we know that we can expect a Bode plot of the angle plant with a slope of -20 dB/decade and a phase shift of -90 degrees, which are characteristic features of an ideal integrator \parencite{quanIntroductionMulticopterDesign2017}.
 
 To verify this theoretical behaviour, the frequency response of the angle plant is estimated from flight data using the system identification approach described earlier. The resulting Bode plot and coherence are shown in \autoref{fig:plant_angle_measured}.
 
@@ -955,7 +955,7 @@ The horizontal acceleration can be expressed as
     a_{\text{hor}}(t) = g \cdot \sin\!\left(\theta(t)\right).
 \end{equation}
 
-Assuming that the drone operates at small angles during position hold, the small-angle approximation \( \sin(\theta) \approx \theta \) can be applied. This results in the simplified expression
+Assuming that the drone operates at small angles during position hold, the small-angle approximation \( \sin(\theta) \approx \theta \) can be applied \parencite{quanIntroductionMulticopterDesign2017}. This results in the simplified expression
 \begin{equation}
     a_{\text{hor}}(t) \approx g \cdot \theta(t).
 \end{equation}
@@ -996,7 +996,7 @@ The thrust produced by a propeller can be approximated by
     T = C_T \rho n^2 D^4,
 \end{equation}
 
-where \(C_T\) is the thrust coefficient, \(\rho\) the air density, \(n\) the rotational speed and \(D\) the propeller diameter.
+where \(C_T\) is the thrust coefficient, \(\rho\) the air density, \(n\) the rotational speed and \(D\) the propeller diameter \parencite{quanIntroductionMulticopterDesign2017}.
 
 The vertical acceleration follows from the force balance
 
