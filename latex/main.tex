@@ -2018,7 +2018,9 @@ Across all four loops the same reporting conventions apply. The identified plant
 
 The comparison is carried out both in the frequency domain using the complementary sensitivity function \(T\) and in the time domain using the corresponding step responses. Good agreement between the predicted and measured responses indicates that the identified plant model captures the relevant system dynamics and can be used to evaluate controller modifications prior to flight testing.
 
-The remaining Gang-of-Four transfer functions (\(S\), \(SC\) and \(SP\)) are calculated analytically from the identified plant and controller models. 
+The remaining Gang-of-Four transfer functions (\(S\), \(SC\) and \(SP\)) are calculated analytically from the identified plant and controller models.
+
+For the step-response analysis, the rise time \(t_r\) is defined as the time required for the response to increase from \(10\,\%\) to \(90\,\%\) of its steady-state value, while the overshoot (OS) denotes the maximum deviation above the steady-state value expressed as a percentage. Furthermore, labels such as \emph{default}, \emph{moderate}, \emph{tuned} and \emph{bad} are used solely to distinguish between the investigated controller configurations and corresponding flight logs. These labels do not represent universal tuning classifications and are only valid within the context of this work.
 
 \section{Gyro Controller}
 
@@ -2439,14 +2441,11 @@ Overall, the navigation-loop results should be interpreted as a proof of concept
 
 The goal of this bachelor thesis was to develop an offline tuning tool for the Betaflight flight controller, allowing users to optimize controller parameters based on recorded flight data. The tool was designed to be modular and extendable, enabling future additions of tuning methods for different control loops. The implementation was carried out in both MATLAB and Python, with a focus on maintaining consistency between the two environments.
 
-Within this work, the existing tuning framework was successfully extended with support for the angle control loop. The developed tool is therefore able to tune both the gyro and angle controllers based on flight data. The results showed that the tool can predict the system response with good accuracy for moderate parameter changes, while larger changes lead to reduced estimation accuracy due to nonlinear effects. This provides FPV pilots with a structured and data-driven alternative to traditional trial-and-error tuning methods.
+Within this work, the existing tuning framework was successfully extended with support for the angle control loop. The developed tool is therefore able to tune both the gyro and angle controllers based on flight data. The results showed that the tool can predict the system response with good accuracy for moderate parameter changes, while larger changes lead to reduced prediction accuracy. This provides FPV pilots with a structured and data-driven alternative to traditional trial-and-error tuning methods.
 
-Additionally, proof-of-concept implementations for the altitude hold and position hold control loops were developed, demonstrating the potential for further extensions of the framework. At the same time, these experiments highlighted limitations and challenges of the proposed tuning approach. In particular, the low update rate and noise of the GPS measurements in the position and altitude hold control loops complicate accurate system identification and controller tuning. These limitations may require additional methods such as sensor fusion or more advanced filtering techniques in future implementations.
+Additionally, proof-of-concept implementations for the altitude-hold and position-hold control loops were developed, demonstrating the potential for further extensions of the framework. At the same time, these experiments highlighted the limitations of the proposed approach. In particular, the low update rate and noise of the navigation sensors complicate accurate system identification and controller tuning. Future work may therefore benefit from improved sensor fusion, higher-rate state estimation or more advanced filtering techniques.
 
-An important outcome of this work was the strong interest from the Betaflight and FPV community. Discussions within the Betaflight project regarding possible integrations of offline tuning methods, as well as feedback and feature requests from developers of existing tuning tools, demonstrated the practical relevance of the developed framework beyond the academic scope of this thesis.
-All in all, the interesst in this project and the tuning tool is high,
-
-
+A further outcome of this work is the ongoing discussion within the Betaflight community regarding the integration of an offline tuning tool into the Betaflight ecosystem. Since the proposed approach is based on the same chirp-based system identification principles currently being explored by Betaflight developers, the results of this thesis provide practical validation of the underlying methodology. The developed framework demonstrates the feasibility of offline controller tuning and may contribute to future developments in this area.
 
 
 % *****************************************************************************
