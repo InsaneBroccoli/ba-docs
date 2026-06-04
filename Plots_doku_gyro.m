@@ -32,7 +32,7 @@ log_name2 = 'Moderate_flipmini.csv';   % moderate  P=46, I=66, D=32
 log_name3 = 'Bad_flipmini.csv';  % bad       P=30, I=60, D=30
 
 base    = 2;   % flight whose plant is identified (the baseline)
-compare = 3;   % measured target flight to predict and compare against
+compare = 1;   % measured target flight to predict and compare against
 %   case 1 = tuned, 2 = moderate, 3 = bad
 
 switch base
@@ -319,30 +319,33 @@ figure(11)
 ax(1) = subplot(2,2,1);
 bodemag(ax(1), CL_new1.T, T1, T2, omega_bode, opt);
 title('Tracking T');
-legend('Calculated Flight1','Measured Flight1','Measured Flight2','Location','best');
+legend(sprintf('Calculated %s', name_compare), sprintf('Measured %s', name_base), sprintf('Measured %s', name_compare), 'Location','best');
 grid on;
 
 ax(2) = subplot(2,2,2);
 bodemag(ax(2), CL_new1.S, CL_new2.S, omega_bode, opt);
 title('Sensitivity S')
-legend('Calculated Flight1','Calculated Flight2','Location','best')
+legend(sprintf('Calculated %s', name_base), sprintf('Calculated %s', name_compare), 'Location','best')
 grid on
 
 ax(3) = subplot(2,2,3);
 bodemag(ax(3), CL_new1.SC, CL_new2.SC, omega_bode, opt);
 title('Controller Effort SC');
-legend('Calculated Flight1','Calculated Flight2','Location','best');
+legend(sprintf('Calculated %s', name_base), sprintf('Calculated %s', name_compare), 'Location','best');
 grid on;
 
 ax(4) = subplot(2,2,4);
 bodemag(ax(4), CL_new1.SP, CL_new2.SP, omega_bode, opt);
 title('Compliance SP');
-legend('Calculated Flight1','Calculated Flight2','Location','best');
+legend(sprintf('Calculated %s', name_base), sprintf('Calculated %s', name_compare), 'Location','best');
 grid on;
 
 linkaxes(ax,'x');
 xlim(ax(1), [0.5 600]);
-sgtitle('Gang of Four - Gyro');
+sgt = sgtitle('Gang of Four - Gyro');
+
+style_doku_fig(gcf, 16, 12, 16, 1.2);
+set(sgt, 'FontWeight', 'bold', 'FontSize', 20);   % overall title: bold, larger than base
 
 
 %% Step responses
@@ -363,17 +366,17 @@ step_resp = step_resp ./ step_resp_mean;
 %% Plot
 
 figure(1)
-plot(step_time, step_resp, 'LineWidth', 1.5)
+plot(step_time, step_resp)
 grid on
-ylabel('Gyro (deg/sec)')
-xlabel('Time (sec)')
+ylabel('Rate [deg/s]')
+xlabel('Time [s]')
 title('Tracking T')
-legend(sprintf('Measured %s', name_base), ...
-       sprintf('Calculated %s', name_compare), ...
-       sprintf('Measured %s', name_compare), ...
+legend(sprintf('Measured %s', name_base), sprintf('Calculated %s', name_compare), sprintf('Measured %s', name_compare), ...
        'Location', 'best')
 xlim([0 0.5])
-ylim([0 1.3])
+ylim([0 1.15])
+
+style_doku_fig(gcf, 16, 7, 16, 1.2);
 
 
 %% Numerical metrics for thesis Results section (Gyro)
@@ -465,3 +468,28 @@ fprintf('     SP calc %-8s peak %+5.2f dB @ %.3f Hz\n', name_base,    peak_db(ma
 fprintf('     SP calc %-8s peak %+5.2f dB @ %.3f Hz\n', name_compare, peak_db(mag_SP_c2),   peak_f(mag_SP_c2));
 
 fprintf('========================================\n\n');
+
+
+%% Local functions
+
+function style_doku_fig(figh, w_cm, h_cm, fs, lw)
+% Unified styling for the documentation figures (Gang of Four + step response).
+% Pins the figure size (cm) and the font / line sizes so the manually exported
+% PNGs come out at identical dimensions across all Plots_doku_* scripts.
+% Call as the last statement of a figure block (after bodemag/linkaxes/sgtitle).
+    set(figh, 'Units', 'centimeters');
+    p = get(figh, 'Position');
+    set(figh, 'Position', [p(1) p(2) w_cm h_cm]);
+    set(findall(figh, 'Type', 'line'), 'LineWidth', lw);          % bodemag curves + plot() lines
+    set(findall(figh, '-property', 'FontSize'), 'FontSize', fs);  % base font: axes, labels, legend
+
+    % Subplot titles: bold and slightly larger than the base font. bodemag can
+    % leave uneven title-to-plot gaps between panels, so after styling we pull
+    % every title up to the largest gap, giving identical spacing on all axes.
+    axs = findall(figh, 'Type', 'axes');
+    set([axs.Title], 'FontWeight', 'bold', 'FontSize', fs + 1, 'Units', 'normalized');
+    ytitle = arrayfun(@(a) a.Title.Position(2), axs);
+    for k = 1:numel(axs)
+        axs(k).Title.Position(2) = max(ytitle);
+    end
+end

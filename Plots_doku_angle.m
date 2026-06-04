@@ -30,7 +30,7 @@ log_name2 = 'P_80_flipmini.csv'; % tuned
 log_name3 = 'P_100_flipmini.csv'; % more tuned
 
 base = 2;
-compare = 1;
+compare = 3;
 switch base
   case 1
     file_path1 = fullfile(log_folder, flight_folder, log_name1);
@@ -60,6 +60,10 @@ end
 gains_all    = [50, 80, 100];   % maps log_name1/2/3 -> Betaflight angle P gain
 gain_base    = gains_all(base);
 gain_compare = C_P_Angle;       % gain of the compare flight
+
+% Case names for the unified GoF / step legends (match the Results tables, e.g. "P = 80")
+name_base    = sprintf('P = %d', gain_base);
+name_compare = sprintf('P = %d', gain_compare);
 
 %% Load and process header information
 [para1, Nheader1, ind1, ind_cntr1] = extract_header_information(file_path1);
@@ -278,16 +282,17 @@ step_resp_meas = step_resp ./ step_resp_mean;
 
 %% Plot
 figure(1);
-plot(step_time, step_resp_meas, 'LineWidth', 1.2);
+plot(step_time, step_resp_meas);
 grid on;
 title('Angle step response');
 xlim([0 1])
+ylim([0 1.15])
 xlabel('Time [s]');
 ylabel('Angle [deg]');
-legend(sprintf('Measured P=%d', gain_base), ...
-       sprintf('Calculated P=%d', gain_compare), ...
-       sprintf('Measured P=%d', gain_compare), ...
+legend(sprintf('Measured %s', name_base), sprintf('Calculated %s', name_compare), sprintf('Measured %s', name_compare), ...
     'Location', 'best');
+
+style_doku_fig(gcf, 16, 7, 16, 1.2);
 
 figure(2)
 bode(Cp_ax1,C_Angle_ana, C_Angle_new);
@@ -350,32 +355,35 @@ CL_new2 = calculate_closed_loop_angle(C_Angle_new, ...
 
 figure(11)
 ax(1) = subplot(2,2,1);
-bodemag(ax(1), CL_ana1.T, T_ax1, CL_new2.T, omega_bode, opt);
+bodemag(ax(1), CL_ana1.T, T_ax1, T_ax2, omega_bode, opt);
 title('Tracking T');
-legend('Calculated Flight1','Measured Flight1','Measured Flight2','Location','best');
+legend(sprintf('Calculated %s', name_compare), sprintf('Measured %s', name_base), sprintf('Measured %s', name_compare), 'Location','best');
 grid on;
 
 ax(2) = subplot(2,2,2);
 bodemag(ax(2), CL_ana1.S, CL_new2.S, omega_bode, opt);
 title('Sensitivity S')
-legend('Calculated Flight1','Calculated Flight2','Location','best')
+legend(sprintf('Calculated %s', name_base), sprintf('Calculated %s', name_compare), 'Location','best')
 grid on
 
 ax(3) = subplot(2,2,3);
 bodemag(ax(3), CL_ana1.SC, CL_new2.SC, omega_bode, opt);
 title('Controller Effort SC');
-legend('Calculated Flight1','Calculated Flight2','Location','best');
+legend(sprintf('Calculated %s', name_base), sprintf('Calculated %s', name_compare), 'Location','best');
 grid on;
 
 ax(4) = subplot(2,2,4);
 bodemag(ax(4), CL_ana1.SP, CL_new2.SP, omega_bode, opt);
 title('Compliance SP');
-legend('Calculated Flight1','Calculated Flight2','Location','best');
+legend(sprintf('Calculated %s', name_base), sprintf('Calculated %s', name_compare), 'Location','best');
 grid on;
 
 linkaxes(ax,'x');
 xlim(ax(1), [0.5 600]);
-sgtitle('Gang of Four - Angle');
+sgt = sgtitle('Gang of Four - Angle');
+
+style_doku_fig(gcf, 16, 12, 16, 1.2);
+set(sgt, 'FontWeight', 'bold', 'FontSize', 20);   % overall title: bold, larger than base
 
 
 %% Numerical metrics for thesis Results section (Angle)
@@ -465,3 +473,28 @@ fprintf('     SP calc %-8s peak %+5.2f dB @ %.3f Hz\n', lbl_base,    peak_db(mag
 fprintf('     SP calc %-8s peak %+5.2f dB @ %.3f Hz\n', lbl_compare, peak_db(mag_SP_c2),   peak_f(mag_SP_c2));
 
 fprintf('========================================\n\n');
+
+
+%% Local functions
+
+function style_doku_fig(figh, w_cm, h_cm, fs, lw)
+% Unified styling for the documentation figures (Gang of Four + step response).
+% Pins the figure size (cm) and the font / line sizes so the manually exported
+% PNGs come out at identical dimensions across all Plots_doku_* scripts.
+% Call as the last statement of a figure block (after bodemag/linkaxes/sgtitle).
+    set(figh, 'Units', 'centimeters');
+    p = get(figh, 'Position');
+    set(figh, 'Position', [p(1) p(2) w_cm h_cm]);
+    set(findall(figh, 'Type', 'line'), 'LineWidth', lw);          % bodemag curves + plot() lines
+    set(findall(figh, '-property', 'FontSize'), 'FontSize', fs);  % base font: axes, labels, legend
+
+    % Subplot titles: bold and slightly larger than the base font. bodemag can
+    % leave uneven title-to-plot gaps between panels, so after styling we pull
+    % every title up to the largest gap, giving identical spacing on all axes.
+    axs = findall(figh, 'Type', 'axes');
+    set([axs.Title], 'FontWeight', 'bold', 'FontSize', fs + 1, 'Units', 'normalized');
+    ytitle = arrayfun(@(a) a.Title.Position(2), axs);
+    for k = 1:numel(axs)
+        axs(k).Title.Position(2) = max(ytitle);
+    end
+end

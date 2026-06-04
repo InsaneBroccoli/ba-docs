@@ -43,6 +43,10 @@ mat_path1 = [base1 '.mat'];  % Speichert direkt im aktuellen Arbeitsverzeichnis
 [~, base2, ~] = fileparts(file_path2);
 mat_path2 = [base2 '.mat'];  % Speichert direkt im aktuellen Arbeitsverzeichnis
 
+% Case names for the unified GoF / step legends (match the Results tables)
+name_base    = 'baseline';   % poshold-default.csv was flown at the baseline gains
+name_compare = 'proposed';   % poshold-tuned.csv was flown at the proposed gains
+
 try
     S = load(mat_path1);
     if isfield(S, 'flight1')
@@ -222,30 +226,34 @@ figure(1)
 ax(1) = subplot(2,2,1);
 bodemag(ax(1), CL_f1.T, T_f1, T_f2, omega_bode, opt);
 title('Tracking T');
-legend('Calculated Flight1','Measured Flight1','Measured Flight2','Location','best');
+legend(sprintf('Calculated %s', name_compare), sprintf('Measured %s', name_base), sprintf('Measured %s', name_compare), 'Location','best');
 grid on;
 
 ax(2) = subplot(2,2,2);
 bodemag(ax(2), CL_f1.S, CL_f2.S, omega_bode, opt);
 title('Sensitivity S')
-legend('Calculated Flight1','Calculated Flight2','Location','best')
+legend(sprintf('Calculated %s', name_base), sprintf('Calculated %s', name_compare), 'Location','best')
 grid on
 
 ax(3) = subplot(2,2,3);
 bodemag(ax(3), CL_f1.SC, CL_f2.SC, omega_bode, opt);
 title('Controller Effort SC');
-legend('Calculated Flight1','Calculated Flight2','Location','best');
+legend(sprintf('Calculated %s', name_base), sprintf('Calculated %s', name_compare), 'Location','best');
 grid on;
 
 ax(4) = subplot(2,2,4);
 bodemag(ax(4), CL_f1.SP, CL_f2.SP, omega_bode, opt);
 title('Compliance SP');
-legend('Calculated Flight1','Calculated Flight2','Location','best');
+legend(sprintf('Calculated %s', name_base), sprintf('Calculated %s', name_compare), 'Location','best');
 grid on;
 
 linkaxes(ax,'x');
 xlim(ax(1), [3e-2 10]);
-sgtitle('Gang of Four - Position Hold');
+sgt = sgtitle('Gang of Four - Position Hold');
+
+style_doku_fig(gcf, 16, 12, 16, 1.2);
+xlim([0.07 4])
+set(sgt, 'FontWeight', 'bold', 'FontSize', 20);   % overall title: bold, larger than base
 
 %% Step Response
 
@@ -264,10 +272,16 @@ step_resp_mean = mean(step_resp(step_time > T_mean(1) & step_time < T_mean(2),:)
 step_resp = step_resp ./ step_resp_mean;
 
 figure(2)
-plot(step_time, step_resp), grid on, ylabel('Position (cm)')
+plot(step_time, step_resp)
+grid on
+ylabel('Position [cm]')
+xlabel('Time [s]')
 title('Step Response Position Hold')
-legend('Measured Flight2', 'Calculated Flight1', 'Measured Flight1', 'location', 'best')
+legend(sprintf('Measured %s', name_compare), sprintf('Calculated %s', name_compare), sprintf('Measured %s', name_base), ...
+       'Location', 'best')
 ylim([-0.2 1.6]); xlim([0 frame/2]);
+
+style_doku_fig(gcf, 16, 7, 16, 1.2);
 
 
 %% Shared labels and chirp-window time vectors
@@ -429,3 +443,28 @@ else
 end
 
 fprintf('========================================\n\n');
+
+
+%% Local functions
+
+function style_doku_fig(figh, w_cm, h_cm, fs, lw)
+% Unified styling for the documentation figures (Gang of Four + step response).
+% Pins the figure size (cm) and the font / line sizes so the manually exported
+% PNGs come out at identical dimensions across all Plots_doku_* scripts.
+% Call as the last statement of a figure block (after bodemag/linkaxes/sgtitle).
+    set(figh, 'Units', 'centimeters');
+    p = get(figh, 'Position');
+    set(figh, 'Position', [p(1) p(2) w_cm h_cm]);
+    set(findall(figh, 'Type', 'line'), 'LineWidth', lw);          % bodemag curves + plot() lines
+    set(findall(figh, '-property', 'FontSize'), 'FontSize', fs);  % base font: axes, labels, legend
+
+    % Subplot titles: bold and slightly larger than the base font. bodemag can
+    % leave uneven title-to-plot gaps between panels, so after styling we pull
+    % every title up to the largest gap, giving identical spacing on all axes.
+    axs = findall(figh, 'Type', 'axes');
+    set([axs.Title], 'FontWeight', 'bold', 'FontSize', fs + 1, 'Units', 'normalized');
+    ytitle = arrayfun(@(a) a.Title.Position(2), axs);
+    for k = 1:numel(axs)
+        axs(k).Title.Position(2) = max(ytitle);
+    end
+end
