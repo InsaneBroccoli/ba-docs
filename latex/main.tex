@@ -958,6 +958,8 @@ At higher frequencies, deviations from the ideal integrator behaviour can be obs
 
 The coherence is close to one in the low-frequency range, indicating a reliable estimate. As the frequency increases, the coherence decreases, suggesting that the estimation becomes less reliable due to noise and reduced signal-to-noise ratio.
 
+\newpage
+
 \subsection*{Plant Position Hold}
 
 The position hold controller includes the angular rate and the angle as inner control loops. Therefore, the plant of the position hold corresponds to the transformation from the drone's attitude (angle) to its position in space. This transformation is determined by the kinematics of the multirotor and the influence of external forces such as gravity.
@@ -1095,7 +1097,9 @@ The estimated frequency response confirms the expected behaviour at low frequenc
 
 In this chapter, the practical implementation of the previously introduced theoretical concepts is presented. The focus lies on the application of the proposed system identification and offline tuning methods to the different control loops of a Betaflight-based flight controller.
 
-The methodology is structured according to the individual control loops. Starting with the angular rate controller, the corresponding control structures, measurement setups, transfer function estimations and tuning procedures are described. The same approach is then extended to the angle, altitude hold and position hold controllers.
+For each control loop, the same general workflow is applied. A chirp signal is injected into the control loop, the resulting flight data is recorded and the frequency response is estimated. Based on these measurements, the corresponding plant and controller dynamics are determined and used for the tuning process.
+
+The methodology is structured according to the individual control loops. Starting with the angular rate controller, the corresponding control structures, firmware changes, transfer function estimations and tuning procedures are described. The same approach is then extended to the angle, altitude hold and position hold controllers.
 
 Additionally, the required firmware modifications, measurement procedures and practical implementation challenges are discussed. The chapter also highlights limitations and observations encountered during the experimental evaluation of the different control loops.
 
@@ -1133,6 +1137,8 @@ After the controller, input disturbances are added before the signal enters the 
 A key feature of this control structure is the placement of the D-controller in the feedback path instead of the forward path. The D-controller acts on the measured output signal and is fed back negatively. This configuration is used to compensate for a zero in the plant dynamics, improving the system stability while reducing the noise amplification that would occur if the derivative term were applied directly to the reference signal.
 
 Additionally, dedicated filters are used to attenuate high-frequency noise before it affects the control action. This is especially important for the D-controller, since the derivative term is generally very sensitive to noise. Without the D-path filter, measurement noise would strongly affect the D-term and therefore the controller output, which is not desired and could lead to unstable behaviour.
+
+\newpage
 
 \subsection*{Control Loop Calculation}
 
@@ -1197,6 +1203,8 @@ C_{\text{D,meas}}(\omega) = \frac{G_{\text{uw}}(\omega) - G_{\text{vw}}(\omega)}
 \end{equation}
 
 The estimation of the D-term was especially useful during the development of the tuning framework, since it helped to better understand the D-term behaviour and identify implementation issues within the controller structure.
+
+\newpage
 
 \subsubsection*{Calculation of the Tuning Responses}
 
@@ -1289,7 +1297,8 @@ In Angle mode, the drone’s tilt angle is directly linked to the stick position
 
 In contrast, Acro mode provides full manual control. In this mode, stick inputs define an angular rate rather than a target angle, meaning that the drone continues rotating as long as the stick remains deflected. This allows aggressive maneuvers such as flips and rolls but also requires greater pilot experience.
 
-During this thesis project, an offline tuner for the angular rate controller was further developed to systematically optimize the rate control loop and improve Acro mode performance. The tuner was subsequently extended to also support Angle mode, enabling improved stability and responsiveness while maintaining intuitive handling for beginner pilots.
+An offline tuning method for the angular rate controller was already available from previous project work and serves as the basis for the present implementation. Since the angle controller is built on top of the angular rate controller, the existing approach can be extended to Angle mode with only minor modifications. This enables the systematic tuning of the angle control loop while preserving the intuitive handling characteristics of Angle mode.
+
 
 This extension allows a consistent tuning methodology across different flight modes, improving overall system performance and usability.
 
@@ -1330,6 +1339,8 @@ The Angle mode controller therefore consists of two cascaded loops:
 The angle control loop consists of a proportional controller and an additional feedforward term. While the feedforward improves responsiveness during normal flight operation by directly reacting to stick inputs, it complicates offline system identification because part of the controller output no longer originates from the feedback loop.
 
 To simplify transfer function estimation and controller tuning, the feedforward term is disabled in the modified firmware. This allows the angle control loop to be analyzed as a purely proportional controller.
+
+\newpage
 
 \subsubsection*{Derivation of the Target Angle}
 
@@ -1580,6 +1591,8 @@ The estimation of the D-term was especially useful during the development of the
 
 With the estimated plant and controller transfer functions, the complete control loop can be analysed and the tuning method can be applied to optimize the controller parameters for improved performance.
 
+\newpage
+
 \subsubsection*{Implementation of the Tuning Method}
 
 Based on the estimated plant and controller transfer functions, the tuning of the PID controllers can be performed. The goal is to adjust the controller parameters to achieve the desired tuning characteristics, such as stability, responsiveness and robustness.
@@ -1613,6 +1626,7 @@ SP_{\text{AltHold}}(\omega) = \frac{P_{\text{AltHold}}(\omega)}
 
 These metrics allows us to evaluate the performance of the new controller parameters and make informed decisions about further adjustments to optimize the altitude hold control loop for improved stability, responsiveness and disturbance rejection. More details about that can be found in the next section, where the results of the tuning process are evaluated based on the step response and the Gang of Four plots.
 
+\newpage
 
 \section{Position Hold Controller}
 
@@ -1624,7 +1638,7 @@ The Position Hold controller represents the outermost control layer in the fligh
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=1.0\textwidth]{Control_Loop_PosHold.png}
+    \includegraphics[width=0.95\textwidth]{Control_Loop_PosHold.png}
     \caption{Control structure of the Betaflight position hold controller.}
     \label{fig:Position_hold_control_loop}
 \end{figure}
@@ -1778,6 +1792,8 @@ The first transfer function describes the closed-loop behaviour of the Position 
          {1-T_\text{pos}(\omega)}.
 \end{equation}
 
+\newpage
+
 \subsubsection*{Implementation of the Tuning Method}
 
 The calculation of the tuning parameters for the Position Hold control loop follows the same approach as for the previously described control loops. For the Position Hold evaluation, the injected chirp signal is applied directly to the horizontal position setpoint, while the resulting aircraft position is reconstructed from the logged position error.
@@ -1785,6 +1801,7 @@ The calculation of the tuning parameters for the Position Hold control loop foll
 The relevant components are the estimated plant \(P_{\text{PosHold}}\), which was obtained from the measured data, and the updated controller \(C_{\text{PID,Pos}}\) using the newly calculated tuning parameters.
 
 With these components, the transfer functions required for the Gang of Four analysis can be calculated. First, the closed-loop transfer function is
+
 
 \begin{equation}
 T_{\text{Pos}}(\omega) =
@@ -1866,7 +1883,7 @@ Here, frequencies are plotted against thrust level and the color shows the signa
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.9\textwidth]{Spectrograms.png}
+	\includegraphics[width=1.0\textwidth]{Spectrograms.png}
 	\caption{Gyro Spectrograms. Red equals much vibration, blue equals little vibration.}
 	\label{fig:Spectrograms_tuning}
 \end{figure}
@@ -1936,6 +1953,8 @@ The tuning process demonstrated these plots to be invaluable for diagnosing and 
 	      Compliance measures how much external disturbances, such as wind or propwash, affect drone motion. Lower compliance indicates more effective disturbance resistance. Increasing P-term gains improves disturbance rejection, though excessive gains can cause oscillations during rapid throttle changes. The optimal balance must be found to maintain both stability and responsiveness.
 \end{enumerate}
 
+\newpage
+
 \subsubsection*{PID Tuning Summary}
 
 The offline tuning framework is designed to enable PID parameters to be optimized without repeated flight tests. The process is guided by these principles:
@@ -1957,8 +1976,6 @@ Once the plant has been identified, candidate tuning parameters can be evaluated
 \textbf{In-Flight Validation}
 
 Once the predicted response is deemed acceptable, the new parameters are applied to the flight controller and validated through actual flight testing. Aggressive maneuvers, wind disturbances and motor thermal behavior should all be assessed to ensure the tuning remains stable and responsive under practical conditions.
-
-\newpage
 
 \textbf{Tuning Philosophy}
 
@@ -2006,6 +2023,8 @@ As already outlined in the project thesis, the tuning tool was implemented using
 The proof-of-concept implementations for altitude hold and position hold tuning were developed as separate tools without following the same modular architecture. This decision allowed the focus to remain on validating the tuning methodology for these additional control loops without being constrained by the existing software structure. Once the proof of concept is validated, the corresponding implementations can be refactored and integrated into the main modular framework to ensure long-term maintainability and consistency across the entire tuning tool.
 
 Across all controller tuning implementations, the same signal-processing and analysis functions were reused, including functions such as \texttt{apply\_rotfiltfilt} and \texttt{estimate\_frequency\_response}. This ensures a consistent analysis workflow across different control loops while reducing development effort through code reuse.
+
+\newpage
 
 \subsection*{Conversion from MATLAB to Python}
 
