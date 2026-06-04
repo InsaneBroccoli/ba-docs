@@ -82,8 +82,6 @@ Die Tuning-Algorithmen für den Winkelgeschwindigkeitsregler und den Winkelregle
 
 Die Ergebnisse dieser Arbeit werden der Betaflight-Community über ein GitHub-Repository zur Verfügung gestellt und in einem umfassenden Bericht dokumentiert. Die experimentelle Validierung erfolgt durch reale FPV-Flüge, um die Wirksamkeit der vorgeschlagenen Methoden zu überprüfen.
 
-\newpage
-
 \section*{Abstract}
 \addcontentsline{toc}{chapter}{Abstract}
 
@@ -97,6 +95,7 @@ The results of this work are published in a public GitHub repository and documen
 
 
 % --- Table of Contents --------------------------------------------------------
+
 \tableofcontents
 
 
@@ -199,7 +198,7 @@ Since this work is concerned with the analysis and modeling of quadcopters, the 
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.90\linewidth]{Figures/multirotor_types.png}
+    \includegraphics[width=1.0\linewidth]{Figures/multirotor_types.png}
     \caption{Rotary-wing multirotor UAV configurations: quadcopter (left), hexacopter (center) and octocopter (right).}
     \label{fig:multirotor_types}
 \end{figure}
@@ -358,6 +357,8 @@ The quality of the chirp excitation depends strongly on the chosen sweep paramet
 
 With the exception of \( f_1 \), these values are taken from the default chirp settings used in Betaflight for the angle and gyro control loops. The final frequency in the simulation is limited to \( 50\,\text{Hz} \) to improve plot readability, whereas in practice \( f_1 \) is typically set much higher (e.g., \( 600\,\text{Hz} \)) to cover the full control bandwidth of the system.
 
+\newpage
+
 \subsubsection*{Exponential chirp:}
 
 For an exponential chirp, the instantaneous frequency increases exponentially from the starting frequency \( f_0 \) to the final frequency \( f_1 \) over the time interval \( T \). This means that lower frequencies are covered more slowly, while higher frequencies are reached more rapidly. \parencite{Matlab_Chirp}
@@ -462,9 +463,11 @@ The chirp signal \( u(t) \) is applied to the system, resulting in the ideal out
 
 In the simulation, the disturbance is modelled as additive white Gaussian noise with a standard deviation of \( \sigma_d = 200\,\text{deg/s} \). Based on these simulated signals, the following signal-processing steps are applied and evaluated.
 
+\newpage
+
 \subsubsection*{Baseband Filtering via Frequency Rotation}
 
-Measured signals are often affected by noise and unwanted high-frequency components, which can obscure relevant information. This is also the case in the simulated signals considered here, where additive noise is present. To reduce these disturbances while preserving the phase characteristics, a frequency-shifting filtering approach is used \parencite{signal_processing}.
+Measured signals are often affected by noise and unwanted high-frequency components, which can obscure relevant information. This is also the case in the simulated signals considered here, where additive noise is present. To reduce these disturbances while preserving the phase characteristics, a frequency-shifting filtering approach is used.
 
 The method shifts the signal to baseband, applies a low-pass filter and then shifts it back to its original frequency range, enabling focused filtering around the frequency of interest.
 
@@ -484,7 +487,7 @@ In this case, the signal of interest is a chirp signal with a continuously chang
     p(t)=e^{i\varphi(t)},
 \end{equation}
 
-where \( \varphi(t) \) describes the instantaneous phase of the chirp. Multiplying the measured signal $x(t)$ with this phasor or its complex conjugate results in a rotation of the signal spectrum toward baseband
+where \( \varphi(t) \) describes the instantaneous phase of the chirp. Multiplying the measured signal $x(t)$ with this phasor or its complex conjugate results in a rotation of the signal spectrum toward baseband \parencite{signal_processing}
 
 \begin{equation}
     y_R(t)=x(t)p(t), \qquad
@@ -601,6 +604,10 @@ Using these quantities, the frequency response estimate is computed as
 
 In our example, the spectral densities are estimated using Welch’s method with a segment length of \(L = 4096\) samples and an overlap of 90\%. A Hanning window is applied to each segment to minimize spectral leakage.
 
+\newpage
+
+The estimated frequency response is shown in \autoref{fig:transfer_estimation_filtered}. The estimated magnitude and phase closely follow the true system response over a wide frequency range. Compared to the direct estimation approach, the usable frequency range is significantly extended.
+
 \begin{figure}[h]
     \centering
     \includegraphics[width=\linewidth]{transferfunction_after_processing.png}
@@ -608,7 +615,6 @@ In our example, the spectral densities are estimated using Welch’s method with
     \label{fig:transfer_estimation_filtered}
 \end{figure}
 
-The estimated frequency response is shown in \autoref{fig:transfer_estimation_filtered}. The estimated magnitude and phase closely follow the true system response over a wide frequency range. Compared to the direct estimation approach, the usable frequency range is significantly extended.
 
 The quality of the frequency response estimate can be evaluated using the coherence. As already mentioned, coherence values close to one indicate a reliable frequency response estimate. The coherence is defined as
 
@@ -619,6 +625,8 @@ $$
 and takes values in the range \(0 \leq \gamma^2(\omega) \leq 1\). It provides a frequency-dependent measure of how strongly the output is linearly related to the input \parencite{signal_processing}.
 
 As shown in \autoref{fig:transfer_estimation_filtered}, the coherence remains close to one up to approximately 10 Hz, where only minor deviations between the estimated and true frequency responses are visible. At higher frequencies, the coherence decreases and the estimation error gradually increases.
+
+\newpage
 
 \section{Control Loop Calculations}
 \label{sec:Control Loop Calculations}
@@ -648,6 +656,8 @@ The advantage of this approach is twofold:
 \end{itemize}
 
 This approach enables a consistent estimation of the transfer function. However, it also implies that the transfer functions of the individual control loop components cannot be obtained directly. Instead, they must be derived through mathematical manipulations.
+
+\newpage
 
 Consider a simplified control loop consisting of a controller \( C(s) \) and a plant \( P(s) \), as illustrated in \autoref{fig:control_loop_easy}. The closed-loop transfer function from the reference input \( R(\omega) \) to the output \( Y(\omega) \) is given by \parencite{lutzTaschenbuchRegelungstechnik}
 
@@ -687,7 +697,7 @@ foundation for the analysis of the individual control loops.
 
 \subsection*{Closed-Loop Performance Metrics}
 
-After determining the plant transfer function, the next step is to analyze the behaviour of the overall system when a controller is applied. This is achieved by evaluating the closed-loop transfer functions, which describe the system response, disturbance sensitivity, disturbance rejection capability and the required controller effort. These measures provide valuable insights into the stability, robustness and performance of the controlled system. \parencite{lutzTaschenbuchRegelungstechnik}
+After determining the plant transfer function, the next step is to analyse the behaviour of the closed-loop system. This is achieved by evaluating several closed-loop transfer functions, which provide information about tracking performance, robustness, disturbance rejection and controller effort. \parencite{lutzTaschenbuchRegelungstechnik}
 
 The closed-loop transfer function from the reference input to the output is given by \parencite{lutzTaschenbuchRegelungstechnik}
 
@@ -695,24 +705,31 @@ The closed-loop transfer function from the reference input to the output is give
     T(\omega) = \frac{C(\omega)P(\omega)}{1 + C(\omega)P(\omega)}.
 \end{equation}
 
-The sensitivity function, which describes how sensitive the system output is to input disturbances and model uncertainties, is defined as \parencite{lutzTaschenbuchRegelungstechnik}
+The transfer function \(T(\omega)\) describes how well the system follows the reference input and is therefore often referred to as the tracking transfer function.
+
+The sensitivity function is defined as \parencite{lutzTaschenbuchRegelungstechnik}
 
 \begin{equation}
     S(\omega) = \frac{1}{1 + C(\omega)P(\omega)}.
 \end{equation}
 
-The compliance function, representing the system response to input disturbances acting on the plant, is given by \parencite{lutzTaschenbuchRegelungstechnik}
+It describes the sensitivity of the system to disturbances and modelling errors and is commonly used as a measure of robustness. Small values indicate good disturbance attenuation, whereas large peaks indicate reduced robustness.
+
+The compliance function is given by \parencite{lutzTaschenbuchRegelungstechnik}
 
 \begin{equation}
     SP(\omega) = P(\omega)\,S(\omega).
 \end{equation}
 
-Finally, the controller effort describes the influence of the reference input on the
-controller output and is defined as \parencite{lutzTaschenbuchRegelungstechnik}
+It describes how disturbances acting on the plant propagate to the system output and therefore characterizes the disturbance rejection capability of the closed-loop system.
+
+Finally, the controller effort is defined as \parencite{lutzTaschenbuchRegelungstechnik}
 
 \begin{equation}
     SC(\omega) = C(\omega)\,S(\omega).
 \end{equation}
+
+This transfer function describes how strongly the controller reacts to reference changes. Excessively large values may lead to actuator saturation or amplified measurement noise.
 
 \subsection*{Compensation of the I-Term}
 
@@ -782,7 +799,9 @@ y_{\mathrm{norm}}[k]
 
 where \(\overline{y}\) denotes the mean value of the settled response. This scales the final value of the step response approximately to one.
 
-Similar to the system step response, a step response can also be calculated for the compliance function \(SP(\omega)\). The calculation follows exactly the same procedure as described above. This allows a direct comparison between the response to reference changes and the response to external disturbances.
+Similar to the system step response, a step response can also be calculated for the compliance function \(SP(\omega)\). The calculation follows exactly the same procedure as described above.
+
+While the system step response evaluates the tracking behaviour of the controller, the compliance response provides insight into how effectively external disturbances are rejected. This allows a direct comparison between the response to reference changes and the response to external disturbances.
 
 The only difference is the final scaling. For the compliance response, the steady-state value is not normalized to one. Instead, the mean value within a selected steady-state interval is subtracted from the complete response
 
@@ -805,7 +824,7 @@ y_{\mathrm{comp}}[k_1:k_2]
 \right).
 \end{equation}
 
-This removes the steady-state offset and centres the compliance response around zero. As a result, the disturbance rejection behaviour of the controller can be interpreted more easily.
+For controllers without integral action, a constant disturbance typically results in a steady-state offset. In contrast, integral action compensates constant disturbances over time and drives the response back to its original value. Subtracting the steady-state mean therefore highlights the transient disturbance rejection behaviour and facilitates the comparison of different controller settings.
 
 \newpage
 
@@ -854,7 +873,11 @@ This transfer function represents a second-order (PT2) system, capturing both el
 
 The angular rate controller forms the innermost control loop of the flight controller and directly influences the performance of the outer loops, such as the angle and position controllers. Therefore, its plant model serves as the basis for the overall system analysis.
 
-Based on the motor dynamics described in the previous section, the plant of the angular rate controller can be derived. The input to this plant is the applied motor voltage, while the output is the resulting angular rate. The transfer function between the input voltage and the motor speed is given by the previously introduced motor model. The relationship between motor speed and angular rate is additionally influenced by the drone geometry and the aerodynamic forces generated by the propellers. Changes in motor speed lead to changes in thrust, which generate the torques responsible for the rotational motion. The thrust produced by each propeller can be approximated by
+Based on the motor dynamics described in the previous section, the plant of the angular rate controller can be derived. The input to this plant is the applied motor voltage, while the output is the resulting angular rate. The transfer function between the input voltage and the motor speed is given by the previously introduced motor model. However, the motor dynamics alone do not fully describe the behaviour of the drone. The relationship between motor speed and angular rate is additionally influenced by the drone geometry and the aerodynamic forces generated by the propellers.
+
+A change in motor speed results in a change in propeller thrust. Due to the distance between the motors and the centre of gravity of the drone, these thrust differences generate torques about the rotational axes. The resulting angular acceleration is proportional to the applied torque and inversely proportional to the moment of inertia of the drone. Integrating the angular acceleration yields the angular rate, which is the controlled variable of the angular rate controller.
+
+The thrust produced by each propeller can be approximated by
 
 \begin{equation}
     T = C_T \rho n^2 D^4,
