@@ -2053,7 +2053,11 @@ The systematic transfer and validation process established so far provides a sol
 \label{ch:Results}
 This chapter presents the results obtained from the application of the proposed offline tuning framework. The outcomes of the controller tuning procedures are shown for the different control loops, including the angular rate, angle, altitude and position controllers. The results are presented objectively without interpretation, focusing on the observed system behaviour and the performance of the tuned controllers. A detailed evaluation and discussion of these results are provided in the subsequent chapter.
 
-Across all four loops the same reporting conventions apply. Of the Gang-of-Four transfer functions, only the closed-loop tracking \(T\) is directly identifiable from the chirp input/output pair, while \(S\), \(SC\) and \(SP\) are computed from the identified plant and the controller model and are therefore analytical; of these, only the sensitivity peak carries a direct robustness interpretation, so it is the only peak reported numerically, with \SI{6}{\decibel} taken throughout as the reference robustness limit. Each analytical prediction applies a given case's controller to the plant identified from a base flight (the lower-gain, default, or baseline case) and, where a measured counterpart exists, is compared against the flight measured at that case. Rise time \(t_r\) is taken between \SI{10}{\percent} and \SI{90}{\percent} of the steady-state value.
+Across all four loops the same reporting conventions apply. The identified plant model obtained from a reference flight is used together with different controller configurations to predict the closed-loop behaviour of the system. These predictions are compared against measurements obtained from separate flights performed with the corresponding controller settings.
+
+The comparison is carried out both in the frequency domain using the complementary sensitivity function \(T\) and in the time domain using the corresponding step responses. Good agreement between the predicted and measured responses indicates that the identified plant model captures the relevant system dynamics and can be used to evaluate controller modifications prior to flight testing.
+
+The remaining Gang-of-Four transfer functions (\(S\), \(SC\) and \(SP\)) are calculated analytically from the identified plant and controller models. 
 
 \section{Gyro Controller}
 
@@ -2078,80 +2082,103 @@ The rate (gyro) loop was identified by injecting an exponential chirp into the r
 
 The chirp was swept exponentially from \SI{0.2}{\hertz} to \SI{600}{\hertz} over a \SI{30}{\second} sweep, repeated three times per flight (about \SI{90}{\second} in total) and averaged. The frequency response was estimated with Welch's method using a Hann window of \SI{2.5}{\second} length and \SI{90}{\percent} overlap, giving a frequency resolution of \(\Delta f \approx \SI{0.4}{\hertz}\).
 
-\subsection*{Closed-Loop Frequency Response}
+\newpage
+
+\subsection*{Gang-of-Four Prediction: Moderate to Bad}
+
+Figure~\ref{fig:gyro_gof} compares the analytically predicted Gang-of-Four transfer functions with the responses obtained from the measured bad-controller flight. The prediction is based on the plant identified from the moderate flight, while the bad-controller parameters are applied analytically to this plant model.
+
+For the tracking transfer function \(T\), the predicted response follows the measured response over a large part of the frequency range. The overall shape, bandwidth and roll-off behaviour are captured by the prediction. However, deviations are visible, particularly at higher frequencies.
+
+The analytically calculated sensitivity \(S\), controller effort \(SC\) and compliance \(SP\) show similar trends to the measured response. Differences can be observed in the sensitivity peak and in the high-frequency region, where the predicted responses indicate a slightly different behaviour.
+
+Overall, the prediction reproduces the main characteristics of the measured closed-loop response, while remaining differences between the predicted and measured responses are visible.
 
 \begin{figure}[H]
     \centering
-    % TODO: overwrite the Stock_Photo placeholder at Figures/gyro/gyro_gang_of_four.png
-    % with the real Gang of Four figure.
-    \includegraphics[width=1.0\linewidth]{gyro/gyro_gang_of_four.png}
-    \caption{Gang of Four magnitude responses for the rate loop, moderate versus tuned. Tracking \(T\), Sensitivity \(S\), Controller Effort \(SC\) and Compliance \(SP\) are shown. The analytical curves use the named controller applied to the moderate-flight plant.}
+    \includegraphics[width=1.0\linewidth]{gyro/gyro_gang_of_four_mod_bad.png}
+    \caption{Gang-of-Four magnitude responses for the rate loop. The analytical prediction is obtained by applying the bad-controller parameters to the plant identified from the moderate-flight case. The resulting responses are compared with measurements from the bad-controller flight.}
     \label{fig:gyro_gof}
 \end{figure}
 
-The rate loop is excited and identified across a broad, coherent band, so the measured tracking \(T\) in \autoref{fig:gyro_gof} is reliable over the displayed range. The analytical sensitivity peaks, evaluated within the displayed band with each controller applied to the moderate-flight plant, are listed in \autoref{tab:gyro_gof_S}.
+\newpage
 
-\begin{table}[H]
+\subsection*{Gang-of-Four Prediction: Moderate to Tuned}
+
+Figure~\ref{fig:gyro_gof_tuned} compares the analytically predicted Gang-of-Four transfer functions with the responses obtained from the measured tuned-controller flight. The prediction is based on the plant identified from the moderate flight, while the tuned-controller parameters are applied analytically to this plant model.
+
+Compared to the moderate configuration, only minor changes were made to the controller parameters. Consequently, only small differences can be observed in the predicted closed-loop behaviour.
+
+For the tracking transfer function \(T\), the predicted and measured responses show a similar overall behaviour. Small deviations are visible throughout the frequency range. Nevertheless, the prediction captures the overall shape, bandwidth and roll-off behaviour of the measured response.
+
+The analytically calculated sensitivity \(S\), controller effort \(SC\) and compliance \(SP\) also differ only slightly from the moderate case. The sensitivity peak remains nearly unchanged and only small variations are visible in the high-frequency region.
+
+Overall, the prediction reproduces the measured response reasonably well. At the same time, both the prediction and the flight measurements indicate that the controller modifications have only a limited influence on the closed-loop behaviour of the system.
+
+\begin{figure}[H]
     \centering
-    \caption{Analytical sensitivity peak magnitudes \(|S|\) for the rate loop and the frequencies at which they occur. All values use the named-case controller applied to the moderate-flight plant.}
-    \label{tab:gyro_gof_S}
-    \begin{tabular}{lrr}
-        \toprule
-        Case     & peak [\si{\decibel}] & \(f\) [\si{\hertz}] \\
-        \midrule
-        tuned    & \(+6.19\) & 42.0 \\
-        moderate & \(+6.53\) & 42.0 \\
-        bad      & \(+5.23\) & 42.0 \\
-        \bottomrule
-    \end{tabular}
-\end{table}
-
-The analytical sensitivity peaks all occur near \SI{42}{\hertz}: \SI{+5.23}{\decibel} for the bad case, \SI{+6.53}{\decibel} for the moderate case and \SI{+6.19}{\decibel} for the tuned case, the latter two lying marginally above the \SI{6}{\decibel} limit. The lowest-gain bad case retains the largest margin, while the two \(P = 46\) cases (moderate and tuned) sit close together just above the limit. These peaks fall within the broad coherent band of the rate-loop identification, so they are not affected by low-coherence behaviour.
+    \includegraphics[width=1.0\linewidth]{gyro/gyro_gang_of_four_mod_tuned.png}
+    \caption{Gang-of-Four magnitude responses for the rate loop. The analytical prediction is obtained by applying the tuned-controller parameters to the plant identified from the moderate-flight case. The resulting responses are compared with measurements from the tuned-controller flight.}
+    \label{fig:gyro_gof_tuned}
+\end{figure}
 
 \subsection*{Step Response}
 
-Two single-increment steps were evaluated, bad \(\rightarrow\) moderate and moderate \(\rightarrow\) tuned, shown in \autoref{fig:gyro_step_big} and \autoref{fig:gyro_step_small}. The per-step rise time \(t_r\) and overshoot are listed in \autoref{tab:gyro_step}.
+Figure~\ref{fig:gyro_step_compare} compares the measured and predicted step responses for the bad and tuned controller configurations. In both cases, the prediction is based on the plant identified from the moderate-flight case, while the corresponding controller parameters are applied analytically to this plant model.
+
+For the bad-controller configuration shown in Figure~\ref{fig:gyro_step_bad}, the predicted and measured responses show a similar overall behaviour. The rise time and the general shape of the transient response are captured by the prediction. However, noticeable deviations are visible during the transient phase, resulting in a larger difference between the predicted and measured responses than observed for the tuned-controller case.
+
+For the tuned-controller configuration shown in Figure~\ref{fig:gyro_step_tuned}, the predicted and measured responses remain very similar over the entire response. Only small deviations can be observed during the initial rise and around the settling region, while the overall response shape is reproduced accurately by the prediction.
+
+Overall, the measured and predicted step responses show good agreement for both controller configurations. As summarised in Table~\ref{tab:gyro_step}, the moderate-to-tuned prediction exhibits the smallest deviations in both rise time and overshoot, while the moderate-to-bad prediction shows slightly larger differences. Nevertheless, the main characteristics of the measured responses are captured in both cases.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.95\linewidth]{gyro/gyro_step_response_big.png}
-    \caption{Rate-loop step response for the bad \(\rightarrow\) moderate step, normalised to unity steady state. Shown are the measured baseline (bad), the analytical prediction for the moderate tuning, and the measured response at the moderate tuning.}
-    \label{fig:gyro_step_big}
-\end{figure}
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.95\linewidth]{gyro/gyro_step_response_small.png}
-    \caption{Rate-loop step response for the moderate \(\rightarrow\) tuned step, normalised to unity steady state. Shown are the measured baseline (moderate), the analytical prediction for the tuned setting, and the measured response at the tuned setting.}
-    \label{fig:gyro_step_small}
+    \begin{subfigure}[b]{0.45\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{gyro/gyro_step_mod_bad.png}
+        \caption{Prediction from moderate to bad.}
+        \label{fig:gyro_step_bad}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.45\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{gyro/gyro_step_mod_tuned.png}
+        \caption{Prediction from moderate to tuned.}
+        \label{fig:gyro_step_tuned}
+    \end{subfigure}
+
+    \caption{Comparison of measured and predicted step responses. The predictions are based on the plant identified from the moderate-flight case.}
+    \label{fig:gyro_step_compare}
 \end{figure}
 
 \begin{table}[H]
     \centering
-    \caption{Rate-loop step-response rise time \(t_r\) and overshoot for the two evaluated tuning steps. The analytical prediction applies the higher tuning's controller to the identified plant of the lower (base) tuning; the measured value is taken from the flight at the higher tuning.}
+    \caption{Comparison of measured and predicted step-response characteristics for the rate controller.}
     \label{tab:gyro_step}
-    \begin{tabular}{llrr}
+    \begin{tabular}{lcc|lcc}
         \toprule
-        Step & Source & \(t_r\) [\si{\second}] & overshoot [\si{\percent}] \\
+        \multicolumn{3}{c|}{Moderate $\rightarrow$ Bad} &
+        \multicolumn{3}{c}{Moderate $\rightarrow$ Tuned} \\
         \midrule
-        bad \(\rightarrow\) moderate   & base (bad)      & 0.034 & 5.2 \\
-                                       & analytical      & 0.015 & 4.0 \\
-                                       & measured        & 0.016 & 4.9 \\
+        Case & $t_r$ [s] & OS [\%] &
+        Case & $t_r$ [s] & OS [\%] \\
         \midrule
-        moderate \(\rightarrow\) tuned & base (moderate) & 0.016 & 4.9 \\
-                                       & analytical      & 0.014 & 4.8 \\
-                                       & measured        & 0.015 & 4.6 \\
+        Measured Moderate & 0.016 & 4.9 &
+        Measured Moderate & 0.016 & 4.9 \\
+        Measured Bad      & 0.034 & 5.2 &
+        Measured Tuned    & 0.015 & 4.6 \\
+        Calculated Bad    & 0.036 & 6.5 &
+        Calculated Tuned  & 0.014 & 4.8 \\
         \bottomrule
     \end{tabular}
 \end{table}
-
-The analytical prediction reproduces both the rise time and the overshoot of the measured response for each step. The analytical and measured rise times agree to within \SI{0.001}{\second} for both steps, and the analytical overshoot lies within about \SI{0.9}{} percentage points of the measured value. The larger bad \(\rightarrow\) moderate step shows the slightly larger overshoot gap, consistent with the agreement loosening as the gain change grows.
-
 \newpage
 
 \section{Angle Controller}
 
-The angle loop was identified by injecting an exponential chirp into the angle setpoint, following the procedure of \autoref{sec:System Identification Using Chirp Signals}. Three flights were flown on the same airframe and firmware build, differing only in the angle proportional gain. The angle controller is proportional, with a third-order low-pass pre-filter at cutoff \(f_{c} = \SI{50}{\hertz}\). The three cases are summarised in \autoref{tab:angle_cases}.
+The angle loop was identified by injecting an exponential chirp into the angle setpoint, following the procedure of \autoref{sec:System Identification Using Chirp Signals}. Three flights were flown on the same airframe and firmware build, differing only in the angle proportional gain. The selected gain values cover the default configuration as well as two increasingly aggressive tunings, allowing the influence of the proportional gain on the closed-loop behaviour to be evaluated. The angle controller is proportional, with a third-order low-pass pre-filter at cutoff \(f_{c} = \SI{50}{\hertz}\). The three cases are summarised in \autoref{tab:angle_cases}.
 
 \subsection*{Setup}
 
@@ -2172,62 +2199,56 @@ The angle loop was identified by injecting an exponential chirp into the angle s
 
 The chirp was swept exponentially from \SI{0.2}{\hertz} to \SI{600}{\hertz} over a \SI{30}{\second} sweep, repeated three times per flight (about \SI{90}{\second} in total) and averaged. The frequency response was estimated with Welch's method using a Hann window of \SI{2}{\second} length and \SI{90}{\percent} overlap, giving a frequency resolution of \(\Delta f \approx \SI{0.5}{\hertz}\).
 
-\subsection*{Closed-Loop Frequency Response}
+Since the prediction methodology has already been demonstrated for the angular-rate controller, the evaluation of the angle controller focuses on the resulting step responses. This provides a compact representation of the predicted and measured closed-loop behaviour while avoiding repetition of the previously presented Gang-of-Four analysis.
 
-\begin{figure}[H]
-    \centering
-    % TODO: overwrite the Stock_Photo placeholder at Figures/angle/angle_gang_of_four.png
-    % with the real Gang of Four figure.
-    \includegraphics[width=1.0\linewidth]{angle/angle_gang_of_four.png}
-    \caption{Gang of Four magnitude responses for the angle loop, \(P = 80\) versus \(P = 100\). Tracking \(T\), Sensitivity \(S\), Controller Effort \(SC\) and Compliance \(SP\) are shown. The analytical curves use the named controller applied to the \(P = 80\)-flight plant.}
-    \label{fig:angle_gof}
-\end{figure}
-
-Like the rate loop, the angle loop is excited across a broad, coherent band, so the measured tracking \(T\) in \autoref{fig:angle_gof} is reliable over the displayed range; the analytical \(S\), \(SC\) and \(SP\) here additionally incorporate the identified inner rate loop. The analytical sensitivity peaks for the three flown gains, each applied to the \(P = 80\)-flight plant, are listed in \autoref{tab:angle_gof_S}.
-
-\begin{table}[H]
-    \centering
-    \caption{Analytical sensitivity peak magnitudes \(|S|\) for the angle loop and the frequencies at which they occur. All values use the named-case controller applied to the \(P = 80\)-flight plant.}
-    \label{tab:angle_gof_S}
-    \begin{tabular}{lrr}
-        \toprule
-        Case        & peak [\si{\decibel}] & \(f\) [\si{\hertz}] \\
-        \midrule
-        \(P = 100\) & \(+1.37\) & 6.0 \\
-        \(P = 80\)  & \(+1.11\) & 6.0 \\
-        \(P = 50\)  & \(+0.71\) & 6.0 \\
-        \bottomrule
-    \end{tabular}
-\end{table}
-
-The analytical sensitivity peaks stay well below the \SI{6}{\decibel} limit for all three gains and increase with gain: \SI{+0.71}{\decibel} at \(P = 50\), \SI{+1.11}{\decibel} at \(P = 80\) and \SI{+1.37}{\decibel} at \(P = 100\), each near \SI{6}{\hertz}. This is consistent with the more aggressive gain trading a small amount of robustness margin for a faster response (cf. the rise times in \autoref{tab:angle_step}). The peaks fall within the coherent band of the angle-loop identification.
+\newpage
 
 \subsection*{Step Response}
 
-Two single-increment steps were evaluated, \(P = 50 \rightarrow 80\) and \(P = 80 \rightarrow 100\). \autoref{fig:angle_step} shows the second step; the per-case rise times are listed in \autoref{tab:angle_step}.
+Figure~\ref{fig:angle_step_compare} compares the measured and predicted step responses for two different angle-controller configurations. In both cases, the prediction is based on the plant identified from a lower-gain configuration, while the controller gain of the evaluated configuration is applied analytically to this plant model.
+
+For the prediction from \(P = 80\) to \(P = 100\), shown in Figure~\ref{fig:angle_step_tuned}, the predicted and measured responses show a similar overall behaviour. The rise time and overall response shape are reproduced by the prediction, while small deviations remain visible throughout the transient response.
+
+For the prediction from \(P = 50\) to \(P = 100\), shown in Figure~\ref{fig:angle_step_baseline}, larger deviations can be observed between the predicted and measured responses. Nevertheless, the prediction captures the overall change in closed-loop behaviour and correctly predicts the faster response resulting from the increased proportional gain.
+
+The corresponding rise times are summarised in Table~\ref{tab:angle_rise_time}. The prediction accuracy is higher for the \(P = 80\) to \(P = 100\) transition, while larger deviations are visible when predicting the response from the baseline configuration.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=1.0\linewidth]{angle/angle_step_response_small.png}
-    \caption{Angle step response for the \(P = 80 \rightarrow 100\) step, normalised to unity steady state. Shown are the measured baseline (\(P = 80\)), the analytical prediction for \(P = 100\) from the baseline-flight identification, and the measured response at \(P = 100\).}
-    \label{fig:angle_step}
+
+    \begin{subfigure}[b]{0.49\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{angle/angle_step_tuned_mtuned.png}
+        \caption{Prediction from \(P = 80\) to \(P = 100\).}
+        \label{fig:angle_step_tuned}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.49\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{angle/angle_step_base_mtuned.png}
+        \caption{Prediction from \(P = 50\) to \(P = 100\).}
+        \label{fig:angle_step_baseline}
+    \end{subfigure}
+
+    \caption{Comparison of measured and predicted angle-controller step responses. In both cases, the prediction is based on the plant identified from the lower-gain configuration.}
+    \label{fig:angle_step_compare}
 \end{figure}
 
 \begin{table}[H]
     \centering
-    \caption{Angle step-response rise time \(t_r\) for the two evaluated gain steps. The analytical prediction applies the higher-gain controller to the identified plant of the lower-gain (base) flight; the measured value is taken from the flight at the higher gain.}
-    \label{tab:angle_step}
-    \begin{tabular}{lrrr}
+    \caption{Comparison of measured and predicted rise times for the angle-controller step responses.}
+    \label{tab:angle_rise_time}
+    \begin{tabular}{lccc}
         \toprule
-        Step                       & base \(t_r\) [\si{\second}] & analytical \(t_r\) [\si{\second}] & measured \(t_r\) [\si{\second}] \\
+        Case & Measured Base & Measured \(P=100\) & Calculated \(P=100\) \\
         \midrule
-        \(P = 50 \rightarrow 80\)  & 0.264 & 0.163 & 0.183 \\
-        \(P = 80 \rightarrow 100\) & 0.183 & 0.140 & 0.148 \\
+        \(P=50 \rightarrow P=100\) & \SI{264}{\milli\second} & \SI{148}{\milli\second} & \SI{129}{\milli\second} \\
+        \(P=80 \rightarrow P=100\) & \SI{183}{\milli\second} & \SI{148}{\milli\second} & \SI{141}{\milli\second} \\
         \bottomrule
     \end{tabular}
 \end{table}
 
-The analytical prediction reproduces the direction and approximate magnitude of the rise-time reduction for both steps, and tends to indicate a slightly faster response than was measured: the analytical-versus-measured rise-time difference is \SI{0.020}{\second} for the \(P = 50 \rightarrow 80\) step and \SI{0.008}{\second} for the \(P = 80 \rightarrow 100\) step. Overshoot remained small throughout, below \SI{1.2}{\percent} in the predictions and near \SI{0.1}{\percent} in the measurements.
+\newpage
 
 \section{Altitude Hold Controller}
 \label{sec:results_althold}
@@ -2246,7 +2267,6 @@ The altitude-hold loop was identified by injecting an exponential chirp into the
         \midrule
         default & 15    & 15    & 15    \\
         tuned   & 18    & 16    & 16    \\
-        medium  & 13    & 13    & 13    \\
         bad     & 10    & 10    & 10    \\
         \bottomrule
     \end{tabular}
@@ -2254,65 +2274,93 @@ The altitude-hold loop was identified by injecting an exponential chirp into the
 
 The althold loop runs at \SI{100}{\hertz}, decimated from the \SI{8}{\kilo\hertz} inner loops. The chirp was swept exponentially from \SI{0.05}{\hertz} to \SI{3}{\hertz} over a \SI{75}{\second} sweep, repeated three times per flight (about \SI{230}{\second} in total). Frequency-domain estimates use Welch's method with a Hann window of \SI{15}{\second} length and \SI{90}{\percent} overlap, giving a frequency resolution of \(\Delta f \approx \SI{0.067}{\hertz}\).
 
-\subsection*{Closed-Loop Frequency Response}
+\newpage
+
+\subsection*{Gang-of-Four Prediction: Default to Bad}
+
+Figure~\ref{fig:althold_gof_bad} compares the analytically predicted Gang-of-Four transfer functions with the responses obtained from the measured bad-controller flight. The prediction is based on the plant identified from the default flight, while the bad-controller parameters are applied analytically to this plant model.
+
+For the tracking transfer function \(T\), the prediction captures the general change in closed-loop behaviour caused by the modified controller parameters. However, noticeable deviations are visible between the predicted and measured responses over a large part of the frequency range.
+
+The analytically calculated sensitivity \(S\), controller effort \(SC\) and compliance \(SP\) indicate the expected trends of the closed-loop system. Compared to the gyro controller, however, the agreement between prediction and measurement is less pronounced.
+
+Overall, the prediction captures the qualitative behaviour of the measured system, but larger deviations remain visible than for the previously analysed control loops.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\linewidth]{althold/althold_gang_default_bad.png}
+    \caption{Gang-of-Four magnitude responses for the altitude-hold controller. The analytical prediction is obtained by applying the bad-controller parameters to the plant identified from the default-flight case. The resulting responses are compared with measurements from the bad-controller flight.}
+    \label{fig:althold_gof_bad}
+\end{figure}
+
+\newpage
+\subsection*{Gang-of-Four Prediction: Default to Tuned}
+
+Figure~\ref{fig:althold_gof_tuned} compares the analytically predicted Gang-of-Four transfer functions with the responses obtained from the measured tuned-controller flight. The prediction is based on the plant identified from the default flight, while the tuned-controller parameters are applied analytically to this plant model.
+
+For the tracking transfer function \(T\), the predicted and measured responses show a similar overall behaviour over most of the frequency range. The prediction captures the main changes in the closed-loop response caused by the modified controller parameters, although deviations remain visible, particularly at higher frequencies.
+
+The analytically calculated sensitivity \(S\), controller effort \(SC\) and compliance \(SP\) indicate only moderate changes compared to the default configuration. The predicted responses remain close to those of the default controller, reflecting the relatively small parameter changes between the two configurations.
+
+Overall, the agreement between prediction and measurement is improved compared to the default-to-bad prediction. While visible deviations remain, the prediction reproduces the measured behaviour more closely and captures the main characteristics of the closed-loop response.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=1.0\linewidth]{althold/althold_gang_of_four.png}
-    \caption{Gang of Four magnitude responses for the althold loop, default versus tuned. Tracking \(T\), Sensitivity \(S\), Controller Effort \(SC\) and Compliance \(SP\) are shown. The analytical curves use the tuned controller applied to the default-flight plant.}
-    \label{fig:althold_gof}
+    \includegraphics[width=\linewidth]{althold/althold_gang_default_tuned.png}
+    \caption{Gang-of-Four magnitude responses for the altitude-hold controller. The analytical prediction is obtained by applying the tuned-controller parameters to the plant identified from the default-flight case. The resulting responses are compared with measurements from the tuned-controller flight.}
+    \label{fig:althold_gof_tuned}
 \end{figure}
 
-The analytical sensitivity peaks, extracted within the displayed band \(f \leq \SI{10}{\hertz}\) using the named controller applied to the default-flight plant, are listed in \autoref{tab:althold_gof_S}.
-
-\begin{table}[H]
-    \centering
-    \caption{Analytical sensitivity peak magnitudes \(|S|\) for the althold loop and the frequencies at which they occur, restricted to \(f \leq \SI{10}{\hertz}\). All values use the named-case controller applied to the default-flight plant.}
-    \label{tab:althold_gof_S}
-    \begin{tabular}{lrr}
-        \toprule
-        Case   & peak [\si{\decibel}] & \(f\) [\si{\hertz}] \\
-        \midrule
-        tuned  & \(+6.43\) & 0.400 \\
-        medium & \(+4.82\) & 0.333 \\
-        bad    & \(+3.99\) & 0.267 \\
-        \bottomrule
-    \end{tabular}
-\end{table}
-
-The analytical sensitivity peak increases with the controller gain: it is highest for the tuned case (\SI{+6.43}{\decibel}, close to the \SI{6}{\decibel} limit) and lower for the medium (\SI{+4.82}{\decibel}) and bad (\SI{+3.99}{\decibel}) cases, the latter having the lowest gains. This is consistent with the more aggressive tune trading robustness margin for a faster response (cf. the rise times in \autoref{tab:althold_step}). In contrast to the tracking and compliance responses, these sensitivity peaks fall within or near the more coherent part of the band (\SIrange{0.27}{0.40}{\hertz}), so they are less affected by the low-coherence behaviour discussed in the following chapter.
+\newpage
 
 \subsection*{Step Response}
 
+Figure~\ref{fig:althold_step_compare} compares the measured and predicted step responses for the tuned and bad altitude-hold controller configurations. In both cases, the prediction is based on the plant identified from the default-flight case.
+
+For the prediction from the default to the bad configuration, shown in Figure~\ref{fig:althold_step_bad}, the predicted and measured responses exhibit a similar overall behaviour. The rise time is reproduced reasonably well, with values of \SI{1.64}{\second} and \SI{1.69}{\second} for the predicted and measured responses, respectively. However, larger deviations are visible in the transient response. In particular, the predicted overshoot of \(28.1\,\%\) is considerably higher than the measured overshoot of \(13.8\,\%\).
+
+For the prediction from the default to the tuned configuration, shown in Figure~\ref{fig:althold_step_tuned}, the prediction captures the general trend of the measured response. The rise time is reproduced reasonably well (\SI{1.14}{\second} predicted versus \SI{1.21}{\second} measured), while the overshoot is overestimated (\(16.2\,\%\) versus \(7.9\,\%\)).
+
+Overall, the step-response predictions reproduce the qualitative behaviour of the altitude-hold controller. Compared to the gyro and angle controllers, however, larger deviations remain visible, particularly in the transient response and overshoot behaviour.
+
 \begin{figure}[H]
     \centering
-    \includegraphics[width=1.0\linewidth]{althold/althold_step_response.png}
-    \caption{Step response of the althold closed loop, normalised to unity steady state. The analytical prediction uses the tuned controller applied to the default-flight plant.}
-    \label{fig:althold_step}
-\end{figure}
 
-Per-case step-response metrics are listed in \autoref{tab:althold_step}.
+    \begin{subfigure}[b]{0.49\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{althold/althold_step_default_tuned.png}
+        \caption{Prediction from default to tuned.}
+        \label{fig:althold_step_tuned}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.49\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{althold/althold_step_default_bad.png}
+        \caption{Prediction from default to bad.}
+        \label{fig:althold_step_bad}
+    \end{subfigure}
+
+    \caption{Comparison of measured and predicted altitude-hold step responses. In both cases, the prediction is based on the plant identified from the default-flight configuration.}
+    \label{fig:althold_step_compare}
+\end{figure}
 
 \begin{table}[H]
     \centering
-    \caption{Althold step-response metrics. Analytical responses use the controller of the named case applied to the default-flight plant; measured responses are taken from the chirp-window step of the named flight.}
-    \label{tab:althold_step}
-    \begin{tabular}{llrr}
+    \caption{Comparison of measured and predicted step-response characteristics for the altitude-hold controller.}
+    \label{tab:althold_step_metrics}
+    \begin{tabular}{lcc}
         \toprule
-        Case    & Source     & \(t_r\) [\si{\second}] & overshoot [\si{\percent}] \\
+        Case & Rise Time [s] & Overshoot [\%] \\
         \midrule
-        default & measured   & 1.46 &  5.0 \\
-        tuned   & analytical & 1.14 & 16.2 \\
-        tuned   & measured   & 1.21 &  7.9 \\
-        medium  & analytical & 1.41 & 22.4 \\
-        medium  & measured   & 1.57 &  7.4 \\
-        bad     & analytical & 1.64 & 28.1 \\
-        bad     & measured   & 1.69 & 13.8 \\
+        Measured Default & 1.46 & 5.0 \\
+        Measured Tuned & 1.21 & 7.9 \\
+        Calculated Tuned & 1.14 & 16.2 \\
+        \midrule
+        Measured Default & 1.46 & 5.0 \\
+        Measured Bad & 1.69 & 13.8 \\
+        Calculated Bad & 1.64 & 28.1 \\
         \bottomrule
     \end{tabular}
 \end{table}
-
-The absolute difference between analytical and measured overshoot is \SI{8.3}{} percentage points for tuned, \SI{15.0}{} percentage points for medium and \SI{14.3}{} percentage points for bad. Rise-time differences between analytical and measured remain below \SI{0.07}{\second} for all three cases.
 
 \section{Position Hold Controller}
 
@@ -2336,93 +2384,95 @@ The position-hold loop operates at the GPS update rate of approximately \SI{10}{
 
 The chirp was swept exponentially from \SI{0.05}{\hertz} to \SI{3}{\hertz} over a \SI{75}{\second} sweep (amplitude \SI{70}{\centi\meter}), remaining below the \SI{5}{\hertz} Nyquist limit of the GPS rate. A lead-lag pre-filter was applied to the injected signal to keep the combined D+A vector within the firmware's \SI{35}{\degree} limit; its parameters were set so that the simulated D+A contribution stayed below that limit across the band. Frequency-domain estimates use Welch's method with a Hann window of \SI{15}{\second} length and \SI{90}{\percent} overlap, giving a frequency resolution of \(\Delta f \approx \SI{0.067}{\hertz}\).
 
-\subsection*{Closed-Loop Frequency Response}
+\newpage
+
+\subsection*{Gang-of-Four Prediction: Baseline to Proposed}
+
+Figure~\ref{fig:poshold_gof} compares the analytically predicted Gang-of-Four transfer functions with the responses obtained from the measured proposed-controller flight. The prediction is based on the plant identified from the baseline flight, while the proposed controller parameters are applied analytically to this plant model.
+
+For the tracking transfer function \(T\), noticeable deviations can be observed between the predicted and measured responses. The agreement improves around the crossover region, where the overall closed-loop dynamics are primarily determined. Consequently, the prediction captures the general dynamic behaviour of the system and correctly indicates the expected change in oscillatory behaviour. However, larger deviations remain visible at both low and high frequencies.
+
+The analytically calculated sensitivity \(S\), controller effort \(SC\) and compliance \(SP\) indicate only moderate differences between the baseline and proposed configurations. Around the sensitivity peak, the predicted responses remain relatively close, suggesting that the main robustness characteristics are captured by the model.
+
+Overall, the prediction captures the qualitative behaviour of the position-hold controller, particularly in the frequency range around the crossover frequency. However, the agreement between prediction and measurement is limited and noticeably worse than for the previously analysed control loops.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=1.0\linewidth]{poshold/poshold_gang_of_four.png}
-    \caption{Gang of Four magnitude responses for the position-hold loop. Tracking \(T\): the analytical response (proposed controller applied to the baseline-flight plant), the measured baseline, and the measured proposed tuning. Sensitivity \(S\), controller effort \(SC\), and compliance \(SP\): analytical responses (proposed controller) for the baseline-flight and proposed-flight plants.}
+    \includegraphics[width=\linewidth]{poshold/poshold_gang_of_four.png}
+    \caption{Gang-of-Four magnitude responses for the position-hold controller. The analytical prediction is obtained by applying the proposed controller parameters to the plant identified from the baseline-flight case. The resulting responses are compared with measurements from the proposed-controller flight.}
     \label{fig:poshold_gof}
 \end{figure}
 
-The analytical and measured tracking responses are compared in \autoref{fig:poshold_gof}. Within the excited band \(f \leq \SI{3}{\hertz}\), the analytical prediction for the proposed tuning peaks near \SI{0.20}{\hertz} and stays within about \SI{0.7}{\decibel} of the measured proposed response there, while the measured baseline peaks lower; below the coherent band (roughly \SIrange{0.27}{3}{\hertz}) the comparison is dominated by wind and GPS noise. The analytical sensitivity peaks are listed in \autoref{tab:poshold_gof_S}.
-
-\begin{table}[H]
-    \centering
-    \caption{Analytical sensitivity peak magnitudes \(|S|\) for the position-hold loop (proposed controller, roll axis), restricted to the excited band \(f \leq \SI{3}{\hertz}\). The proposed controller is evaluated on both the baseline-flight and proposed-flight plant identifications.}
-    \label{tab:poshold_gof_S}
-    \begin{tabular}{lrr}
-        \toprule
-        Plant            & peak [\si{\decibel}] & \(f\) [\si{\hertz}] \\
-        \midrule
-        baseline-flight  & \(+5.35\) & 0.267 \\
-        proposed-flight  & \(+4.71\) & 0.333 \\
-        \bottomrule
-    \end{tabular}
-\end{table}
-
-The proposed controller reaches a sensitivity peak of \SI{+5.35}{\decibel} on the baseline-flight plant and \SI{+4.71}{\decibel} on the proposed-flight plant, both below the \SI{6}{\decibel} limit and falling within the coherent band. The controller effort \(SC\) stays below \SI{-8}{\decibel} within the coherent band, indicating modest actuation demand on the inner angle loop. The compliance \(SP\) peak falls at the lowest Welch bin, where the coherence is very low, and is interpreted as an artefact rather than a physical resonance.
+\newpage
 
 \subsection*{Step Response}
 
+Figure~\ref{fig:poshold_step} compares the measured and predicted step responses for the proposed position-hold controller configuration. The prediction is based on the plant identified from the baseline flight, while the proposed controller parameters are applied analytically to this plant model.
+
+The predicted and measured responses show a similar overall behaviour. The rise time is reproduced reasonably well, with values of \SI{1.30}{\second} and \SI{1.20}{\second} for the predicted and measured responses, respectively. The overshoot is also predicted with good accuracy, yielding values of \(44.7\,\%\) and \(47.6\,\%\) for the predicted and measured responses.
+
+Compared to the baseline configuration, both the predicted and measured responses show a faster rise time and an increased overshoot. The analytical prediction therefore captures the main effects of the controller modification and reproduces the dominant characteristics of the measured transient response.
+
+The corresponding step-response metrics are summarised in Table~\ref{tab:poshold_step_metrics}.
+
 \begin{figure}[H]
     \centering
-    \includegraphics[width=1.0\linewidth]{poshold/poshold_step_response.png}
-    \caption{Step response of the position-hold closed loop, normalised to unity steady state: measured baseline, analytical prediction for the proposed tuning (from the baseline-flight identification), and measured proposed tuning.}
+    \includegraphics[width=0.85\linewidth]{poshold/poshold_step_response.png}
+    \caption{Comparison of measured and predicted position-hold step responses. The prediction is obtained by applying the proposed controller parameters to the plant identified from the baseline-flight configuration.}
     \label{fig:poshold_step}
 \end{figure}
 
-Per-tuning step-response metrics are listed in \autoref{tab:poshold_step}; the \SI{10}{\hertz} GPS rate limits the time resolution to \SI{0.1}{\second}.
-
 \begin{table}[H]
     \centering
-    \caption{Position-hold step-response metrics. The analytical prediction applies the proposed controller to the identified baseline-flight plant; the measured values are taken from the chirp-window step of the named flight.}
-    \label{tab:poshold_step}
-    \begin{tabular}{llrr}
+    \caption{Comparison of measured and predicted step-response characteristics for the position-hold controller.}
+    \label{tab:poshold_step_metrics}
+    \begin{tabular}{lcc}
         \toprule
-        Case     & Source     & \(t_r\) [\si{\second}] & overshoot [\si{\percent}] \\
+        Case & Rise Time [s] & Overshoot [\%] \\
         \midrule
-        baseline & measured   & 1.4 & 30.0 \\
-        proposed & analytical & 1.3 & 44.7 \\
-        proposed & measured   & 1.2 & 47.6 \\
+        Measured Baseline & 1.40 & 30.0 \\
+        Measured Proposed & 1.20 & 47.6 \\
+        Calculated Proposed & 1.30 & 44.7 \\
         \bottomrule
     \end{tabular}
 \end{table}
-
-The proposed tuning gives a faster rise with higher overshoot than the baseline. The analytical prediction for the proposed tuning is close to the measured proposed response, with the overshoot predicted within about \num{3} percentage points (\SI{44.7}{} versus \SI{47.6}{\percent}) and the rise time within one GPS sample (\SI{0.1}{\second}). Given the GPS-rate resolution, the step comparison is necessarily coarse.
 
 \chapter{Discussion}
 
 The four control loops examined in this work fall into two regimes that differ in the bandwidth of the sensor that closes the loop. The gyro and angle loops are closed on the IMU at \SI{8}{\kilo\hertz}, where the chirp identification is well conditioned across the excited band; the altitude- and position-hold loops are closed on slower navigation-sensor feedback, a fused barometer/GPS altitude estimate at \SI{100}{\hertz} and GPS position at approximately \SI{10}{\hertz}, where the available identification bandwidth is itself the limiting factor. The discussion is organised along this split: the attitude loops, where the method performs as designed, and the navigation loops, where it serves as a proof of concept.
 
-Three observations recur across all four loops and are stated here once. First, the prediction rests on a linear, time-invariant approximation of the plant identified at a single tune, so its accuracy degrades as the gain step away from that baseline grows; within the tested range the agreement was close for single increments and loosened for larger steps. Second, this places the tool in the role of a guidance instrument for \emph{incremental} retuning: the plant should be identified from a flight at the current tune, one step predicted at a time, and the plant re-identified between steps when a larger change is intended. Third, the configurations under which the tool was validated here (the experimental airframe and firmware build, and the loop rates noted above) bound the range over which these observations should be transferred to other setups.
+Three observations recur across all four loops and are stated here once:
+
+\begin{enumerate}
+    \item The prediction rests on a linear, time-invariant approximation of the plant identified at a single tune. Consequently, the prediction accuracy degrades as the gain step away from that baseline grows. Within the tested range, the agreement was close for single increments and loosened for larger steps.
+
+    \item The tool should therefore be regarded as a guidance instrument for \emph{incremental} retuning. The plant should be identified from a flight at the current tune, one step predicted at a time, and re-identified between steps when larger controller changes are intended.
+
+    \item The prediction accuracy is strongly influeynced by the bandwidth of the sensor closing the loop. The best agreement was obtained for the IMU-based attitude loops, while larger deviations occurred for the navigation loops, where the available sensor bandwidth limits the identification quality.
+\end{enumerate}
 
 \section{Attitude loops}
 
-In both attitude loops the chirp excitation produces a well-conditioned identification across the band, so the linear, time-invariant approximation is the only meaningful source of prediction error.
+In both attitude loops, the chirp excitation resulted in a well-conditioned identification over the excited frequency range. Consequently, the quality of the prediction is mainly limited by the linear, time-invariant approximation used for the plant model.
 
-\subsection*{Gyro}
+For the gyro controller, the analytical prediction showed the best agreement observed in this work. Both the frequency-domain responses and the step-response characteristics were reproduced closely. The predicted rise times and overshoots remained close to the measured values, indicating that the identified plant model captured the dominant dynamics of the control loop accurately. The prediction accuracy was slightly lower for the larger gain change, but the overall behaviour was still reproduced well.
 
-For the rate (gyro) loop this is the best case observed: the analytical prediction reproduced both the rise time and the overshoot of the measured response for each single-increment step (\autoref{tab:gyro_step}), the overshoot being captured here as tightly as the rise time rather than over-predicted as in altitude hold. The overshoot gap was slightly larger for the bigger bad \(\rightarrow\) moderate step than for the smaller moderate \(\rightarrow\) tuned step, consistent with the linear, time-invariant assumption holding only approximately and loosening as the gain change grows.
+The angle controller showed a similar trend. The prediction correctly indicated the effect of increasing the proportional gain and reproduced the overall shape of the measured step responses. However, the calculated responses were consistently slightly faster than the measured ones. As for the gyro controller, the agreement was better for smaller gain changes than for larger ones.
 
-\subsection*{Angle}
-
-For the angle loop the prediction reproduced the measured rise-time trend for both single-increment gain steps but consistently indicated a slightly faster response than was measured, the analytical-versus-measured gap in \autoref{tab:angle_step} being larger for the bigger relative step (\(P = 50 \rightarrow 80\)) than for the smaller one (\(P = 80 \rightarrow 100\)). The loop remained essentially overshoot-free across the tested range, so the transient shape was captured in every case and the residual error is confined to the predicted speed.
+For both attitude loops, the results suggest that the proposed methodology can be used to predict the effect of moderate tuning changes before flight testing. The predictions are not exact, but they consistently indicate the expected direction of the tuning change and provide a reasonable estimate of the resulting closed-loop behaviour.
 
 \section{Navigation loops}
 
-In the navigation loops the limiting factor is no longer the linear approximation but the identification itself. The feedback sensors restrict the usable bandwidth to a narrow, low-frequency band, so the synthesised step response, which requires accurate magnitude \emph{and} phase across the full identification band, is the less reliable of the two comparisons, while the Gang of Four, reported as magnitude only at each frequency, is treated as the primary tuning artefact. Both loops are therefore presented as a proof of concept rather than a validated predictor.
+For the navigation loops, the limiting factor is no longer the linear approximation of the plant but the identification itself. Unlike the attitude loops, which are based on IMU measurements at \SI{8}{\kilo\hertz}, the altitude- and position-hold controllers rely on significantly slower navigation sensors. Consequently, only a narrow low-frequency band can be identified reliably, which limits the accuracy of the resulting plant models.
 
-\subsection*{Altitude hold}
-\label{sec:discussion_althold}
+The low excitation frequencies required for these control loops further increase the difficulty of the identification process. Since the crossover frequencies of both loops lie in the low-frequency range, the measurements become more susceptible to external influences such as wind disturbances, slow drift and sensor noise. These effects occur on similar time scales as the injected chirp signal and therefore directly affect the estimated frequency response.
 
-The altitude-hold prediction is bounded on two sides. Its accuracy degrades as the gain step from the default tune grows (the overshoot gap in \autoref{tab:althold_step} widens from \SI{8.3}{} to \SI{15.0}{} percentage points) because the plant was identified at the default tune and larger gains push the airframe outside the small-signal hover envelope, with between-flight drift adding a baseline offset. In frequency, the joint coherence supports the comparison only over approximately \SIrange{0.3}{1}{\hertz} (\autoref{fig:plant_altitude_measured}); the exponential chirp under-excites the lowest decade and environmental drift, thermals and slow wind dominate the altitude signal below \SI{0.3}{\hertz}, so the low-frequency rise of the tracking and compliance curves in \autoref{fig:althold_gof} is an estimation artefact rather than a physical resonance. The sensitivity peaks in \autoref{tab:althold_gof_S} fall inside the coherent band and are unaffected.
+This limitation is visible in both loops. The analytical predictions generally capture the direction of the controller changes and reproduce the main characteristics of the measured responses, but the agreement between prediction and measurement is noticeably lower than for the attitude loops.
 
-Within that band the analytical overshoot in \autoref{tab:althold_step} exceeds the measured while the rise times agree to within \SI{0.07}{\second}; this directional gap reflects the approximate firmware-D-path model and the band-limited, phase-noisy step reconstruction, so it is best read as a model-derived upper bound, with the rise time the more reliable step-domain metric. Two caveats follow: the chirp amplitude must keep the actuator out of saturation, and the results were obtained on firmware build \href{https://github.com/InsaneBroccoli/betaflight/commit/898435640}{\texttt{InsaneBroccoli/betaflight @ 898435640}} with \texttt{USE\_ALTHOLD\_CHIRP} enabled, around a hover baseline.
+The altitude-hold controller achieved the better results of the two navigation loops. The predicted rise times remained close to the measured values and the overall behaviour was reproduced reasonably well, although the overshoot was consistently overestimated. In contrast, the position-hold controller showed larger deviations between prediction and measurement. While the dominant behaviour around the crossover frequency was still captured, noticeable differences remained at both low and high frequencies. This is likely related to the significantly lower update rate of the GPS-based position estimate, which provides considerably less information for the identification process than the altitude estimate running at approximately \SI{100}{\hertz}.
 
-\subsection*{Position hold}
+Overall, the navigation-loop results should be interpreted as a proof of concept. The proposed methodology is able to capture the dominant dynamics of both loops and predict the general effect of controller changes, but the limited bandwidth and update rate of the navigation sensors prevent the level of agreement achieved for the attitude loops.
 
-The position loop is identified through GPS feedback at approximately \SI{10}{\hertz}, which bounds the usable bandwidth far below that of the \SI{8}{\kilo\hertz} inner loops and introduces roughly \SI{100}{\milli\second} of latency through the cascaded position-error, PIDA, and rate stages; the joint coherence rises above 0.8 only between about \SI{0.27}{\hertz} and \SI{3}{\hertz}, below which wind disturbance and GPS noise dominate the position-error signal. Within that band the analytical tracking response is consistent with the measured proposed tuning, and the step-response prediction is closer than the GPS-limited resolution might suggest: the predicted overshoot lies within about \num{3} percentage points of the measured value (\autoref{tab:poshold_step}), and the measured proposed flight remained stable throughout. The Gang of Four within the approximately \SIrange{0.27}{3}{\hertz} coherent band is the most trustworthy artefact, while the step-response values should be read as coarse indicators given the \SI{10}{\hertz} resolution. Closing the remaining gap would require higher-rate position estimates (for example, sensor fusion or optical flow) or restricting the excitation to the lowest part of the band where the GPS feedback is most reliable.
 
 \chapter{Conclusion}
 

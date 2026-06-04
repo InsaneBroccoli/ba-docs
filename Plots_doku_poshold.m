@@ -3,8 +3,8 @@ clc;
 clear variables;
 close all;
 
-% addpath('/home/janick-dort/Dokumente/Studium_ZHAW/BA/bf_controller_tuning/lib/');
-% addpath(genpath('/home/janick-dort/Dokumente/Studium_ZHAW/BA/bf_controller_tuning'));
+addpath('/home/janick-dort/Dokumente/Studium_ZHAW/BA/bf_controller_tuning/lib/');
+addpath(genpath('/home/janick-dort/Dokumente/Studium_ZHAW/BA/bf_controller_tuning'));
 addpath('../bf_controller_tuning/lib/');
 
 %% Plotsettings
@@ -22,7 +22,7 @@ opt.PhaseWrapping = 'on';
 %% File paths
 
 log_folder    = '../bf_controller_tuning/logs';
-flight_folder = 'poshold';
+flight_folder = '20260529';
 
 log_name1 = 'poshold-default.csv';
 log_name2 = 'poshold-tuned.csv';

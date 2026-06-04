@@ -3,8 +3,8 @@ clc;
 clear variables;
 close all;
 
-% addpath('/home/janick-dort/Dokumente/Studium_ZHAW/BA/bf_controller_tuning/lib/');
-% addpath(genpath('/home/janick-dort/Dokumente/Studium_ZHAW/BA/bf_controller_tuning'));
+addpath('/home/janick-dort/Dokumente/Studium_ZHAW/BA/bf_controller_tuning/lib/');
+addpath(genpath('/home/janick-dort/Dokumente/Studium_ZHAW/BA/bf_controller_tuning'));
 
 addpath('../bf_controller_tuning/lib/');
 
@@ -312,7 +312,7 @@ xlabel('Time [s]')
 title('Step Response Altitude Hold')
 legend(sprintf('Measured %s', name_compare), sprintf('Calculated %s', name_compare), sprintf('Measured %s', name_base), ...
        'Location', 'best')
-ylim([-0.1 1.25]); xlim([0 frame/2]);
+ylim([-0.1 1.4]); xlim([0 frame/2]);
 
 style_doku_fig(gcf, 16, 7, 16, 1.2);
 

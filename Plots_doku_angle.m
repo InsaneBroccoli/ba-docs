@@ -3,8 +3,8 @@ clc;
 clear variables;
 close all;
 
-% addpath('/home/janick-dort/Dokumente/Studium_ZHAW/BA/bf_controller_tuning/lib/');
-% addpath(genpath('/home/janick-dort/Dokumente/Studium_ZHAW/BA/bf_controller_tuning'));
+addpath('/home/janick-dort/Dokumente/Studium_ZHAW/BA/bf_controller_tuning/lib/');
+addpath(genpath('/home/janick-dort/Dokumente/Studium_ZHAW/BA/bf_controller_tuning'));
 
 addpath('../bf_controller_tuning/lib/');
 
@@ -23,11 +23,11 @@ opt.PhaseWrapping = 'on';
 %% File paths
 
 log_folder    = '../bf_controller_tuning/logs/';
-flight_folder = 'angle';
+flight_folder = '20260601';
 
-log_name1 = 'P_50_flipmini.csv'; % default
-log_name2 = 'P_80_flipmini.csv'; % tuned
-log_name3 = 'P_100_flipmini.csv'; % more tuned
+log_name1 = 'P_50_flipmini.TXT.csv'; % default
+log_name2 = 'P_80_flipmini.TXT.csv'; % tuned
+log_name3 = 'P_100_flipmini.TXT.csv'; % more tuned
 
 base = 2;
 compare = 3;
@@ -285,7 +285,7 @@ figure(1);
 plot(step_time, step_resp_meas);
 grid on;
 title('Angle step response');
-xlim([0 1])
+xlim([0 0.6])
 ylim([0 1.15])
 xlabel('Time [s]');
 ylabel('Angle [deg]');

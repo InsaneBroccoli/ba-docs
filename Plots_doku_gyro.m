@@ -3,8 +3,8 @@ clc;
 clear variables;
 close all;
 
-% addpath('/home/janick-dort/Dokumente/Studium_ZHAW/BA/bf_controller_tuning/lib/');
-% addpath(genpath('/home/janick-dort/Dokumente/Studium_ZHAW/BA/bf_controller_tuning'));
+addpath('/home/janick-dort/Dokumente/Studium_ZHAW/BA/bf_controller_tuning/lib/');
+addpath(genpath('/home/janick-dort/Dokumente/Studium_ZHAW/BA/bf_controller_tuning'));
 
 addpath('../bf_controller_tuning/lib/');
 
@@ -24,12 +24,12 @@ do_compensate_iterm = true;
 
 %% File paths
 log_folder = '../bf_controller_tuning/logs';
-flight_folder = 'gyro';
+flight_folder = '20260601';
 
 % Each gyro log (path relative to log_folder) with the gains it was flown at:
-log_name1 = 'Tuned_flipmini.csv';                       % tuned     P=46, I=74, D=30
-log_name2 = 'Moderate_flipmini.csv';   % moderate  P=46, I=66, D=32
-log_name3 = 'Bad_flipmini.csv';  % bad       P=30, I=60, D=30
+log_name1 = 'Tuned_flipmini.TXT.csv';                       % tuned     P=46, I=74, D=30
+log_name2 = 'Moderate_flipmini.TXT.csv';   % moderate  P=46, I=66, D=32
+log_name3 = 'Bad_flipmini.TXT.csv';  % bad       P=30, I=60, D=30
 
 base    = 2;   % flight whose plant is identified (the baseline)
 compare = 1;   % measured target flight to predict and compare against
@@ -373,7 +373,7 @@ xlabel('Time [s]')
 title('Tracking T')
 legend(sprintf('Measured %s', name_base), sprintf('Calculated %s', name_compare), sprintf('Measured %s', name_compare), ...
        'Location', 'best')
-xlim([0 0.5])
+xlim([0 0.15])
 ylim([0 1.15])
 
 style_doku_fig(gcf, 16, 7, 16, 1.2);
