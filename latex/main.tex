@@ -1908,7 +1908,7 @@ The foundation for effective PID tuning is understanding the system dynamics. Th
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=1.0\textwidth]{Plant_Gyro_Tuning.png}
+	\includegraphics[width=1.01\textwidth]{Plant_Gyro_Tuning.png}
 	\caption{Frequency response of the identified gyro plant model.}
 	\label{fig:plant_gyro_tuning}
 \end{figure}
@@ -1946,9 +1946,9 @@ The tuning process demonstrated these plots to be invaluable for diagnosing and 
 
 \begin{enumerate}
 	\item Sensitivity (S):
-	      This plot shows how the system reacts to noise and reference commands. The peak value is a key indicator of stability. In our experience, a peak below 6 dB is ideal for a well-damped system. Higher peaks suggest the drone might oscillate or become unstable, especially during aggressive maneuvers. We noticed that reducing the peak often required balancing stability with responsiveness, as overly conservative settings could make the drone feel sluggish.
+	      This plot shows how the system reacts to noise and reference commands. The peak value is a key indicator of stability. A peak below 6 dB is ideal for a well-damped system. Higher peaks suggest the drone might oscillate or become unstable, especially during aggressive maneuvers. Reducing the peak typically requires balancing stability with responsiveness, as overly conservative settings can result in sluggish behaviour.
 	\item Controller Effort (SC):
-	      This plot indicates how much work the controller is doing to maintain stability and follow commands. High effort at higher frequencies usually means the system is reacting to sensor noise rather than real disturbances. This can lead to unnecessary motor activity, overheating and wear. Adjusting D-term gains and optimizing filters can reduce high-frequency effort while maintaining responsiveness.
+	      This plot indicates how much work the controller must perform to maintain stability and follow commands. High effort at higher frequencies usually means the system is reacting to sensor noise rather than real disturbances. This can lead to unnecessary motor activity, overheating and wear. Adjusting D-term gains and optimizing filters can reduce high-frequency effort while maintaining responsiveness.
 	\item Compliance (SP):
 	      Compliance measures how much external disturbances, such as wind or propwash, affect drone motion. Lower compliance indicates more effective disturbance resistance. Increasing P-term gains improves disturbance rejection, though excessive gains can cause oscillations during rapid throttle changes. The optimal balance must be found to maintain both stability and responsiveness.
 \end{enumerate}
@@ -1957,45 +1957,24 @@ The tuning process demonstrated these plots to be invaluable for diagnosing and 
 
 \subsubsection*{PID Tuning Summary}
 
-The offline tuning framework is designed to enable PID parameters to be optimized without repeated flight tests. The process is guided by these principles:
+The offline tuning workflow follows an iterative, plant-centered approach. Each iteration begins with a chirp flight at the current parameter set, from 
+which the plant transfer function is identified. Candidate parameters are then evaluated offline using the step response and the Gang of Four before any 
+additional flight is performed.
 
-\textbf{Plant Identification}
+For incremental changes, a single plant identification remains valid across several tuning steps. Once a larger parameter change is intended, a new chirp flight must be performed to re-identify the plant and restore prediction reliability.
 
-Each tuning iteration beginns by identifying the plant transfer function from a chirp flight conducted at the current parameters. This measurement captures how the drone responds to control inputs under the existing tuning, including environmental conditions present during that flight.
-
-\textbf{Offline Prediction}
-
-Once the plant has been identified, candidate tuning parameters can be evaluated offline without additional flights. Two complementary analysis tools are employed:
-
-\begin{itemize}
-    \item \textbf{Step Response:} Time-domain analysis showing how the drone responds to a stick command. Desirable characteristics include adequate rise time, minimal overshoot and smooth curves without ringing. The analytical prediction can be compared with the measured baseline response to validate the model quality.
-    
-    \item \textbf{Gang of Four:} Frequency-domain analysis displaying four transfer functions that fully characterize the closed-loop system. The Sensitivity peak indicates stability margins and should remain within acceptable bounds. Compliance reveals disturbance rejection capability. Controller Effort exposes whether high-frequency noise is being amplified. These plots reveal tradeoffs between responsiveness and robustness across the control bandwidth.
-\end{itemize}
-
-\textbf{In-Flight Validation}
-
-Once the predicted response is deemed acceptable, the new parameters are applied to the flight controller and validated through actual flight testing. Aggressive maneuvers, wind disturbances and motor thermal behavior should all be assessed to ensure the tuning remains stable and responsive under practical conditions.
-
-\textbf{Tuning Philosophy}
-
-No universally optimal tune exists. Different applications should reflect different operational priorities: performance-oriented applications may demand aggressive response, while stability-focused platforms should prioritize robustness. Throughout this work, emphasis was placed on robustness and disturbance rejection, a philosophy that accommodates practical imperfections including bent propellers and asymmetric mass distribution. This conservative approach proved more valuable than pursuing peak responsiveness.
-
-For coherent handling feel, particularly during combined maneuvers, roll and pitch axes should be tuned symmetrically. Asymmetric tuning, while sometimes beneficial, can introduce unintuitive cross-coupling that degrades predictability.
-
-\textbf{Incremental Workflow}
-
+The condensed workflow is as follows:
 \begin{enumerate}
-    \item A baseline flight is established and the plant is identified at current settings
-    \item The step response and Gang of Four are analyzed to assess current behaviour
-    \item One parameter is adjusted at a time by a small increment
-    \item The response is predicted offline and key metrics are verified to remain within acceptable ranges
-    \item The new parameters are validated through flight testing
-    \item \textbf{Before making substantial changes, a new chirp flight is performed to re-identify the plant}
-    \item The process is repeated from step 2
+    \item Perform a baseline chirp flight and identify the plant
+    \item Evaluate the step response and Gang of Four at current settings
+    \item Adjust one parameter at a time by a small increment
+    \item Verify key metrics offline - sensitivity peak, rise time, overshoot
+    \item Apply the new parameters and validate through flight testing
+    \item Re-identify the plant before any substantial change
+    \item Repeat from step~2
 \end{enumerate}
 
-This iterative approach ensures that the system remains within the linear region around the identified plant, thereby maintaining prediction reliability.
+No universally optimal tune exists. Throughout this work, emphasis was placed on robustness and disturbance rejection over peak responsiveness, a philosophy that proved more resilient to practical imperfections such as bent propellers and asymmetric mass distribution. Roll and pitch axes should be tuned symmetrically to avoid unintuitive cross-coupling during combined maneuvers.
 
 \newpage
 
