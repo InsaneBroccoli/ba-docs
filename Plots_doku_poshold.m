@@ -223,28 +223,42 @@ CL_f2 = calculate_closed_loop(Cpid_f2, tf(1,1,Ts_log), Plant_f2, tf(1,1,Ts_log),
 %% Gang of Four Plot
 
 figure(1)
+
 ax(1) = subplot(2,2,1);
 bodemag(ax(1), CL_f1.T, T_f1, T_f2, omega_bode, opt);
 title('Tracking T');
-legend(sprintf('Calculated %s', name_compare), sprintf('Measured %s', name_base), sprintf('Measured %s', name_compare), 'Location','best');
+legend( ...
+    'Predicted response', ...
+    'Measured reference flight', ...
+    'Measured validation flight', ...
+    'Location','best');
 grid on;
 
 ax(2) = subplot(2,2,2);
 bodemag(ax(2), CL_f1.S, CL_f2.S, omega_bode, opt);
-title('Sensitivity S')
-legend(sprintf('Calculated %s', name_base), sprintf('Calculated %s', name_compare), 'Location','best')
-grid on
+title('Sensitivity S');
+legend( ...
+    'Reference calculation', ...
+    'Predicted calculation', ...
+    'Location','best');
+grid on;
 
 ax(3) = subplot(2,2,3);
 bodemag(ax(3), CL_f1.SC, CL_f2.SC, omega_bode, opt);
 title('Controller Effort SC');
-legend(sprintf('Calculated %s', name_base), sprintf('Calculated %s', name_compare), 'Location','best');
+legend( ...
+    'Reference calculation', ...
+    'Predicted calculation', ...
+    'Location','best');
 grid on;
 
 ax(4) = subplot(2,2,4);
 bodemag(ax(4), CL_f1.SP, CL_f2.SP, omega_bode, opt);
 title('Compliance SP');
-legend(sprintf('Calculated %s', name_base), sprintf('Calculated %s', name_compare), 'Location','best');
+legend( ...
+    'Reference calculation', ...
+    'Predicted calculation', ...
+    'Location','best');
 grid on;
 
 linkaxes(ax,'x');
@@ -252,8 +266,8 @@ xlim(ax(1), [3e-2 10]);
 sgt = sgtitle('Gang of Four - Position Hold');
 
 style_doku_fig(gcf, 16, 12, 16, 1.2);
-xlim([0.07 4])
-set(sgt, 'FontWeight', 'bold', 'FontSize', 20);   % overall title: bold, larger than base
+xlim(ax, [0.07 4]);
+set(sgt, 'FontWeight', 'bold', 'FontSize', 20);
 
 %% Step Response
 
@@ -272,14 +286,25 @@ step_resp_mean = mean(step_resp(step_time > T_mean(1) & step_time < T_mean(2),:)
 step_resp = step_resp ./ step_resp_mean;
 
 figure(2)
-plot(step_time, step_resp)
+
+% Reorder columns so that the plot order is consistent:
+% 1) measured reference flight
+% 2) predicted response
+% 3) measured validation flight
+step_resp_plot = [step_resp(:,3), step_resp(:,2), step_resp(:,1)];
+
+plot(step_time, step_resp_plot)
 grid on
 ylabel('Position [cm]')
 xlabel('Time [s]')
 title('Step Response Position Hold')
-legend(sprintf('Measured %s', name_compare), sprintf('Calculated %s', name_compare), sprintf('Measured %s', name_base), ...
-       'Location', 'best')
-ylim([-0.2 1.6]); xlim([0 frame/2]);
+legend( ...
+    'Measured reference flight', ...
+    'Predicted response', ...
+    'Measured validation flight', ...
+    'Location', 'best')
+ylim([-0.2 1.6]); 
+xlim([0 frame/2]);
 
 style_doku_fig(gcf, 16, 7, 16, 1.2);
 

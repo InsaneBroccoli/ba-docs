@@ -29,7 +29,7 @@ log_name1 = 'P_50_flipmini.TXT.csv'; % default
 log_name2 = 'P_80_flipmini.TXT.csv'; % tuned
 log_name3 = 'P_100_flipmini.TXT.csv'; % more tuned
 
-base = 2;
+base = 1;
 compare = 3;
 switch base
   case 1
@@ -289,8 +289,9 @@ xlim([0 0.6])
 ylim([0 1.15])
 xlabel('Time [s]');
 ylabel('Angle [deg]');
-legend(sprintf('Measured %s', name_base), sprintf('Calculated %s', name_compare), sprintf('Measured %s', name_compare), ...
-    'Location', 'best');
+legend('Measured reference flight', 'Predicted response', 'Measured validation flight', 'Location','best')
+% legend(sprintf('Measured %s', name_base), sprintf('Calculated %s', name_compare), sprintf('Measured %s', name_compare), ...
+    % 'Location', 'best');
 
 style_doku_fig(gcf, 16, 7, 16, 1.2);
 
@@ -354,28 +355,42 @@ CL_new2 = calculate_closed_loop_angle(C_Angle_new, ...
 %% Gang of Four
 
 figure(11)
+
 ax(1) = subplot(2,2,1);
 bodemag(ax(1), CL_ana1.T, T_ax1, T_ax2, omega_bode, opt);
 title('Tracking T');
-legend(sprintf('Calculated %s', name_compare), sprintf('Measured %s', name_base), sprintf('Measured %s', name_compare), 'Location','best');
+legend( ...
+    'Predicted response', ...
+    'Measured reference flight', ...
+    'Measured validation flight', ...
+    'Location','best');
 grid on;
 
 ax(2) = subplot(2,2,2);
 bodemag(ax(2), CL_ana1.S, CL_new2.S, omega_bode, opt);
-title('Sensitivity S')
-legend(sprintf('Calculated %s', name_base), sprintf('Calculated %s', name_compare), 'Location','best')
-grid on
+title('Sensitivity S');
+legend( ...
+    'Reference calculation', ...
+    'Predicted calculation', ...
+    'Location','best');
+grid on;
 
 ax(3) = subplot(2,2,3);
 bodemag(ax(3), CL_ana1.SC, CL_new2.SC, omega_bode, opt);
 title('Controller Effort SC');
-legend(sprintf('Calculated %s', name_base), sprintf('Calculated %s', name_compare), 'Location','best');
+legend( ...
+    'Reference calculation', ...
+    'Predicted calculation', ...
+    'Location','best');
 grid on;
 
 ax(4) = subplot(2,2,4);
 bodemag(ax(4), CL_ana1.SP, CL_new2.SP, omega_bode, opt);
 title('Compliance SP');
-legend(sprintf('Calculated %s', name_base), sprintf('Calculated %s', name_compare), 'Location','best');
+legend( ...
+    'Reference calculation', ...
+    'Predicted calculation', ...
+    'Location','best');
 grid on;
 
 linkaxes(ax,'x');
