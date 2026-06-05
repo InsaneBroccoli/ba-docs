@@ -898,7 +898,7 @@ Integrating the angular acceleration yields the angular rate. The resulting tran
 
 \begin{equation}
     P_{\text{Angular Rate}}(s) = \frac{\Omega(s)}{U(s)} =
-    \frac{k_t}{J_{\mathrm{m}} L s^2 + J_{\mathrm{m}} R s + k_t k_e}
+    \frac{k}{J_{\mathrm{m}} L s^2 + J_{\mathrm{m}} R s + k^2}
     \cdot
     \frac{l}{J_{\text{roll}}\,s}.
 \end{equation}
@@ -934,7 +934,7 @@ Assuming zero initial conditions and applying the Laplace transform, this relati
 
 This shows that the angle is obtained by integrating the angular rate, corresponding to a multiplication by \( 1 / s \) in the Laplace domain. Consequently, from a theoretical point of view, the angle plant behaves as an ideal integrator with the transfer function
 \begin{equation}
-    P_{\text{Angle}}(s) = \frac{\theta(s)}{\omega(s)} = \frac{1}{s}.
+    P_{\text{Angle}}(s) = \frac{\Theta(s)}{\Omega(s)} = \frac{1}{s}.
 \end{equation}
 
 Through these calculations, we know that we can expect a Bode plot of the angle plant with a slope of -20 dB/decade and a phase shift of -90 degrees, which are characteristic features of an ideal integrator \parencite{quanIntroductionMulticopterDesign2017}. To verify this theoretical behaviour, the frequency response of the angle plant is estimated from flight data using the system identification approach described earlier.
@@ -1544,8 +1544,9 @@ This approach allows the estimation of the real plant dynamics, which can then b
 The transfer function of the PI controller can be estimated as
 
 \begin{equation}
-    C_{\text{PI,meas}}(\omega) = \frac{G_{\text{yw}}(\omega)}{G_{\text{vw}}(\omega) - G_{\text{yw}}(\omega)}
+    C_{\text{PI,meas}}(\omega) = \frac{G_{\text{uw}}(\omega)}{1 - T_{\text{AltHold,meas}}(\omega)}
 \end{equation}
+
 
 This estimation is required for the compensation of the I-Term Relax algorithm described in the theory chapter. By comparing the estimated transfer function with the analytical PI controller model, a compensation factor can be calculated and applied to both the original and the newly designed controller.
 
