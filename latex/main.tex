@@ -125,6 +125,8 @@ The primary goal of this work was therefore to develop an offline tuning framewo
 
 We would like to express our sincere gratitude to our supervisors, Michael Peter and Prof. Dr. Ruprecht Altenburger, for their continuous guidance and support throughout the project. Their expertise, constructive feedback and commitment were invaluable in shaping the direction of this work and ensuring its successful completion.
 
+\paragraph*{Availability}
+The offline tuning framework developed in this work is publicly available on GitHub at \url{https://github.com/pichim/bf_controller_tuning}. The main branch contains complete implementations for rate and angle controller tuning in MATLAB, Python, which is also available as Jupyter notebook. Additionally, the \texttt{proof-of-concept} branch includes MATLAB evaluation scripts for altitude hold and position hold controller tuning. The corresponding Betaflight firmware modifications that implement chirp signal injection are available at \url{https://github.com/InsaneBroccoli/betaflight} on the \texttt{althold\_chirp} and \texttt{poshold\_chirp} branches.
 
 \newpage
 % *****************************************************************************
@@ -137,7 +139,7 @@ We would like to express our sincere gratitude to our supervisors, Michael Peter
 \chapter{Introduction}
 \label{ch:introduction}
 
-First-Person-View (FPV) racing drones require precise and responsive control to achieve stable flight behaviour, suppress disturbances such as propwash and maintain agility during rapid maneuvers. The flight performance strongly depends on the tuning of the flight controller’s feedback loops. 
+First-Person-View (FPV) racing drones require precise and responsive control to achieve stable flight behaviour, suppress disturbances such as propwash and maintain agility during rapid manoeuvres. The flight performance strongly depends on the tuning of the flight controller’s feedback loops. 
 In particular, the parameters of the angular rate controller determine how quickly and accurately the drone reacts to pilot inputs and external disturbances.
 
 In practice, controller tuning is still often performed manually through iterative trial-and-error procedures. This requires extensive flight testing and considerable piloting experience, making the process time-consuming and difficult to reproduce. Although modern flight controller firmware such as Betaflight provides extensive configuration options and detailed flight data logging, systematic tuning remains a challenge.
@@ -146,7 +148,7 @@ One commonly used tool for offline tuning is the PID-Toolbox. In this approach, 
 
 In the approach proposed in this thesis, a chirp excitation signal is injected directly into the control loop. This allows the system to be excited over a wide range of frequencies in a controlled and systematic way, resulting in higher quality measurements for system identification and controller tuning.
 
-A previous project introduced a proof of concept for the offline tuning approach of angular rate controllers based on recorded flight data, originally proposed by our supervisor Michael Peter. In the subsequent project thesis, this concept was restructured and modularized, forming the foundation for the present work.
+A previous project introduced a proof of concept for the offline tuning approach of angular rate controllers based on recorded flight data, originally proposed by our supervisor Michael Peter. In the following project thesis, this concept was restructured and modularised, forming the foundation for the present work.
 
 The objective of this bachelor thesis is to further refine and extend this approach into an offline tuning framework for multiple control loops used in Betaflight-based flight controllers. In addition to the existing angular rate controller tuner, the framework will be extended with code extensions for tuning the angle controller, the altitude controller and the position controller. This extends the tuning framework beyond the inner rate control loop and enables the analysis and tuning of higher-level control layers.
 
@@ -164,7 +166,7 @@ Betaflight is currently the most popular open-source flight controller firmware 
 
 Currently, controller tuning is often performed manually through iterative trial-and-error procedures or with the support of tools such as the PID Toolbox by Brian White. However, these approaches rely on the natural flight behaviour of the drone and the pilot’s inputs, which may not sufficiently excite all relevant frequency ranges. As a result, this can lead to suboptimal tuning outcomes and requires extensive flight testing as well as significant piloting experience.
 
-During our project thesis, a proof-of-concept approach for offline tuning of the angular rate controller based on recorded flight data, originally developed by Michael Peter, was restructured and modularized. This approach serves as the foundation for the present work and is further refined and extended to include additional control loops.
+During our project thesis, a proof-of-concept approach for offline tuning of the angular rate controller based on recorded flight data, originally developed by Michael Peter, was restructured and modularised. This approach serves as the foundation for the present work and is further refined and extended to include additional control loops.
 
 \section*{Task and Objective}
 \label{sec:TaskObjective}
@@ -190,7 +192,7 @@ This chapter provides the theoretical background for the methods used in this th
 
 Unmanned Aerial Vehicles (UAVs) can generally be classified into different categories, such as fixed-wing, rotary-wing and hybrid systems. This work focuses on multirotor drones, a subgroup of rotary-wing platforms, which generate lift through multiple rotors \parencite{quanIntroductionMulticopterDesign2017, UAV_hardware}.
 
-Among multirotor UAVs, the most common configurations are quadcopters, hexacopters and octocopters, which differ in the number of rotors (see \autoref{fig:multirotor_types}). Quadcopters use four rotors and represent the simplest fully controllable multirotor configuration. Due to their comparatively low mechanical complexity, good maneuverability and widespread use in research and practical applications, they are particularly relevant for modeling and control tasks \parencite{mahonyMultirotorAerialVehicles2012}.
+Among multirotor UAVs, the most common configurations are quadcopters, hexacopters and octocopters, which differ in the number of rotors (see \autoref{fig:multirotor_types}). Quadcopters use four rotors and represent the simplest fully controllable multirotor configuration. Due to their comparatively low mechanical complexity, good manoeuvrability and widespread use in research and practical applications, they are particularly relevant for modeling and control tasks \parencite{mahonyMultirotorAerialVehicles2012}.
 
 Hexacopters and octocopters extend this concept by using six or eight rotors. These configurations offer increased thrust, improved fault tolerance and higher payload capacity, but they also involve greater weight, higher energy consumption and more complex control allocation \parencite{mahonyMultirotorAerialVehicles2012}.
 
@@ -198,7 +200,7 @@ Since this work is concerned with the analysis and modeling of quadcopters, the 
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=1.0\linewidth]{Figures/multirotor_types.png}
+    \includegraphics[width=1.0\linewidth]{multirotor_types.png}
     \caption{Rotary-wing multirotor Unmanned Aerial Vehicle configurations.}
     \label{fig:multirotor_types}
 \end{figure}
@@ -328,8 +330,7 @@ The instantaneous value of the chirp signal is defined as
     x(t) = A \cdot \sin(\varphi(t)),
 \end{equation}
 
-where \( A \) is the amplitude, which determines the excitation strength and therefore 
-influences the signal-to-noise ratio of the measurement \parencite{Matlab_Chirp}.
+where \( A \) is the amplitude, which determines the excitation strength and therefore influences the signal-to-noise ratio of the measurement \parencite{Matlab_Chirp}.
 
 The phase \( \varphi(t) \) represents the accumulated instantaneous frequency over time  and is defined as
 
@@ -365,8 +366,7 @@ The instantaneous frequency is defined as
     f(t) = f_0 \left(\frac{f_1}{f_0}\right)^{\frac{t}{T}}.
 \end{equation}
 
-Compared to the linear chirp, this results in a more uniform excitation in logarithmic
-frequency space, which is particularly useful when analysing systems using Bode plots \parencite{Matlab_Chirp}.
+Compared to the linear chirp, this results in a more uniform excitation in logarithmic frequency space, which is particularly useful when analysing systems using Bode plots \parencite{Matlab_Chirp}.
 
 The corresponding phase trajectory is obtained by integrating the frequency 
 
@@ -385,8 +385,6 @@ These expressions define the phase trajectory \( \varphi(t) \) used both in the 
     \caption{Exponential chirp signal used for the simulation. The upper plot shows the generated chirp signal, the middle plot the exponential frequency sweep and the lower plot the wrapped phase used in the signal generation.}
     \label{fig:exponential_chirp}
 \end{figure}
-
-
 
 \subsubsection*{Lag Filter for Chirp Input Shaping}
 
@@ -745,7 +743,7 @@ The I-Term Relax algorithm is inherently nonlinear because the integral action i
 	C_{\mathrm{PI,com}}(\omega) = \frac{C_{\mathrm{PI}}(\omega)}{C_{\mathrm{PI,ana}}(\omega)}
 \end{equation}
 
-This frequency-dependent compensation factor represents the combined influence of effects that are not explicitly modeled, including the impact of I-Term Relax. Applying this factor scales the controller transfer function at each frequency such that the measured controller behaviour is reproduced. In this way, the effect of I-Term Relax can be approximated without explicitly modeling the nonlinear algorithm. The factor is further applied to both the original analytical PI controller \( C_{\mathrm{PI,ana}} \) and the newly designed PI controller \( C_{\mathrm{PI,new}} \):
+This frequency-dependent compensation factor represents the combined influence of effects that are not explicitly modelled, including the impact of I-Term Relax. Applying this factor scales the controller transfer function at each frequency such that the measured controller behaviour is reproduced. In this way, the effect of I-Term Relax can be approximated without explicitly modeling the nonlinear algorithm. The factor is further applied to both the original analytical PI controller \( C_{\mathrm{PI,ana}} \) and the newly designed PI controller \( C_{\mathrm{PI,new}} \):
 
 \begin{align}
 	C_{\mathrm{PI,ana,com}}(\omega) & = C_{\mathrm{PI,ana}}(\omega) \cdot C_{\mathrm{PI,com}}(\omega) \\
@@ -907,8 +905,7 @@ To validate the theoretical model, the frequency response of the plant is estima
 
 The estimated response shows good agreement with the expected behaviour in the low- to mid-frequency range, exhibiting the characteristic \(-20\,\text{dB/dec}\) slope. This confirms the integrator behaviour of the plant.
 
-At higher frequencies, deviations occur due to motor dynamics and unmodeled effects such as aerodynamic disturbances. The coherence remains high over a wide frequency range and decreases at higher frequencies due to measurement noise and reduced signal-to-noise ratio.
-\parencite{lutzTaschenbuchRegelungstechnik}
+At higher frequencies, deviations occur due to motor dynamics and unmodelled effects such as aerodynamic disturbances. The coherence remains high over a wide frequency range and decreases at higher frequencies due to measurement noise and reduced signal-to-noise ratio. \parencite{lutzTaschenbuchRegelungstechnik}
 
 \newpage
 
@@ -938,7 +935,7 @@ Through these calculations, we know that we can expect a Bode plot of the angle 
     \label{fig:plant_angle_measured}
 \end{figure}
 
-The measured frequency response in \autoref{fig:plant_angle_measured} confirms the expected integrator behaviour at low frequencies. In particular, the magnitude exhibits an approximate -20 dB/dec slope and the phase remains close to -90°, as predicted by the theoretical model. At higher frequencies, deviations from the ideal integrator behaviour can be observed. These effects are mainly caused by measurement noise, limited excitation and unmodeled dynamics in the system. The coherence is close to one in the low-frequency range, indicating a reliable estimate. As the frequency increases, the coherence decreases, suggesting that the estimation becomes less reliable due to noise and reduced signal-to-noise ratio.
+The measured frequency response in \autoref{fig:plant_angle_measured} confirms the expected integrator behaviour at low frequencies. In particular, the magnitude exhibits an approximate -20 dB/dec slope and the phase remains close to -90°, as predicted by the theoretical model. At higher frequencies, deviations from the ideal integrator behaviour can be observed. These effects are mainly caused by measurement noise, limited excitation and unmodelled dynamics in the system. The coherence is close to one in the low-frequency range, indicating a reliable estimate. As the frequency increases, the coherence decreases, suggesting that the estimation becomes less reliable due to noise and reduced signal-to-noise ratio.
 
 \newpage
 
@@ -1060,6 +1057,7 @@ To validate the derived model, the frequency response of the altitude plant is e
 
 The estimated frequency response confirms the expected behaviour at low frequencies, where the magnitude follows approximately a \(-40\,\text{dB/dec}\) slope, consistent with the double integrator model.
 
+% =============================================================================
 \chapter{Methodology}
 \label{ch:methodology}
 
