@@ -1,4 +1,5 @@
 from manim import *
+import theme  # sets URW Gothic as the default Text font
 import numpy as np
 
 
@@ -274,28 +275,39 @@ class StepResponseFromFRDPart2(Scene, StepResponseFromFRDBase):
         impulse_show = impulse_response[:show_n]
         step_show = step_response[:show_n]
 
-        impulse_axes = Axes(
+        # Show each curve on its own scale (no clipping). Size the y-ranges so
+        # that BOTH the x-axis (y=0) and the peak sit at the same fraction of the
+        # equally sized, equally placed boxes -> the x-axes line up AND the peaks
+        # reach the same height.
+        base_frac, peak_frac = 0.27, 0.92
+
+        def _y_range(peak):
+            floor = peak / (1.0 - peak_frac / base_frac)
+            top = floor * (1.0 - 1.0 / base_frac)
+            return floor, top
+
+        impulse_floor, impulse_top = _y_range(float(impulse_show.max()))
+        step_floor, step_top = _y_range(float(step_show.max()))
+
+        common = dict(
             x_range=[0, show_n, 30],
-            y_range=[-0.08, 0.18, 0.08],
-            x_length=4.9,
-            y_length=2.0,
+            x_length=6.0,
+            y_length=2.6,
             tips=False,
             axis_config={"color": MUTED, "stroke_width": 2},
-        ).to_edge(LEFT, buff=0.9).shift(UP * 0.45)
-        step_axes = Axes(
-            x_range=[0, show_n, 30],
-            y_range=[-0.15, 1.15, 0.5],
-            x_length=6.9,
-            y_length=2.85,
-            tips=False,
-            axis_config={"color": MUTED, "stroke_width": 2},
-        ).to_edge(RIGHT, buff=0.75).shift(UP * 0.45)
+        )
+        impulse_axes = Axes(y_range=[impulse_floor, impulse_top, 0.1], **common).to_edge(LEFT, buff=0.9).shift(UP * 0.45)
+        step_axes = Axes(y_range=[step_floor, step_top, 0.5], **common).to_edge(RIGHT, buff=0.9).shift(UP * 0.45)
         plot_group = VGroup(impulse_axes, step_axes)
 
         impulse_label = Text("Impulse response", font_size=21, color=INK)
         impulse_label.next_to(impulse_axes, UP, buff=0.12)
         step_label = Text("Step response", font_size=23, color=INK)
         step_label.next_to(step_axes, UP, buff=0.12)
+        # The plots have different heights; align both titles to the same level.
+        title_y = max(impulse_label.get_y(), step_label.get_y())
+        impulse_label.set_y(title_y)
+        step_label.set_y(title_y)
 
         formula = Text(
             "step response[k] = Σ impulse response[i],  i = 0 ... k",

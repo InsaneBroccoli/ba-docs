@@ -1,4 +1,5 @@
 from manim import *
+import theme  # sets URW Gothic as the default Text font
 import numpy as np
 
 
@@ -113,6 +114,8 @@ class EstimateSpectraWelchPart1(SpectraAnimationBase, Scene):
 
         centered_graph = self.graph_from_data(time_axes, t, signal_centered, BLUE, 3)
         mean_formula = Text("centered signal = input signal - global mean", font_size=22, color=INK)
+        if mean_formula.width > time_axes.width:
+            mean_formula.scale_to_fit_width(time_axes.width)
         mean_formula.next_to(time_axes, DOWN, buff=0.18)
         self.play(
             Transform(signal_graph, centered_graph),
@@ -149,6 +152,8 @@ class EstimateSpectraWelchPart1(SpectraAnimationBase, Scene):
             font_size=21,
             color=INK,
         )
+        if overlap_text.width > time_axes.width:
+            overlap_text.scale_to_fit_width(time_axes.width)
         overlap_text.next_to(time_axes, DOWN, buff=0.18)
         self.play(
             Transform(step_title, self.make_step_title("Step 2: Segment signal with overlap", ORANGE)),

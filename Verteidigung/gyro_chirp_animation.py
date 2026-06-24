@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from manim import *
+import theme  # sets URW Gothic as the default Text font
 import numpy as np
 
 
@@ -207,7 +208,7 @@ class GyroChirp(Scene):
         legend = VGroup(
             VGroup(Line(ORIGIN, RIGHT * 0.45, color=BLUE, stroke_width=4), Text("Shaped chirp amplitude", font_size=18, color=BLUE)).arrange(RIGHT, buff=0.12),
             VGroup(Line(ORIGIN, RIGHT * 0.45, color=ORANGE, stroke_width=4), Text("Gyro response amplitude", font_size=18, color=ORANGE)).arrange(RIGHT, buff=0.12),
-        ).arrange(RIGHT, buff=0.65).next_to(axes, UP, buff=0.10)
+        ).arrange(RIGHT, buff=0.65).next_to(axes, UP, buff=0.45)
 
         # Corner-frequency markers.
         pole_line = DashedLine(
@@ -268,8 +269,17 @@ class GyroChirp(Scene):
             ).arrange(DOWN, aligned_edge=LEFT, buff=0.08).to_corner(UL, buff=0.55).shift(DOWN * 0.70)
         )
 
+        # Centre the status box in the gap between the top-left readout and the
+        # top-right parameter list, sized to fit (readout uses fixed-width
+        # number formats, so its right edge is stable across the animation).
+        status_gap_left = dynamic_readout.get_right()[0]
+        status_gap_right = parameter_text.get_left()[0]
+        status_width = (status_gap_right - status_gap_left) - 0.5
+        status_center_x = (status_gap_left + status_gap_right) / 2
         status = always_redraw(
-            lambda: self.make_status(frequency_at(tracker.get_value()))
+            lambda: self.make_status(
+                frequency_at(tracker.get_value()), status_center_x, status_width
+            )
         )
 
         frequency_marker = always_redraw(
@@ -312,16 +322,23 @@ class GyroChirp(Scene):
             Text("Above 30 Hz", font_size=19, color=BLUE, weight="SEMIBOLD"),
             Text("The lag-filter gain approaches one tenth", font_size=18, color=INK),
         ).arrange(DOWN, aligned_edge=LEFT, buff=0.07)
-        shaping_explanation.to_corner(UR, buff=0.55).shift(DOWN * 2.15)
+        # Keep the box narrow enough that its left edge stays clear of the drone,
+        # which tilts up to MAX_TILT_DEGREES and sweeps a rotor to the right.
+        if shaping_explanation.width > 4.4:
+            shaping_explanation.scale_to_fit_width(4.4)
         explanation_box = RoundedRectangle(
-            width=4.55,
-            height=2.15,
+            width=shaping_explanation.width + 0.5,
+            height=shaping_explanation.height + 0.35,
             corner_radius=0.16,
             stroke_color=GRID,
             stroke_width=1.5,
             fill_color=WHITE,
             fill_opacity=0.94,
-        ).move_to(shaping_explanation)
+        )
+        # Hang the box just below the parameter list (right-aligned) so it grows
+        # downward (never up into that text) and sits in the right column.
+        explanation_box.next_to(parameter_text, DOWN, buff=0.3, aligned_edge=RIGHT)
+        shaping_explanation.move_to(explanation_box)
 
         # ------------------------------------------------------------------
         # Animation
@@ -369,7 +386,7 @@ class GyroChirp(Scene):
             return BLUE
         return RED
 
-    def make_status(self, current_frequency):
+    def make_status(self, current_frequency, center_x, width):
         if current_frequency < LAG_POLE_FREQUENCY:
             text = "Low-frequency chirp: amplitude scaling"
             color = GREEN
@@ -384,7 +401,7 @@ class GyroChirp(Scene):
             color = RED
 
         box = RoundedRectangle(
-            width=5.55,
+            width=width,
             height=0.58,
             corner_radius=0.14,
             stroke_color=color,
@@ -392,5 +409,10 @@ class GyroChirp(Scene):
             fill_color=WHITE,
             fill_opacity=0.92,
         )
-        label = Text(text, font_size=18, color=color).move_to(box)
-        return VGroup(box, label).move_to(UP * 2.65 + LEFT * 0.35)
+        # Box is sized/placed to the gap between readout and parameter list;
+        # shrink long labels to fit rather than overflow into either side.
+        label = Text(text, font_size=18, color=color)
+        if label.width > width - 0.3:
+            label.scale_to_fit_width(width - 0.3)
+        label.move_to(box)
+        return VGroup(box, label).move_to(UP * 2.65 + RIGHT * center_x)

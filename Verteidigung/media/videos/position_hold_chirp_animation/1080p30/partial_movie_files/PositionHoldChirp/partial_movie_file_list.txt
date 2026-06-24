@@ -1,8 +1,0 @@
-# This file is used internally by FFMPEG.
-file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/position_hold_chirp_animation/1080p30/partial_movie_files/PositionHoldChirp/2278592847_2850148918_223132457.mp4'
-file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/position_hold_chirp_animation/1080p30/partial_movie_files/PositionHoldChirp/3725352333_3800910831_3270451081.mp4'
-file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/position_hold_chirp_animation/1080p30/partial_movie_files/PositionHoldChirp/3725352333_1218579536_1172812819.mp4'
-file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/position_hold_chirp_animation/1080p30/partial_movie_files/PositionHoldChirp/3725352333_1229136111_4044783862.mp4'
-file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/position_hold_chirp_animation/1080p30/partial_movie_files/PositionHoldChirp/3725352333_4090605074_1964056874.mp4'
-file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/position_hold_chirp_animation/1080p30/partial_movie_files/PositionHoldChirp/3725352333_1586389057_3086226728.mp4'
-file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/position_hold_chirp_animation/1080p30/partial_movie_files/PositionHoldChirp/3725352333_1464625686_562525663.mp4'

@@ -1,4 +1,5 @@
 from manim import *
+import theme  # sets URW Gothic as the default Text font
 
 # ==========================================
 # Global style
@@ -122,9 +123,12 @@ class ClosedLoopIdentification(Scene):
         # Feedback path
         feedback_dot = Dot(sum3.get_right() + RIGHT * 0.12, radius=0.06, color=INK)
         fb_down = Line(feedback_dot.get_center(), feedback_dot.get_center() + DOWN * 1.7, color=INK, stroke_width=2.5)
-        fb_left = Line(fb_down.get_end(), sum1.get_bottom() + DOWN * 1.7, color=INK, stroke_width=2.5)
+        # Corner directly below sum1, at the same height as the bottom of the
+        # down-leg, so the horizontal leg stays perfectly level.
+        fb_corner = fb_down.get_end() + RIGHT * (sum1.get_bottom()[0] - fb_down.get_end()[0])
+        fb_left = Line(fb_down.get_end(), fb_corner, color=INK, stroke_width=2.5)
         fb_up = Arrow(
-            fb_left.get_end(),
+            fb_corner,
             sum1.get_bottom(),
             buff=0.03,
             stroke_width=2.5,

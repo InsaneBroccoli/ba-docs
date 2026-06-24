@@ -1,3 +1,0 @@
-# This file is used internally by FFMPEG.
-file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/titlepage/1080p60/partial_movie_files/TitleDroneAnimation/2724447040_1053742454_2577012700.mp4'
-file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/titlepage/1080p60/partial_movie_files/TitleDroneAnimation/1529838924_422628456_2616904595.mp4'

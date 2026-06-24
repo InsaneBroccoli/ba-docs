@@ -1,9 +1,0 @@
-# This file is used internally by FFMPEG.
-file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/calculate_step_response_manim/1080p60/partial_movie_files/StepResponseFromFRDPart1/30694623_1839772851_223132457.mp4'
-file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/calculate_step_response_manim/1080p60/partial_movie_files/StepResponseFromFRDPart1/2849474439_3250932629_3803494245.mp4'
-file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/calculate_step_response_manim/1080p60/partial_movie_files/StepResponseFromFRDPart1/2849474439_3963603028_304203743.mp4'
-file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/calculate_step_response_manim/1080p60/partial_movie_files/StepResponseFromFRDPart1/2849474439_2789562269_1981163462.mp4'
-file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/calculate_step_response_manim/1080p60/partial_movie_files/StepResponseFromFRDPart1/2849474439_153803468_2179808920.mp4'
-file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/calculate_step_response_manim/1080p60/partial_movie_files/StepResponseFromFRDPart1/2849474439_3963603028_2756494119.mp4'
-file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/calculate_step_response_manim/1080p60/partial_movie_files/StepResponseFromFRDPart1/2849474439_498575490_403766088.mp4'
-file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/calculate_step_response_manim/1080p60/partial_movie_files/StepResponseFromFRDPart1/2849474439_3244409290_1011261385.mp4'

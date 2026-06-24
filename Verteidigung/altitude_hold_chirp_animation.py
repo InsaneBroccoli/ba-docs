@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from manim import *
+import theme  # sets URW Gothic as the default Text font
 import numpy as np
 
 
@@ -166,7 +167,7 @@ class AltitudeHoldChirp(Scene):
         dynamic_readout = always_redraw(
             lambda: VGroup(
                 Text(
-                    f"Time: {2*tracker.get_value():4.1f} s",
+                    f"Time: {tracker.get_value():4.1f} s",
                     font_size=18,
                     color=INK,
                 ),
@@ -184,7 +185,18 @@ class AltitudeHoldChirp(Scene):
             ).arrange(DOWN, aligned_edge=LEFT, buff=0.10).to_corner(UL, buff=0.55).shift(DOWN * 0.70)
         )
 
-        status = always_redraw(lambda: self.make_status(frequency_at(tracker.get_value())))
+        # Centre the status box in the gap between the top-left readout and the
+        # top-right parameter list, sized to fit (readout uses fixed-width
+        # number formats, so its right edge is stable across the animation).
+        status_gap_left = dynamic_readout.get_right()[0]
+        status_gap_right = parameter_text.get_left()[0]
+        status_width = (status_gap_right - status_gap_left) - 0.5
+        status_center_x = (status_gap_left + status_gap_right) / 2
+        status = always_redraw(
+            lambda: self.make_status(
+                frequency_at(tracker.get_value()), status_center_x, status_width
+            )
+        )
 
         # A moving marker connects the live animation to the lower plot.
         time_marker = always_redraw(
@@ -249,8 +261,8 @@ class AltitudeHoldChirp(Scene):
         ).arrange(DOWN, aligned_edge=LEFT, buff=0.10)
         conclusion.to_corner(UR, buff=0.55).shift(DOWN * 2.65)
         background = RoundedRectangle(
-            width=4.4,
-            height=1.75,
+            width=conclusion.width + 0.5,
+            height=conclusion.height + 0.35,
             corner_radius=0.16,
             stroke_color=GRID,
             stroke_width=1.5,
@@ -260,7 +272,7 @@ class AltitudeHoldChirp(Scene):
         self.play(FadeIn(background), FadeIn(conclusion, shift=LEFT * 0.15), run_time=1.3)
         self.wait(FINAL_WAIT)
 
-    def make_status(self, current_frequency):
+    def make_status(self, current_frequency, center_x, width):
         if current_frequency < 0.7 * DRONE_BANDWIDTH:
             text = "The drone closely follows the command"
             color = GREEN
@@ -272,7 +284,7 @@ class AltitudeHoldChirp(Scene):
             color = RED
 
         box = RoundedRectangle(
-            width=5.3,
+            width=width,
             height=0.58,
             corner_radius=0.14,
             stroke_color=color,
@@ -280,6 +292,11 @@ class AltitudeHoldChirp(Scene):
             fill_color=WHITE,
             fill_opacity=0.92,
         )
-        label = Text(text, font_size=14, color=color).move_to(box)
-        return VGroup(box, label).move_to(UP * 2.65 + LEFT * 0.4)
+        # Box is sized/placed to the gap between readout and parameter list;
+        # shrink long labels to fit rather than overflow into either side.
+        label = Text(text, font_size=14, color=color)
+        if label.width > width - 0.3:
+            label.scale_to_fit_width(width - 0.3)
+        label.move_to(box)
+        return VGroup(box, label).move_to(UP * 2.65 + RIGHT * center_x)
 

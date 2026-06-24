@@ -1,4 +1,5 @@
 from manim import *
+import theme  # sets URW Gothic as the default Text font
 import numpy as np
 
 
@@ -451,11 +452,11 @@ class EstimateSpectrogramPart2(Scene, SpectrogramAnimationBase):
         spectrum_axes = Axes(
             x_range=[0, 20, 5],
             y_range=[0, 0.45, 0.15],
-            x_length=4.2,
+            x_length=4.6,
             y_length=1.15,
             tips=False,
             axis_config={"color": MUTED, "stroke_width": 1.8},
-        ).to_edge(RIGHT, buff=0.95).shift(DOWN * 1.65)
+        ).to_edge(RIGHT, buff=0.75).shift(DOWN * 1.65)
         spectrum_label = Text("Spectrum of the selected segment", font_size=19, color=PURPLE).next_to(
             spectrum_axes, UP, buff=0.08
         )

@@ -1,4 +1,5 @@
 from manim import *
+import theme  # sets URW Gothic as the default Text font
 import numpy as np
 
 

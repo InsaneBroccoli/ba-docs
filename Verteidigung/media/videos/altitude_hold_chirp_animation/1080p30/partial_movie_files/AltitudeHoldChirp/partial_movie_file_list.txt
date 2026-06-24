@@ -1,8 +1,0 @@
-# This file is used internally by FFMPEG.
-file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/altitude_hold_chirp_animation/1080p30/partial_movie_files/AltitudeHoldChirp/2278592847_4000780478_223132457.mp4'
-file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/altitude_hold_chirp_animation/1080p30/partial_movie_files/AltitudeHoldChirp/3725352333_824533866_911605971.mp4'
-file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/altitude_hold_chirp_animation/1080p30/partial_movie_files/AltitudeHoldChirp/3725352333_1218579536_1463755820.mp4'
-file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/altitude_hold_chirp_animation/1080p30/partial_movie_files/AltitudeHoldChirp/3725352333_1787131601_3701391225.mp4'
-file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/altitude_hold_chirp_animation/1080p30/partial_movie_files/AltitudeHoldChirp/3725352333_4090605074_2188326208.mp4'
-file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/altitude_hold_chirp_animation/1080p30/partial_movie_files/AltitudeHoldChirp/3725352333_1787906792_2918613182.mp4'
-file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/altitude_hold_chirp_animation/1080p30/partial_movie_files/AltitudeHoldChirp/3725352333_1464625686_838395818.mp4'

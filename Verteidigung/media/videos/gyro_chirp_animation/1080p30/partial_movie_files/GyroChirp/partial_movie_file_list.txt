@@ -1,9 +1,0 @@
-# This file is used internally by FFMPEG.
-file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/gyro_chirp_animation/1080p30/partial_movie_files/GyroChirp/3192430948_1164336186_223132457.mp4'
-file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/gyro_chirp_animation/1080p30/partial_movie_files/GyroChirp/4133503217_1184350237_2991151155.mp4'
-file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/gyro_chirp_animation/1080p30/partial_movie_files/GyroChirp/4133503217_3114220893_3523357525.mp4'
-file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/gyro_chirp_animation/1080p30/partial_movie_files/GyroChirp/4133503217_2412898682_704279389.mp4'
-file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/gyro_chirp_animation/1080p30/partial_movie_files/GyroChirp/4133503217_1157195461_2390882783.mp4'
-file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/gyro_chirp_animation/1080p30/partial_movie_files/GyroChirp/4133503217_1956685446_3579581048.mp4'
-file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/gyro_chirp_animation/1080p30/partial_movie_files/GyroChirp/4133503217_2453650568_239188430.mp4'
-file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/gyro_chirp_animation/1080p30/partial_movie_files/GyroChirp/4133503217_2714901071_3378814453.mp4'

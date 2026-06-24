@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from manim import *
+import theme  # sets URW Gothic as the default Text font
 import numpy as np
 
 
@@ -269,8 +270,8 @@ class PositionHoldChirp(Scene):
         conclusion.to_corner(UR, buff=0.75).shift(DOWN * 2.85 + LEFT * 0.25)
 
         background = RoundedRectangle(
-            width=5.35,
-            height=1.75,
+            width=conclusion.width + 0.5,
+            height=conclusion.height + 0.35,
             corner_radius=0.16,
             stroke_color=GRID,
             stroke_width=1.5,
@@ -301,6 +302,11 @@ class PositionHoldChirp(Scene):
             fill_color=WHITE,
             fill_opacity=0.92,
         )
-        label = Text(text, font_size=16, color=color).move_to(box)
+        # Keep the box in its fixed centre slot; shrink long labels to fit
+        # instead of widening the box into the parameter list on the right.
+        label = Text(text, font_size=16, color=color)
+        if label.width > box.width - 0.3:
+            label.scale_to_fit_width(box.width - 0.3)
+        label.move_to(box)
         return VGroup(box, label).move_to(UP * 2.65 + LEFT * 0.4)
 

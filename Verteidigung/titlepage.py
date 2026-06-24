@@ -1,4 +1,5 @@
 from manim import *
+import theme  # sets URW Gothic as the default Text font
 import numpy as np
 from PIL import Image
 import os
@@ -38,7 +39,6 @@ class TitleDroneAnimation(Scene):
             "Bachelor's Thesis - System Engineering",
             font_size=28,
             color=gray,
-            font="DejaVu Sans",
         )
 
         title = Text(
@@ -46,21 +46,18 @@ class TitleDroneAnimation(Scene):
             font_size=44,
             color=blue,
             weight=BOLD,
-            font="DejaVu Sans",
         )
 
         authors = Text(
             "Yuri Bianchi | Janick Dort | Dario Jurietti",
             font_size=27,
             color=light_blue,
-            font="DejaVu Sans",
         )
 
         date = Text(
             "26.06.2026",
             font_size=25,
             color=gray,
-            font="DejaVu Sans",
         )
 
         text_group = VGroup(subtitle, title, authors, date).arrange(
