@@ -1,0 +1,13 @@
+# This file is used internally by FFMPEG.
+file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/estimate_spectra_manim/1080p60/partial_movie_files/EstimateSpectraWelchPart1/30694623_143457960_223132457.mp4'
+file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/estimate_spectra_manim/1080p60/partial_movie_files/EstimateSpectraWelchPart1/2849474439_1953767762_2092863376.mp4'
+file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/estimate_spectra_manim/1080p60/partial_movie_files/EstimateSpectraWelchPart1/2849474439_229270859_2056471130.mp4'
+file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/estimate_spectra_manim/1080p60/partial_movie_files/EstimateSpectraWelchPart1/2849474439_147282372_2360387988.mp4'
+file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/estimate_spectra_manim/1080p60/partial_movie_files/EstimateSpectraWelchPart1/2849474439_3910518604_741958603.mp4'
+file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/estimate_spectra_manim/1080p60/partial_movie_files/EstimateSpectraWelchPart1/2849474439_998750327_863630066.mp4'
+file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/estimate_spectra_manim/1080p60/partial_movie_files/EstimateSpectraWelchPart1/2849474439_25225458_3370032032.mp4'
+file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/estimate_spectra_manim/1080p60/partial_movie_files/EstimateSpectraWelchPart1/2849474439_1907867988_3430356017.mp4'
+file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/estimate_spectra_manim/1080p60/partial_movie_files/EstimateSpectraWelchPart1/2849474439_3942663277_2345151365.mp4'
+file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/estimate_spectra_manim/1080p60/partial_movie_files/EstimateSpectraWelchPart1/2849474439_4069698859_601132345.mp4'
+file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/estimate_spectra_manim/1080p60/partial_movie_files/EstimateSpectraWelchPart1/2849474439_1643527663_1951042611.mp4'
+file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/estimate_spectra_manim/1080p60/partial_movie_files/EstimateSpectraWelchPart1/2849474439_147282372_2377528170.mp4'

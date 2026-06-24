@@ -1,0 +1,10 @@
+# This file is used internally by FFMPEG.
+file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/estimate_spectrogram_manim/1080p60/partial_movie_files/EstimateSpectrogramPart1/30694623_3089283899_223132457.mp4'
+file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/estimate_spectrogram_manim/1080p60/partial_movie_files/EstimateSpectrogramPart1/2849474439_2267093392_315627199.mp4'
+file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/estimate_spectrogram_manim/1080p60/partial_movie_files/EstimateSpectrogramPart1/2849474439_344633622_3371931827.mp4'
+file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/estimate_spectrogram_manim/1080p60/partial_movie_files/EstimateSpectrogramPart1/2849474439_2751725065_21585891.mp4'
+file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/estimate_spectrogram_manim/1080p60/partial_movie_files/EstimateSpectrogramPart1/2849474439_392101120_2110928181.mp4'
+file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/estimate_spectrogram_manim/1080p60/partial_movie_files/EstimateSpectrogramPart1/2849474439_3584127114_1887022399.mp4'
+file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/estimate_spectrogram_manim/1080p60/partial_movie_files/EstimateSpectrogramPart1/2849474439_2246518226_378544720.mp4'
+file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/estimate_spectrogram_manim/1080p60/partial_movie_files/EstimateSpectrogramPart1/2849474439_1949854530_2890277397.mp4'
+file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/estimate_spectrogram_manim/1080p60/partial_movie_files/EstimateSpectrogramPart1/2849474439_2666197528_1695917264.mp4'

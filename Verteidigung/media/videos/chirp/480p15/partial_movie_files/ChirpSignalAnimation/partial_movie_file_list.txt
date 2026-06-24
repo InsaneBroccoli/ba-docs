@@ -1,0 +1,11 @@
+# This file is used internally by FFMPEG.
+file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/chirp/480p15/partial_movie_files/ChirpSignalAnimation/3149057423_1510560158_223132457.mp4'
+file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/chirp/480p15/partial_movie_files/ChirpSignalAnimation/3114813194_633332555_3799374382.mp4'
+file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/chirp/480p15/partial_movie_files/ChirpSignalAnimation/3114813194_904311245_2543893748.mp4'
+file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/chirp/480p15/partial_movie_files/ChirpSignalAnimation/3114813194_2736857447_985338860.mp4'
+file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/chirp/480p15/partial_movie_files/ChirpSignalAnimation/3114813194_1570502627_1666721039.mp4'
+file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/chirp/480p15/partial_movie_files/ChirpSignalAnimation/3114813194_2531091242_911089075.mp4'
+file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/chirp/480p15/partial_movie_files/ChirpSignalAnimation/3114813194_3121926807_2136375699.mp4'
+file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/chirp/480p15/partial_movie_files/ChirpSignalAnimation/3114813194_1464625686_3941269546.mp4'
+file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/chirp/480p15/partial_movie_files/ChirpSignalAnimation/3114813194_2143903535_2454080311.mp4'
+file 'file:/home/janick-dort/Dokumente/Studium_ZHAW/BA/Verteidigung/media/videos/chirp/480p15/partial_movie_files/ChirpSignalAnimation/3114813194_3244409290_2699618489.mp4'
